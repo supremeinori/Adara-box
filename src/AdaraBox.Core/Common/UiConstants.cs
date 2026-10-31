@@ -66,4 +66,9 @@ public static class UiConstants
     /// 100% transparent (#00000000) windows fail WPF hit-testing.
     /// </summary>
     public const string HitTestableTransparentColorHex = "#01000000";
+
+    /// <summary>
+    /// Default hardware stats polling interval in milliseconds (FR-ST-05, SRS §9.4).
+    /// </summary>
+    public const int StatsPollingIntervalMs = 1000;
 }

@@ -202,8 +202,11 @@ public class MultiLaunchServiceTests
         // Act
         var summary = await service.LaunchAllAsync(resources, progress);
 
-        // Give async progress dispatch a moment if needed
-        await Task.Delay(20);
+        // Give async progress dispatch a moment to finish invoking callbacks
+        for (var i = 0; i < 20 && reported.Count < 2; i++)
+        {
+            await Task.Delay(15);
+        }
 
         // Assert
         Assert.Equal(2, summary.Results.Count);
