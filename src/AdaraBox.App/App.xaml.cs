@@ -36,8 +36,10 @@ namespace AdaraBox.App;
 
 public partial class App : Application
 {
-    private const string MutexName = @"Global\AdaraBox.SingleInstance";
+    private const string MutexName = @"Local\AdaraBox.SingleInstance";
+    private const string WakeupEventName = @"Local\AdaraBox.WakeupEvent";
     private Mutex? _singleInstanceMutex;
+    private EventWaitHandle? _wakeupEvent;
     private IServiceProvider? _serviceProvider;
     private TrayIconManager? _trayIconManager;
     private TopBarWindow? _topBarWindow;
@@ -51,9 +53,33 @@ public partial class App : Application
         _singleInstanceMutex = new Mutex(true, MutexName, out bool createdNew);
         if (!createdNew)
         {
-            // Another instance is already running; silently terminate this instance
+            // Another instance is already running; signal it to wake up and show itself
+            try
+            {
+                using var wakeHandle = EventWaitHandle.OpenExisting(WakeupEventName);
+                wakeHandle.Set();
+            }
+            catch
+            {
+                // Fallback if event is not yet accessible
+            }
+
             Shutdown();
             return;
+        }
+
+        // Initialize wakeup event listener for subsequent double-clicks/invocations
+        try
+        {
+            _wakeupEvent = new EventWaitHandle(false, EventResetMode.AutoReset, WakeupEventName, out _);
+            ThreadPool.RegisterWaitForSingleObject(_wakeupEvent, (state, timedOut) =>
+            {
+                Dispatcher.Invoke(ShowAndActivateTopBar);
+            }, null, -1, false);
+        }
+        catch
+        {
+            // Non-critical fallback
         }
 
         // 2. Configure Serilog (Master Guide §8: %LOCALAPPDATA%\AdaraBox\logs\adarabox-.log, 14 days retention)
@@ -209,35 +235,36 @@ public partial class App : Application
 
         hotkeyService.HotkeyPressed += (s, ev) =>
         {
-            Dispatcher.Invoke(() =>
-            {
-                if (_topBarWindow == null) return;
-                if (!_topBarWindow.IsVisible)
-                {
-                    _topBarWindow.Show();
-                }
-                _topBarWindow.Activate();
-                _topBarWindow.Focus();
-
-                if (_topBarWindow.DataContext is TopBarViewModel topBarVm)
-                {
-                    if (topBarVm.IsPanelOpen)
-                    {
-                        topBarVm.ClosePanelCommand.Execute(null);
-                    }
-                    else
-                    {
-                        var wsModule = topBarVm.Modules.FirstOrDefault(m => m.Id == "workspace");
-                        if (wsModule != null)
-                        {
-                            topBarVm.SelectModuleCommand.Execute(wsModule);
-                        }
-                    }
-                }
-            });
+            Dispatcher.Invoke(ShowAndActivateTopBar);
         };
 
+        // 9. Show Top Bar immediately on initial start
+        Dispatcher.InvokeAsync(ShowAndActivateTopBar);
+
         Log.Information("Adara Box application shell successfully initialized.");
+    }
+
+    private void ShowAndActivateTopBar()
+    {
+        if (_topBarWindow == null) return;
+        if (!_topBarWindow.IsVisible)
+        {
+            _topBarWindow.Show();
+        }
+        _topBarWindow.Activate();
+        _topBarWindow.Focus();
+
+        if (_topBarWindow.DataContext is TopBarViewModel topBarVm)
+        {
+            if (!topBarVm.IsPanelOpen)
+            {
+                var wsModule = topBarVm.Modules.FirstOrDefault(m => m.Id == "workspace");
+                if (wsModule != null)
+                {
+                    topBarVm.SelectModuleCommand.Execute(wsModule);
+                }
+            }
+        }
     }
 
     private void ConfigureServices(IServiceCollection services, IDbConnectionFactory dbConnectionFactory)
@@ -391,6 +418,9 @@ public partial class App : Application
             _singleInstanceMutex.Dispose();
             _singleInstanceMutex = null;
         }
+
+        _wakeupEvent?.Dispose();
+        _wakeupEvent = null;
 
         Log.CloseAndFlush();
         base.OnExit(e);
