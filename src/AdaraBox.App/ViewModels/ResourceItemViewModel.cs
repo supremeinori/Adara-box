@@ -98,6 +98,9 @@ public sealed partial class ResourceItemViewModel : ObservableObject
         OnPropertyChanged(nameof(AvailabilityWarningText));
     }
 
+    [RelayCommand]
+    private async Task LaunchAsync() => await _parent.LaunchSingleResourceAsync(this);
+
     [RelayCommand(CanExecute = nameof(CanManage))]
     private void Edit() => _parent.BeginEditResource(this);
 

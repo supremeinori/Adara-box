@@ -18,6 +18,7 @@ public sealed partial class MediaPanelViewModel : ObservableObject
     private readonly IMediaLinkService _mediaLinkService;
     private readonly IResourceLauncher _launcher;
     private readonly IDialogService _dialogService;
+    private readonly IMediaPlaybackController? _mediaController;
 
     [ObservableProperty]
     private bool _isLoading;
@@ -37,6 +38,22 @@ public sealed partial class MediaPanelViewModel : ObservableObject
     [ObservableProperty]
     private string? _formError;
 
+    // Apple Music Style Now Playing Card
+    [ObservableProperty]
+    private string _trackTitle = "Tidak ada media aktif";
+
+    [ObservableProperty]
+    private string _trackArtist = "Buka Spotify, YouTube, atau player musik";
+
+    [ObservableProperty]
+    private bool _hasActiveTrack;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PlayPauseButtonText))]
+    private bool _isPlaying;
+
+    public string PlayPauseButtonText => IsPlaying ? "⏸ Pause" : "▶ Play";
+
     public ObservableCollection<MediaLinkItemViewModel> Links { get; } = new();
 
     public bool HasLinks => Links.Count > 0;
@@ -51,13 +68,93 @@ public sealed partial class MediaPanelViewModel : ObservableObject
     public MediaPanelViewModel(
         IMediaLinkService mediaLinkService,
         IResourceLauncher launcher,
-        IDialogService dialogService)
+        IDialogService dialogService,
+        IMediaPlaybackController? mediaController = null)
     {
         _mediaLinkService = mediaLinkService ?? throw new ArgumentNullException(nameof(mediaLinkService));
         _launcher = launcher ?? throw new ArgumentNullException(nameof(launcher));
         _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
+        _mediaController = mediaController;
+
+        if (_mediaController != null)
+        {
+            _mediaController.TrackChanged += (s, track) =>
+            {
+                var app = System.Windows.Application.Current;
+                if (app != null && !app.Dispatcher.HasShutdownStarted)
+                {
+                    app.Dispatcher.InvokeAsync(() => UpdateTrackDisplay(track));
+                }
+                else
+                {
+                    UpdateTrackDisplay(track);
+                }
+            };
+
+            _mediaController.PlaybackStateChanged += (s, state) =>
+            {
+                var app = System.Windows.Application.Current;
+                if (app != null && !app.Dispatcher.HasShutdownStarted)
+                {
+                    app.Dispatcher.InvokeAsync(() =>
+                    {
+                        IsPlaying = state == MediaPlaybackState.Playing;
+                    });
+                }
+                else
+                {
+                    IsPlaying = state == MediaPlaybackState.Playing;
+                }
+            };
+
+            UpdateTrackDisplay(_mediaController.CurrentTrack);
+            IsPlaying = _mediaController.CurrentState == MediaPlaybackState.Playing;
+        }
 
         _ = LoadLinksAsync();
+    }
+
+    private void UpdateTrackDisplay(MediaTrackInfo? track)
+    {
+        if (track != null)
+        {
+            TrackTitle = track.Title;
+            TrackArtist = !string.IsNullOrWhiteSpace(track.Artist) ? track.Artist : "Artis tidak diketahui";
+            HasActiveTrack = true;
+        }
+        else
+        {
+            TrackTitle = "Tidak ada media aktif";
+            TrackArtist = "Buka Spotify, YouTube, atau player musik";
+            HasActiveTrack = false;
+        }
+    }
+
+    [RelayCommand]
+    public async Task PlayPauseAsync()
+    {
+        if (_mediaController != null)
+        {
+            await _mediaController.PlayPauseAsync();
+        }
+    }
+
+    [RelayCommand]
+    public async Task NextTrackAsync()
+    {
+        if (_mediaController != null)
+        {
+            await _mediaController.NextAsync();
+        }
+    }
+
+    [RelayCommand]
+    public async Task PreviousTrackAsync()
+    {
+        if (_mediaController != null)
+        {
+            await _mediaController.PreviousAsync();
+        }
     }
 
     [RelayCommand]

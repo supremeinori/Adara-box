@@ -339,4 +339,94 @@ public class WorkspacePanelViewModelLaunchTests
         Assert.True(vm.HasManySelected);
         Assert.Equal(11, vm.SelectedCount);
     }
+
+    [Fact]
+    public async Task LaunchSingleResource_WithLauncher_InvokesLauncherDirectly()
+    {
+        var launcher = Substitute.For<IResourceLauncher>();
+        var ws = new Workspace(Guid.NewGuid(), "Test WS", _fixedTime, _fixedTime, 0);
+        var r1 = CreateResource(ws.Id, "Item 1");
+        _resourceService.ListAsync(ws.Id).Returns(Task.FromResult<IReadOnlyList<Resource>>(new[] { r1 }));
+        launcher.LaunchAsync(r1, Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new LaunchResult(r1.Id, r1.Name, true)));
+
+        var vm = new WorkspacePanelViewModel(
+            _workspaceService,
+            _resourceService,
+            _availabilityChecker,
+            _iconProvider,
+            _filePickerService,
+            _dialogService,
+            _settingsStore,
+            _multiLaunchService,
+            launcher);
+
+        vm.OpenWorkspace(new WorkspaceItemViewModel(ws, vm));
+        await vm.LoadResourcesAsync(ws.Id);
+
+        var item = vm.Resources[0];
+        await item.LaunchCommand.ExecuteAsync(null);
+
+        await launcher.Received(1).LaunchAsync(r1, Arg.Any<CancellationToken>());
+        Assert.False(vm.IsLaunchSummaryOpen);
+    }
+
+    [Fact]
+    public async Task LaunchSingleResource_Failed_OpensLaunchSummary()
+    {
+        var launcher = Substitute.For<IResourceLauncher>();
+        var ws = new Workspace(Guid.NewGuid(), "Test WS", _fixedTime, _fixedTime, 0);
+        var r1 = CreateResource(ws.Id, "Broken Item");
+        _resourceService.ListAsync(ws.Id).Returns(Task.FromResult<IReadOnlyList<Resource>>(new[] { r1 }));
+        launcher.LaunchAsync(r1, Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new LaunchResult(r1.Id, r1.Name, false, LaunchFailureReason.NotFound, "File not found")));
+
+        var vm = new WorkspacePanelViewModel(
+            _workspaceService,
+            _resourceService,
+            _availabilityChecker,
+            _iconProvider,
+            _filePickerService,
+            _dialogService,
+            _settingsStore,
+            _multiLaunchService,
+            launcher);
+
+        vm.OpenWorkspace(new WorkspaceItemViewModel(ws, vm));
+        await vm.LoadResourcesAsync(ws.Id);
+
+        var item = vm.Resources[0];
+        await item.LaunchCommand.ExecuteAsync(null);
+
+        Assert.True(vm.IsLaunchSummaryOpen);
+        Assert.Single(vm.FailedResults);
+        Assert.Equal("File not found", vm.LaunchSummaryMessage);
+    }
+
+    [Fact]
+    public async Task LaunchAllInWorkspaceAsync_InvokesMultiLaunchServiceWithAllItems()
+    {
+        var ws = new Workspace(Guid.NewGuid(), "Test WS", _fixedTime, _fixedTime, 0);
+        var r1 = CreateResource(ws.Id, "Item 1");
+        var r2 = CreateResource(ws.Id, "Item 2");
+        _resourceService.ListAsync(ws.Id).Returns(Task.FromResult<IReadOnlyList<Resource>>(new[] { r1, r2 }));
+
+        var vm = CreateVm();
+        vm.OpenWorkspace(new WorkspaceItemViewModel(ws, vm));
+        await vm.LoadResourcesAsync(ws.Id);
+
+        _multiLaunchService.LaunchAllAsync(Arg.Any<IReadOnlyList<Resource>>(), Arg.Any<IProgress<LaunchResult>>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new LaunchSummary(new[]
+            {
+                new LaunchResult(r1.Id, r1.Name, true),
+                new LaunchResult(r2.Id, r2.Name, true)
+            })));
+
+        await vm.LaunchAllInWorkspaceCommand.ExecuteAsync(null);
+
+        await _multiLaunchService.Received(1).LaunchAllAsync(
+            Arg.Is<IReadOnlyList<Resource>>(list => list.Count == 2 && list[0] == r1 && list[1] == r2),
+            Arg.Any<IProgress<LaunchResult>>(),
+            Arg.Any<CancellationToken>());
+    }
 }

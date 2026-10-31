@@ -13,48 +13,22 @@
         <conv:BoolToVisibilityConverter x:Key="BoolToVis" />
         <conv:BoolToVisibilityConverter x:Key="InverseBoolToVis" Invert="True" />
 
-        <!-- Base Primary Button Style -->
+        <!-- Base Primary Button Style (Apple Monochrome High-Contrast) -->
         <Style x:Key="PrimaryActionBtnStyle" TargetType="Button">
-            <Setter Property="Background" Value="#2563EB" />
-            <Setter Property="Foreground" Value="#FFFFFF" />
+            <Setter Property="Background" Value="#FFFFFF" />
+            <Setter Property="Foreground" Value="#000000" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="BorderBrush" Value="#3B82F6" />
-            <Setter Property="Padding" Value="10,4" />
-            <Setter Property="FontSize" Value="12" />
+            <Setter Property="BorderBrush" Value="#E4E4E7" />
+            <Setter Property="Padding" Value="9,3" />
+            <Setter Property="FontSize" Value="11" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Template">
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+            <Setter Property="RenderTransform">
                 <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="border"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="5"
-                                Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#1D4ED8" />
-                                <Setter Property="BorderBrush" Value="#60A5FA" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
+                    <ScaleTransform ScaleX="1.0" ScaleY="1.0" />
                 </Setter.Value>
             </Setter>
-        </Style>
-
-        <!-- Secondary Button Style -->
-        <Style x:Key="SecondaryActionBtnStyle" TargetType="Button">
-            <Setter Property="Background" Value="#27272A" />
-            <Setter Property="Foreground" Value="#D4D4D8" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="BorderBrush" Value="#3F3F46" />
-            <Setter Property="Padding" Value="8,4" />
-            <Setter Property="FontSize" Value="11" />
-            <Setter Property="FontWeight" Value="Medium" />
-            <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -68,8 +42,63 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#3F3F46" />
+                                <Setter Property="Background" Value="#F4F4F5" />
+                                <Setter Property="BorderBrush" Value="#FFFFFF" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#E4E4E7" />
+                                <Setter Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.97" ScaleY="0.97" />
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Secondary Button Style (Matte Dark Surface) -->
+        <Style x:Key="SecondaryActionBtnStyle" TargetType="Button">
+            <Setter Property="Background" Value="#1E1E24" />
+            <Setter Property="Foreground" Value="#D4D4D8" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="#33333E" />
+            <Setter Property="Padding" Value="8,3" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <ScaleTransform ScaleX="1.0" ScaleY="1.0" />
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#2A2A34" />
                                 <Setter Property="Foreground" Value="#FFFFFF" />
+                                <Setter Property="BorderBrush" Value="#4B4B58" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#343442" />
+                                <Setter Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.97" ScaleY="0.97" />
+                                    </Setter.Value>
+                                </Setter>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -79,14 +108,15 @@
 
         <!-- Destructive Button Style -->
         <Style x:Key="DestructiveActionBtnStyle" TargetType="Button">
-            <Setter Property="Background" Value="#3F1D1D" />
-            <Setter Property="Foreground" Value="#F87171" />
+            <Setter Property="Background" Value="#281616" />
+            <Setter Property="Foreground" Value="#FCA5A5" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="BorderBrush" Value="#7F1D1D" />
-            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="BorderBrush" Value="#482020" />
+            <Setter Property="Padding" Value="8,3" />
             <Setter Property="FontSize" Value="11" />
             <Setter Property="FontWeight" Value="Medium" />
             <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -100,9 +130,16 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#991B1B" />
-                                <Setter Property="Foreground" Value="#FFFFFF" />
-                                <Setter Property="BorderBrush" Value="#DC2626" />
+                                <Setter Property="Background" Value="#3E1A1A" />
+                                <Setter Property="BorderBrush" Value="#662626" />
+                                <Setter Property="Foreground" Value="#FEE2E2" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.97" ScaleY="0.97" />
+                                    </Setter.Value>
+                                </Setter>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -239,11 +276,11 @@
                 <!-- Header Actions: Open the File Toggle, View Mode Toggle, Rename & Delete Workspace -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center"
                             Visibility="{Binding IsFormOpen, Converter={StaticResource InverseBoolToVis}}">
-                    <!-- Toggle Open the File Mode (FR-OF-01) -->
-                    <Button Content="Open the File"
-                            Command="{Binding ToggleOpenModeCommand}"
-                            Style="{StaticResource OpenTheFileToggleBtnStyle}"
-                            ToolTip="Pilih beberapa resource untuk dibuka sekaligus"
+                    <!-- Launch All in Workspace (Instant 1-Click Action) -->
+                    <Button Content="🚀 Buka Semua"
+                            Command="{Binding LaunchAllInWorkspaceCommand}"
+                            Style="{StaticResource PrimaryActionBtnStyle}"
+                            ToolTip="Buka semua resource dalam workspace ini sekaligus"
                             Margin="0,0,8,0" />
 
                     <!-- ViewMode Toggle: Grid vs List (FR-VW-01..05) -->
@@ -441,68 +478,7 @@
                     </Grid>
                 </Grid>
 
-                <!-- 2. Open the File Action Bar (Open Mode - FR-OF-02..10) -->
-                <Border Grid.Row="0"
-                        Background="#132E27"
-                        BorderBrush="#10B981"
-                        BorderThickness="1"
-                        CornerRadius="6"
-                        Padding="10,6"
-                        Margin="0,0,0,10"
-                        Visibility="{Binding IsOpenMode, Converter={StaticResource BoolToVis}}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
 
-                        <!-- Left: Counter & Bulk Selection -->
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding SelectedCountText}"
-                                       FontSize="12"
-                                       FontWeight="Bold"
-                                       Foreground="#A7F3D0"
-                                       VerticalAlignment="Center"
-                                       Margin="0,0,10,0" />
-
-                            <Button Content="Pilih Semua"
-                                    Command="{Binding SelectAllCommand}"
-                                    Style="{StaticResource SecondaryActionBtnStyle}"
-                                    Padding="6,2"
-                                    Margin="0,0,4,0" />
-
-                            <Button Content="Bersihkan"
-                                    Command="{Binding ClearSelectionCommand}"
-                                    Style="{StaticResource SecondaryActionBtnStyle}"
-                                    Padding="6,2" />
-                        </StackPanel>
-
-                        <!-- Center: Warning if > 10 items (FR-OF-10) -->
-                        <TextBlock Grid.Column="1"
-                                   Text="{Binding ManySelectedWarningText}"
-                                   FontSize="11"
-                                   Foreground="#FBBF24"
-                                   TextAlignment="Center"
-                                   VerticalAlignment="Center"
-                                   Margin="8,0"
-                                   TextTrimming="CharacterEllipsis"
-                                   Visibility="{Binding HasManySelected, Converter={StaticResource BoolToVis}}" />
-
-                        <!-- Right: Open Button & Done -->
-                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Button Content="{Binding OpenButtonText}"
-                                    Command="{Binding OpenSelectedCommand}"
-                                    Style="{StaticResource AccentActionBtnStyle}"
-                                    IsEnabled="{Binding CanOpen}"
-                                    Margin="0,0,6,0" />
-
-                            <Button Content="Selesai"
-                                    Command="{Binding ExitOpenModeCommand}"
-                                    Style="{StaticResource SecondaryActionBtnStyle}" />
-                        </StackPanel>
-                    </Grid>
-                </Border>
 
                 <!-- Resource Form (Add Link / Edit Resource) -->
                 <Border Grid.Row="1"
@@ -653,32 +629,35 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="{x:Type vm:ResourceItemViewModel}">
-                                    <Border Width="130" Height="110"
-                                            Background="#1F1F24"
-                                            BorderBrush="#2E2E38"
+                                    <Border Width="112" Height="84"
+                                            Background="#18181D"
+                                            BorderBrush="#2C2C36"
                                             BorderThickness="1"
-                                            CornerRadius="6"
-                                            Padding="8"
-                                            Margin="0,0,8,8"
+                                            CornerRadius="5"
+                                            Padding="6,5"
+                                            Margin="0,0,6,6"
                                             ToolTip="{Binding FullTooltip}"
                                             Focusable="True"
+                                            Cursor="Hand"
                                             MouseLeftButtonUp="ResourceCard_MouseLeftButtonUp"
                                             KeyDown="ResourceCard_KeyDown">
                                         <Border.Style>
                                             <Style TargetType="Border">
+                                                <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+                                                <Setter Property="RenderTransform">
+                                                    <Setter.Value>
+                                                        <ScaleTransform ScaleX="1.0" ScaleY="1.0" />
+                                                    </Setter.Value>
+                                                </Setter>
                                                 <Style.Triggers>
                                                     <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter Property="Background" Value="#27272F" />
-                                                        <Setter Property="BorderBrush" Value="#4B5563" />
+                                                        <Setter Property="Background" Value="#222228" />
+                                                        <Setter Property="BorderBrush" Value="#444452" />
                                                     </Trigger>
                                                     <Trigger Property="IsKeyboardFocused" Value="True">
-                                                        <Setter Property="Background" Value="#27272F" />
-                                                        <Setter Property="BorderBrush" Value="#3B82F6" />
+                                                        <Setter Property="Background" Value="#222228" />
+                                                        <Setter Property="BorderBrush" Value="#E4E4E7" />
                                                     </Trigger>
-                                                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                                        <Setter Property="Background" Value="#132E27" />
-                                                        <Setter Property="BorderBrush" Value="#10B981" />
-                                                    </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
                                         </Border.Style>
@@ -699,27 +678,13 @@
                                                 <RowDefinition Height="Auto" />
                                             </Grid.RowDefinitions>
 
-                                            <!-- Top: CheckBox + Icon + Availability Badge -->
+                                            <!-- Top: Icon + Availability Badge -->
                                             <Grid Grid.Row="0">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="Auto" />
-                                                </Grid.ColumnDefinitions>
-
-                                                <!-- CheckBox in Open Mode (FR-OF-02) -->
-                                                <CheckBox Grid.Column="0"
-                                                          IsChecked="{Binding IsSelected}"
-                                                          Visibility="{Binding IsOpenMode, Converter={StaticResource BoolToVis}}"
-                                                          VerticalAlignment="Center"
-                                                          Margin="0,0,4,0" />
-
-                                                <Image Grid.Column="1" Source="{Binding Icon}" Width="28" Height="28" HorizontalAlignment="Center" />
+                                                <Image Source="{Binding Icon}" Width="24" Height="24" HorizontalAlignment="Center" />
 
                                                 <!-- Warning Badge (⚠️) if Missing or AccessDenied -->
-                                                <TextBlock Grid.Column="2"
-                                                           Text="⚠️"
-                                                           FontSize="12"
+                                                <TextBlock Text="⚠️"
+                                                           FontSize="10"
                                                            Foreground="#EF4444"
                                                            HorizontalAlignment="Right"
                                                            VerticalAlignment="Top"
@@ -727,23 +692,23 @@
                                                            Visibility="{Binding HasAvailabilityWarning, Converter={StaticResource BoolToVis}}" />
                                             </Grid>
 
-                                            <!-- Middle: Resource Name (max 2 lines) -->
+                                            <!-- Middle: Resource Name -->
                                             <TextBlock Grid.Row="1"
                                                        Text="{Binding Name}"
                                                        FontSize="11"
-                                                       FontWeight="Medium"
+                                                       FontWeight="SemiBold"
                                                        Foreground="#F4F4F5"
                                                        TextAlignment="Center"
                                                        TextWrapping="Wrap"
                                                        TextTrimming="CharacterEllipsis"
-                                                       MaxHeight="32"
-                                                       Margin="0,4,0,0" />
+                                                       MaxHeight="28"
+                                                       Margin="0,3,0,0" />
 
                                             <!-- Bottom: Distinctive info (host / short path) -->
                                             <TextBlock Grid.Row="2"
                                                        Text="{Binding DistinctiveInfo}"
-                                                       FontSize="10"
-                                                       Foreground="#71717A"
+                                                       FontSize="9"
+                                                       Foreground="#8E8E93"
                                                        TextAlignment="Center"
                                                        TextTrimming="CharacterEllipsis" />
                                         </Grid>
@@ -766,31 +731,28 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="{x:Type vm:ResourceItemViewModel}">
-                                    <Border Background="#1F1F24"
-                                            BorderBrush="#2E2E38"
+                                    <Border Background="#18181D"
+                                            BorderBrush="#2C2C36"
                                             BorderThickness="1"
-                                            CornerRadius="5"
-                                            Padding="10,6"
-                                            Margin="0,0,0,6"
+                                            CornerRadius="4"
+                                            Padding="8,5"
+                                            Margin="0,0,0,4"
                                             ToolTip="{Binding FullTooltip}"
                                             Focusable="True"
+                                            Cursor="Hand"
                                             MouseLeftButtonUp="ResourceCard_MouseLeftButtonUp"
                                             KeyDown="ResourceCard_KeyDown">
                                         <Border.Style>
                                             <Style TargetType="Border">
                                                 <Style.Triggers>
                                                     <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter Property="Background" Value="#27272F" />
-                                                        <Setter Property="BorderBrush" Value="#4B5563" />
+                                                        <Setter Property="Background" Value="#222228" />
+                                                        <Setter Property="BorderBrush" Value="#444452" />
                                                     </Trigger>
                                                     <Trigger Property="IsKeyboardFocused" Value="True">
-                                                        <Setter Property="Background" Value="#27272F" />
-                                                        <Setter Property="BorderBrush" Value="#3B82F6" />
+                                                        <Setter Property="Background" Value="#222228" />
+                                                        <Setter Property="BorderBrush" Value="#E4E4E7" />
                                                     </Trigger>
-                                                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                                        <Setter Property="Background" Value="#132E27" />
-                                                        <Setter Property="BorderBrush" Value="#10B981" />
-                                                    </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
                                         </Border.Style>
@@ -807,51 +769,41 @@
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="Auto" />
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
 
-                                            <!-- CheckBox in Open Mode (FR-OF-02) -->
-                                            <CheckBox Grid.Column="0"
-                                                      IsChecked="{Binding IsSelected}"
-                                                      Visibility="{Binding IsOpenMode, Converter={StaticResource BoolToVis}}"
-                                                      VerticalAlignment="Center"
-                                                      Margin="0,0,8,0" />
-
                                             <!-- Left: Icon + Warning -->
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
-                                                <Image Source="{Binding Icon}" Width="20" Height="20" VerticalAlignment="Center" />
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
+                                                <Image Source="{Binding Icon}" Width="18" Height="18" VerticalAlignment="Center" />
                                                 <TextBlock Text="⚠️"
-                                                           FontSize="11"
-                                                           Margin="4,0,0,0"
+                                                           FontSize="10"
+                                                           Margin="3,0,0,0"
                                                            VerticalAlignment="Center"
                                                            ToolTip="{Binding AvailabilityWarningText}"
                                                            Visibility="{Binding HasAvailabilityWarning, Converter={StaticResource BoolToVis}}" />
                                             </StackPanel>
 
                                             <!-- Middle: Name & Path info -->
-                                            <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold" Foreground="#F4F4F5" TextTrimming="CharacterEllipsis" />
-                                                <TextBlock Text="{Binding DistinctiveInfo}" FontSize="10" Foreground="#71717A" TextTrimming="CharacterEllipsis" />
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Name}" FontSize="11" FontWeight="SemiBold" Foreground="#F4F4F5" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding DistinctiveInfo}" FontSize="10" Foreground="#8E8E93" TextTrimming="CharacterEllipsis" />
                                             </StackPanel>
 
                                             <!-- Type Tag -->
-                                            <Border Grid.Column="3"
-                                                    Background="#27272A"
-                                                    BorderBrush="#3F3F46"
+                                            <Border Grid.Column="2"
+                                                    Background="#222228"
+                                                    BorderBrush="#33333E"
                                                     BorderThickness="1"
                                                     CornerRadius="3"
-                                                    Padding="5,2"
-                                                    Margin="6,0"
+                                                    Padding="5,1"
+                                                    Margin="4,0"
                                                     VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding TypeDisplayName}" FontSize="10" Foreground="#A1A1AA" />
+                                                <TextBlock Text="{Binding TypeDisplayName}" FontSize="9" Foreground="#A1A1AA" />
                                             </Border>
-
-                                            <!-- Action Buttons: Move Up/Down, Edit, Delete (FR-OF-05: Hidden in Open Mode) -->
-                                            <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center"
-                                                        Visibility="{Binding CanManage, Converter={StaticResource BoolToVis}}">
+                                            <!-- Action Buttons: Move Up/Down, Edit, Delete -->
+                                            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
                                                 <Button Content="▲" ToolTip="Pindah ke Atas" AutomationProperties.Name="Pindah ke Atas" Command="{Binding MoveUpCommand}" Background="Transparent" Foreground="#A1A1AA" BorderThickness="0" Padding="4,2" Cursor="Hand" />
                                                 <Button Content="▼" ToolTip="Pindah ke Bawah" AutomationProperties.Name="Pindah ke Bawah" Command="{Binding MoveDownCommand}" Background="Transparent" Foreground="#A1A1AA" BorderThickness="0" Padding="4,2" Cursor="Hand" />
                                                 <Button Content="✏" ToolTip="Edit" AutomationProperties.Name="Edit Resource" Command="{Binding EditCommand}" Background="Transparent" Foreground="#A1A1AA" BorderThickness="0" Padding="4,2" Cursor="Hand" Margin="2,0" />

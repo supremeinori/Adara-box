@@ -27,6 +27,7 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
     private readonly IDialogService _dialogService;
     private readonly ISettingsStore _settingsStore;
     private readonly IMultiLaunchService _multiLaunchService;
+    private readonly IResourceLauncher? _resourceLauncher;
 
     [ObservableProperty]
     private bool _isLoading;
@@ -175,7 +176,8 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
         IFilePickerService filePickerService,
         IDialogService dialogService,
         ISettingsStore settingsStore,
-        IMultiLaunchService multiLaunchService)
+        IMultiLaunchService multiLaunchService,
+        IResourceLauncher? resourceLauncher = null)
     {
         _workspaceService = workspaceService;
         _resourceService = resourceService;
@@ -185,6 +187,7 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
         _dialogService = dialogService;
         _settingsStore = settingsStore;
         _multiLaunchService = multiLaunchService;
+        _resourceLauncher = resourceLauncher;
 
         _ = InitializeAsync();
     }
@@ -664,6 +667,89 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
             res.IsSelected = false;
         }
         NotifySelectionChanged();
+    }
+
+    [RelayCommand]
+    public async Task LaunchSingleResourceAsync(ResourceItemViewModel item)
+    {
+        if (item == null) return;
+
+        if (_resourceLauncher != null)
+        {
+            var result = await _resourceLauncher.LaunchAsync(item.Resource);
+            if (!result.Success)
+            {
+                FailedResults.Clear();
+                FailedResults.Add(new LaunchResultItemViewModel(result));
+                LaunchSummaryMessage = result.Message ?? "Gagal membuka resource";
+                OnPropertyChanged(nameof(HasFailedResults));
+                IsLaunchSummaryOpen = true;
+            }
+        }
+        else
+        {
+            await LaunchResourcesAsync(new[] { item.Resource });
+        }
+    }
+
+    [RelayCommand]
+    public async Task LaunchAllInWorkspaceAsync()
+    {
+        if (IsLaunching || Resources.Count == 0) return;
+        var allResources = Resources.Select(r => r.Resource).ToList();
+        await LaunchResourcesAsync(allResources);
+    }
+
+    private async Task LaunchResourcesAsync(IReadOnlyList<Resource> targetResources)
+    {
+        try
+        {
+            IsLaunching = true;
+            LaunchProgressTotal = targetResources.Count;
+            LaunchProgressCurrent = 0;
+            NotifyOpenStateChanged();
+
+            var progress = new Progress<LaunchResult>(_ =>
+            {
+                LaunchProgressCurrent++;
+                OnPropertyChanged(nameof(OpenButtonText));
+            });
+
+            var summary = await _multiLaunchService.LaunchAllAsync(targetResources, progress);
+            LastLaunchSummary = summary;
+
+            FailedResults.Clear();
+            SuccessfulResults.Clear();
+            foreach (var r in summary.Results)
+            {
+                if (r.Success)
+                {
+                    SuccessfulResults.Add(new LaunchResultItemViewModel(r));
+                }
+                else
+                {
+                    FailedResults.Add(new LaunchResultItemViewModel(r));
+                }
+            }
+
+            if (summary.FailureCount == 0)
+            {
+                LaunchSummaryMessage = string.Format(UiText.LaunchSummaryAllSuccessFormat, summary.SuccessCount);
+            }
+            else
+            {
+                LaunchSummaryMessage = string.Format(UiText.LaunchSummaryPartialFormat, summary.SuccessCount, summary.FailureCount);
+            }
+
+            OnPropertyChanged(nameof(HasFailedResults));
+            OnPropertyChanged(nameof(HasSuccessfulResults));
+            IsLaunchSummaryOpen = true;
+        }
+        finally
+        {
+            IsLaunching = false;
+            NotifyOpenStateChanged();
+        }
     }
 
     [RelayCommand]

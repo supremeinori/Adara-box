@@ -14,18 +14,18 @@
         <conv:BoolToVisibilityConverter x:Key="InverseBoolToVis" Invert="True" />
 
         <Style x:Key="MetricProgressBarStyle" TargetType="ProgressBar">
-            <Setter Property="Height" Value="6" />
-            <Setter Property="Background" Value="#27272A" />
+            <Setter Property="Height" Value="4" />
+            <Setter Property="Background" Value="#222228" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ProgressBar">
                         <Grid>
-                            <Border Background="{TemplateBinding Background}" CornerRadius="3" />
+                            <Border Background="{TemplateBinding Background}" CornerRadius="2" />
                             <Border x:Name="PART_Track" />
                             <Border x:Name="PART_Indicator"
                                     Background="{TemplateBinding Foreground}"
-                                    CornerRadius="3"
+                                    CornerRadius="2"
                                     HorizontalAlignment="Left" />
                         </Grid>
                     </ControlTemplate>
@@ -34,14 +34,14 @@
         </Style>
     </UserControl.Resources>
 
-    <Grid Margin="14" MinWidth="430">
+    <Grid Margin="10" MinWidth="430">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <Grid Grid.Row="0" Margin="0,0,0,14">
+        <Grid Grid.Row="0" Margin="0,0,0,10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
@@ -49,14 +49,14 @@
 
             <StackPanel Grid.Column="0">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="📊" FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center" />
-                    <TextBlock Text="Statistik Sistem" FontSize="14" FontWeight="SemiBold" Foreground="#F4F4F5" VerticalAlignment="Center" />
+                    <TextBlock Text="📊" FontSize="14" Margin="0,0,6,0" VerticalAlignment="Center" />
+                    <TextBlock Text="Statistik Sistem" FontSize="13" FontWeight="SemiBold" Foreground="#F4F4F5" VerticalAlignment="Center" />
                 </StackPanel>
-                <TextBlock Text="Metrik hardware real-time tanpa histori (update setiap 1 detik)" FontSize="11" Foreground="#71717A" Margin="24,2,0,0" />
+                <TextBlock Text="Metrik hardware real-time (update setiap 1 detik)" FontSize="10" Foreground="#8E8E93" Margin="20,1,0,0" />
             </StackPanel>
 
-            <Border Grid.Column="1" Background="#142D25" BorderBrush="#059669" BorderThickness="1" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
-                <TextBlock Text="● Live" FontSize="10" FontWeight="SemiBold" Foreground="#34D399" />
+            <Border Grid.Column="1" Background="#1E1E24" BorderBrush="#33333E" BorderThickness="1" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+                <TextBlock Text="● Live" FontSize="10" FontWeight="SemiBold" Foreground="#E4E4E7" />
             </Border>
         </Grid>
 
@@ -64,48 +64,48 @@
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel>
                 <!-- Top 3 Metrics: CPU, RAM, GPU -->
-                <Grid Margin="0,0,0,12">
+                <Grid Margin="0,0,0,10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="8" />
                         <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="8" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
                     <!-- CPU Card -->
-                    <Border Grid.Column="0" Background="#1F1F24" BorderBrush="#2E2E38" BorderThickness="1" CornerRadius="8" Padding="12,10">
+                    <Border Grid.Column="0" Background="#18181D" BorderBrush="#2A2A34" BorderThickness="1" CornerRadius="6" Padding="10,8">
                         <StackPanel>
-                            <TextBlock Text="CPU" FontSize="11" FontWeight="SemiBold" Foreground="#A1A1AA" Margin="0,0,0,4" />
-                            <TextBlock Text="{Binding CpuText}" FontSize="18" FontWeight="Bold" Foreground="#60A5FA" Margin="0,0,0,8" />
+                            <TextBlock Text="CPU" FontSize="10" FontWeight="SemiBold" Foreground="#8E8E93" Margin="0,0,0,3" />
+                            <TextBlock Text="{Binding CpuText}" FontSize="16" FontWeight="Bold" Foreground="#FFFFFF" Margin="0,0,0,6" />
                             <ProgressBar Style="{StaticResource MetricProgressBarStyle}"
-                                         Foreground="#3B82F6"
+                                         Foreground="#FFFFFF"
                                          Value="{Binding CpuValue, Mode=OneWay}"
                                          Minimum="0" Maximum="100" />
                         </StackPanel>
                     </Border>
 
                     <!-- RAM Card -->
-                    <Border Grid.Column="2" Background="#1F1F24" BorderBrush="#2E2E38" BorderThickness="1" CornerRadius="8" Padding="12,10">
+                    <Border Grid.Column="2" Background="#18181D" BorderBrush="#2A2A34" BorderThickness="1" CornerRadius="6" Padding="10,8">
                         <StackPanel>
-                            <TextBlock Text="RAM" FontSize="11" FontWeight="SemiBold" Foreground="#A1A1AA" Margin="0,0,0,4" />
-                            <TextBlock Text="{Binding MemoryPercentText}" FontSize="18" FontWeight="Bold" Foreground="#A78BFA" Margin="0,0,0,2" />
-                            <TextBlock Text="{Binding MemoryDetailText}" FontSize="10" Foreground="#71717A" Margin="0,0,0,6" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="RAM" FontSize="10" FontWeight="SemiBold" Foreground="#8E8E93" Margin="0,0,0,3" />
+                            <TextBlock Text="{Binding MemoryPercentText}" FontSize="16" FontWeight="Bold" Foreground="#FFFFFF" Margin="0,0,0,1" />
+                            <TextBlock Text="{Binding MemoryDetailText}" FontSize="9" Foreground="#8E8E93" Margin="0,0,0,5" TextTrimming="CharacterEllipsis" />
                             <ProgressBar Style="{StaticResource MetricProgressBarStyle}"
-                                         Foreground="#8B5CF6"
+                                         Foreground="#D4D4D8"
                                          Value="{Binding MemoryValue, Mode=OneWay}"
                                          Minimum="0" Maximum="100" />
                         </StackPanel>
                     </Border>
 
                     <!-- GPU Card -->
-                    <Border Grid.Column="4" Background="#1F1F24" BorderBrush="#2E2E38" BorderThickness="1" CornerRadius="8" Padding="12,10"
+                    <Border Grid.Column="4" Background="#18181D" BorderBrush="#2A2A34" BorderThickness="1" CornerRadius="6" Padding="10,8"
                             ToolTip="{Binding GpuTooltip}">
                         <StackPanel>
-                            <TextBlock Text="GPU (3D)" FontSize="11" FontWeight="SemiBold" Foreground="#A1A1AA" Margin="0,0,0,4" />
-                            <TextBlock Text="{Binding GpuText}" FontSize="18" FontWeight="Bold" Foreground="#34D399" Margin="0,0,0,8" />
+                            <TextBlock Text="GPU (3D)" FontSize="10" FontWeight="SemiBold" Foreground="#8E8E93" Margin="0,0,0,3" />
+                            <TextBlock Text="{Binding GpuText}" FontSize="16" FontWeight="Bold" Foreground="#FFFFFF" Margin="0,0,0,6" />
                             <ProgressBar Style="{StaticResource MetricProgressBarStyle}"
-                                         Foreground="#10B981"
+                                         Foreground="#A1A1AA"
                                          Value="{Binding GpuValue, Mode=OneWay}"
                                          Minimum="0" Maximum="100"
                                          Visibility="{Binding IsGpuAvailable, Converter={StaticResource BoolToVis}}" />
@@ -116,14 +116,14 @@
                 </Grid>
 
                 <!-- Storage Drives Section -->
-                <Border Background="#1F1F24" BorderBrush="#2E2E38" BorderThickness="1" CornerRadius="8" Padding="14,12" Margin="0,0,0,10">
+                <Border Background="#18181D" BorderBrush="#2A2A34" BorderThickness="1" CornerRadius="6" Padding="12,10" Margin="0,0,0,8">
                     <StackPanel>
-                        <TextBlock Text="Penyimpanan (Drives)" FontSize="12" FontWeight="SemiBold" Foreground="#E4E4E7" Margin="0,0,0,10" />
+                        <TextBlock Text="Penyimpanan (Drives)" FontSize="11" FontWeight="SemiBold" Foreground="#E4E4E7" Margin="0,0,0,8" />
 
                         <ItemsControl ItemsSource="{Binding Drives}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate DataType="{x:Type vm:DriveItemViewModel}">
-                                    <Border Margin="0,0,0,10">
+                                    <Border Margin="0,0,0,8">
                                         <Grid>
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto" />
@@ -131,21 +131,21 @@
                                             </Grid.RowDefinitions>
 
                                             <!-- Row 0: Drive Name & Usage details -->
-                                            <Grid Grid.Row="0" Margin="0,0,0,5">
+                                            <Grid Grid.Row="0" Margin="0,0,0,4">
                                                 <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="💾 " FontSize="12" VerticalAlignment="Center" />
-                                                    <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold" Foreground="#F4F4F5" VerticalAlignment="Center" />
+                                                    <TextBlock Text="💾 " FontSize="11" VerticalAlignment="Center" />
+                                                    <TextBlock Text="{Binding Name}" FontSize="11" FontWeight="SemiBold" Foreground="#F4F4F5" VerticalAlignment="Center" />
                                                 </StackPanel>
                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding UsageText}" FontSize="11" Foreground="#A1A1AA" Margin="0,0,8,0" />
-                                                    <TextBlock Text="{Binding PercentText}" FontSize="11" FontWeight="Bold" Foreground="#38BDF8" />
+                                                    <TextBlock Text="{Binding UsageText}" FontSize="10" Foreground="#8E8E93" Margin="0,0,6,0" />
+                                                    <TextBlock Text="{Binding PercentText}" FontSize="10" FontWeight="Bold" Foreground="#FFFFFF" />
                                                 </StackPanel>
                                             </Grid>
 
                                             <!-- Row 1: Progress Bar -->
                                             <ProgressBar Grid.Row="1"
                                                          Style="{StaticResource MetricProgressBarStyle}"
-                                                         Foreground="#0284C7"
+                                                         Foreground="#D4D4D8"
                                                          Value="{Binding PercentValue, Mode=OneWay}"
                                                          Minimum="0" Maximum="100" />
                                         </Grid>

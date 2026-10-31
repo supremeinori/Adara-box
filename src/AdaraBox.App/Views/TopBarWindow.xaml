@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:AdaraBox.App.ViewModels"
         xmlns:panels="clr-namespace:AdaraBox.App.Views.Panels"
+        xmlns:conv="clr-namespace:AdaraBox.App.Converters"
         d:DataContext="{d:DesignInstance vm:TopBarViewModel}"
         mc:Ignorable="d"
         Title="Adara Box"
@@ -16,9 +17,12 @@
         ShowActivated="False"
         Background="Transparent"
         SizeToContent="Height"
-        Width="480">
+        Width="540">
 
     <Window.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVis" />
+        <conv:BoolToVisibilityConverter x:Key="InverseBoolToVis" Invert="True" />
+
         <!-- DataTemplates for Module Panels -->
         <DataTemplate DataType="{x:Type vm:WorkspacePanelViewModel}">
             <panels:WorkspacePanelView />
@@ -33,17 +37,23 @@
             <panels:SettingsPanelView />
         </DataTemplate>
 
-        <!-- Module Button Style -->
+        <!-- Apple Style Module Button (Tactile micro-press feedback) -->
         <Style x:Key="ModuleButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Foreground" Value="#D4D4D8" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="BorderBrush" Value="Transparent" />
-            <Setter Property="Padding" Value="10,4" />
-            <Setter Property="Margin" Value="2,0" />
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Padding" Value="7,2" />
+            <Setter Property="Margin" Value="1,0" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <ScaleTransform ScaleX="1.0" ScaleY="1.0" />
+                </Setter.Value>
+            </Setter>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -57,8 +67,17 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#3F3F46" />
+                                <Setter Property="Background" Value="#222228" />
                                 <Setter Property="Foreground" Value="#FFFFFF" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#2E2E38" />
+                                <Setter Property="Foreground" Value="#FFFFFF" />
+                                <Setter Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.97" ScaleY="0.97" />
+                                    </Setter.Value>
+                                </Setter>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -66,17 +85,60 @@
             </Setter>
         </Style>
 
-        <!-- Module Action Button Style -->
+        <!-- Mini Media Control Button Style -->
+        <Style x:Key="MiniMediaBtnStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="#E4E4E7" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="3,1" />
+            <Setter Property="Margin" Value="1,0" />
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <ScaleTransform ScaleX="1.0" ScaleY="1.0" />
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="3"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#2A2A32" />
+                                <Setter Property="Foreground" Value="#FFFFFF" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.92" ScaleY="0.92" />
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Module Action Button Style (Monochrome Solid) -->
         <Style x:Key="ModuleActionButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#1E293B" />
-            <Setter Property="Foreground" Value="#60A5FA" />
+            <Setter Property="Background" Value="#202026" />
+            <Setter Property="Foreground" Value="#E4E4E7" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="BorderBrush" Value="#2563EB" />
-            <Setter Property="Padding" Value="8,3" />
+            <Setter Property="BorderBrush" Value="#33333E" />
+            <Setter Property="Padding" Value="7,2" />
             <Setter Property="Margin" Value="2,0" />
-            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontSize" Value="10" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -90,9 +152,17 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#2563EB" />
+                                <Setter Property="Background" Value="#2A2A34" />
                                 <Setter Property="Foreground" Value="#FFFFFF" />
-                                <Setter Property="BorderBrush" Value="#3B82F6" />
+                                <Setter Property="BorderBrush" Value="#555566" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#383846" />
+                                <Setter Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.97" ScaleY="0.97" />
+                                    </Setter.Value>
+                                </Setter>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -101,18 +171,19 @@
         </Style>
     </Window.Resources>
 
+    <!-- Apple macOS Menu Bar Frame -->
     <Border x:Name="WindowBorder"
-            Background="#EE18181B"
-            BorderBrush="#3F3F46"
+            Background="#F20D0D10"
+            BorderBrush="#1AFFFFFF"
             BorderThickness="1,0,1,1"
-            CornerRadius="0,0,10,10">
+            CornerRadius="0,0,8,8">
         <Border.Effect>
-            <DropShadowEffect BlurRadius="16" ShadowDepth="4" Opacity="0.45" Direction="270" Color="#000000" />
+            <DropShadowEffect BlurRadius="20" ShadowDepth="4" Opacity="0.4" Direction="270" Color="#000000" />
         </Border.Effect>
 
         <StackPanel>
-            <!-- Top Bar Header Row (Always 36 DIP) -->
-            <Grid Height="36" Margin="10,0">
+            <!-- Top Bar Header Row (Apple Menu Bar 30 DIP) -->
+            <Grid Height="30" Margin="8,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
@@ -120,33 +191,84 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- Brand / Logo -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
-                    <TextBlock Text="✦" Foreground="#3B82F6" FontWeight="Bold" FontSize="14" Margin="0,0,6,0" VerticalAlignment="Center" />
-                    <TextBlock Text="Adara Box" Foreground="#F4F4F5" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
+                    <TextBlock Text="✦" Foreground="#FFFFFF" FontWeight="Bold" FontSize="11" Margin="0,0,5,0" VerticalAlignment="Center" />
+                    <TextBlock Text="Adara" Foreground="#F4F4F5" FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center" />
                 </StackPanel>
 
-                <!-- Data-driven Module Buttons (ordered by Order) -->
-                <ItemsControl x:Name="ModulesItemsControl" Grid.Column="1" ItemsSource="{Binding Modules}" VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel Orientation="Horizontal" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Button Content="{Binding DisplayName}"
-                                    Style="{StaticResource ModuleButtonStyle}"
-                                    Click="ModuleButton_Click"
-                                    Tag="{Binding}">
+                <!-- Center Area: Modules Buttons + macOS Now Playing Widget -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <!-- Data-driven Module Buttons -->
+                    <ItemsControl x:Name="ModulesItemsControl" ItemsSource="{Binding Modules}" VerticalAlignment="Center">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Content="{Binding DisplayName}"
+                                        Style="{StaticResource ModuleButtonStyle}"
+                                        Click="ModuleButton_Click"
+                                        Tag="{Binding}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- macOS Menu Bar "Now Playing" Widget (GSMTC) -->
+                    <Border Background="#1C1C22"
+                            BorderBrush="#2C2C36"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Padding="5,1"
+                            Margin="8,0,0,0"
+                            VerticalAlignment="Center"
+                            Visibility="{Binding HasActiveMedia, Converter={StaticResource BoolToVis}}">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <!-- Prev Button -->
+                            <Button Content="⏮"
+                                    Command="{Binding PreviousTrackCommand}"
+                                    Style="{StaticResource MiniMediaBtnStyle}"
+                                    ToolTip="Lagu sebelumnya" />
+
+                            <!-- Play/Pause Button -->
+                            <Button Content="{Binding PlayPauseIcon}"
+                                    Command="{Binding TogglePlayPauseCommand}"
+                                    Style="{StaticResource MiniMediaBtnStyle}"
+                                    ToolTip="Putar / Jeda" />
+
+                            <!-- Next Button -->
+                            <Button Content="⏭"
+                                    Command="{Binding NextTrackCommand}"
+                                    Style="{StaticResource MiniMediaBtnStyle}"
+                                    ToolTip="Lagu berikutnya" />
+
+                            <!-- Track Display (Click opens Media panel) -->
+                            <Button Command="{Binding OpenMediaPanelCommand}"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Cursor="Hand"
+                                    Margin="4,0,2,0"
+                                    ToolTip="{Binding NowPlayingText}">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="🎵" FontSize="9" Margin="0,0,3,0" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding NowPlayingText}"
+                                               FontSize="10"
+                                               FontWeight="Medium"
+                                               Foreground="#E4E4E7"
+                                               MaxWidth="130"
+                                               TextTrimming="CharacterEllipsis"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
                             </Button>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
 
                 <!-- Top Bar Right Action Area -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                     <!-- Data-driven Quick Actions -->
-                    <ItemsControl ItemsSource="{Binding Actions}" VerticalAlignment="Center" Margin="0,0,6,0">
+                    <ItemsControl ItemsSource="{Binding Actions}" VerticalAlignment="Center" Margin="0,0,4,0">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <StackPanel Orientation="Horizontal" />
@@ -165,11 +287,11 @@
                     <!-- Close Panel Button (✕) -->
                     <Button x:Name="ClosePanelButton"
                             Content="✕"
-                            Width="24" Height="22"
+                            Width="20" Height="20"
                             Background="Transparent"
                             Foreground="#A1A1AA"
                             BorderThickness="0"
-                            FontSize="11"
+                            FontSize="10"
                             Cursor="Hand"
                             ToolTip="Tutup panel (Esc)"
                             AutomationProperties.Name="Tutup Panel"
@@ -178,9 +300,10 @@
                 </StackPanel>
             </Grid>
 
-            <!-- Panel Content Area (Visible only when a module is selected) -->
+            <!-- Panel Content Area (Apple Control Center Floating Sheet) -->
             <Border x:Name="PanelContainer"
-                    BorderBrush="#27272A"
+                    Background="#F8121215"
+                    BorderBrush="#14FFFFFF"
                     BorderThickness="0,1,0,0"
                     Visibility="Collapsed"
                     MaxHeight="600">

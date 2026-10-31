@@ -129,4 +129,69 @@ public class MediaPanelViewModelTests
         Assert.Empty(vm.Links);
         await _mediaService.Received(1).DeleteAsync(id, Arg.Any<CancellationToken>());
     }
+
+    [Fact]
+    public void MediaController_InitialTrackAndState_SetsProperties()
+    {
+        var controller = Substitute.For<IMediaPlaybackController>();
+        controller.CurrentTrack.Returns(new MediaTrackInfo("Bohemian Rhapsody", "Queen", "A Night at the Opera", "Spotify"));
+        controller.CurrentState.Returns(MediaPlaybackState.Playing);
+
+        var vm = new MediaPanelViewModel(_mediaService, _launcher, _dialogService, controller);
+
+        Assert.Equal("Bohemian Rhapsody", vm.TrackTitle);
+        Assert.Equal("Queen", vm.TrackArtist);
+        Assert.True(vm.HasActiveTrack);
+        Assert.True(vm.IsPlaying);
+        Assert.Equal("⏸ Pause", vm.PlayPauseButtonText);
+    }
+
+    [Fact]
+    public void MediaController_TrackChangedEvent_UpdatesTrackProperties()
+    {
+        var controller = Substitute.For<IMediaPlaybackController>();
+        var vm = new MediaPanelViewModel(_mediaService, _launcher, _dialogService, controller);
+
+        controller.TrackChanged += Raise.Event<EventHandler<MediaTrackInfo?>>(controller, new MediaTrackInfo("Starboy", "The Weeknd", "Starboy", "Chrome"));
+
+        Assert.Equal("Starboy", vm.TrackTitle);
+        Assert.Equal("The Weeknd", vm.TrackArtist);
+        Assert.True(vm.HasActiveTrack);
+
+        controller.TrackChanged += Raise.Event<EventHandler<MediaTrackInfo?>>(controller, (MediaTrackInfo?)null);
+
+        Assert.Equal("Tidak ada media aktif", vm.TrackTitle);
+        Assert.False(vm.HasActiveTrack);
+    }
+
+    [Fact]
+    public void MediaController_PlaybackStateChangedEvent_UpdatesPlayingState()
+    {
+        var controller = Substitute.For<IMediaPlaybackController>();
+        var vm = new MediaPanelViewModel(_mediaService, _launcher, _dialogService, controller);
+
+        controller.PlaybackStateChanged += Raise.Event<EventHandler<MediaPlaybackState>>(controller, MediaPlaybackState.Playing);
+        Assert.True(vm.IsPlaying);
+        Assert.Equal("⏸ Pause", vm.PlayPauseButtonText);
+
+        controller.PlaybackStateChanged += Raise.Event<EventHandler<MediaPlaybackState>>(controller, MediaPlaybackState.Paused);
+        Assert.False(vm.IsPlaying);
+        Assert.Equal("▶ Play", vm.PlayPauseButtonText);
+    }
+
+    [Fact]
+    public async Task MediaController_PlaybackCommands_InvokeController()
+    {
+        var controller = Substitute.For<IMediaPlaybackController>();
+        var vm = new MediaPanelViewModel(_mediaService, _launcher, _dialogService, controller);
+
+        await vm.PlayPauseCommand.ExecuteAsync(null);
+        await controller.Received(1).PlayPauseAsync();
+
+        await vm.NextTrackCommand.ExecuteAsync(null);
+        await controller.Received(1).NextAsync();
+
+        await vm.PreviousTrackCommand.ExecuteAsync(null);
+        await controller.Received(1).PreviousAsync();
+    }
 }

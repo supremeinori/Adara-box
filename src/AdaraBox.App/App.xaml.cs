@@ -27,6 +27,7 @@ using AdaraBox.Platform.Availability;
 using AdaraBox.Platform.Hotkeys;
 using AdaraBox.Platform.Icons;
 using AdaraBox.Platform.Launcher;
+using AdaraBox.Platform.Media;
 using AdaraBox.Platform.Startup;
 using AdaraBox.Platform.Stats;
 using AdaraBox.Platform.Tray;
@@ -262,6 +263,7 @@ public partial class App : Application
         services.AddSingleton<IAutoStartService, RegistryAutoStartService>();
         services.AddSingleton<IGlobalHotkeyService, Win32GlobalHotkeyService>();
         services.AddSingleton<ISystemStatsProvider, SystemStatsProvider>();
+        services.AddSingleton<IMediaPlaybackController, WindowsMediaPlaybackController>();
 
         // Top Bar Visibility with initial mode loaded from ISettingsStore
         services.AddSingleton<ITopBarVisibilityService>(sp =>

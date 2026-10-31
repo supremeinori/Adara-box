@@ -96,24 +96,17 @@ public partial class WorkspacePanelView : UserControl
 
     private void ResourceCard_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
-        // Ignore clicks directly on child buttons (like action buttons)
+        // Ignore clicks directly on child buttons
         if (e.OriginalSource is DependencyObject source)
         {
             var btn = FindParent<Button>(source);
             if (btn != null) return;
-
-            // If user clicked directly on CheckBox, let WPF toggle it naturally
-            var chk = FindParent<CheckBox>(source);
-            if (chk != null) return;
         }
 
-        if (ViewModel != null && ViewModel.IsOpenMode)
+        if (sender is FrameworkElement element && element.DataContext is ResourceItemViewModel item)
         {
-            if (sender is FrameworkElement element && element.DataContext is ResourceItemViewModel item)
-            {
-                item.ToggleSelectCommand.Execute(null);
-                e.Handled = true;
-            }
+            item.LaunchCommand.Execute(null);
+            e.Handled = true;
         }
     }
 
@@ -146,26 +139,20 @@ public partial class WorkspacePanelView : UserControl
             return;
         }
 
-        if (ViewModel != null && ViewModel.IsOpenMode)
+        if (e.Key == Key.Enter || e.Key == Key.Space)
         {
-            if (e.Key == Key.Space)
-            {
-                item.ToggleSelectCommand.Execute(null);
-                e.Handled = true;
-            }
+            item.LaunchCommand.Execute(null);
+            e.Handled = true;
         }
-        else if (ViewModel != null && !ViewModel.IsOpenMode)
+        else if (e.Key == Key.F2)
         {
-            if (e.Key == Key.F2)
-            {
-                item.EditCommand.Execute(null);
-                e.Handled = true;
-            }
-            else if (e.Key == Key.Delete)
-            {
-                item.DeleteCommand.Execute(null);
-                e.Handled = true;
-            }
+            item.EditCommand.Execute(null);
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Delete)
+        {
+            item.DeleteCommand.Execute(null);
+            e.Handled = true;
         }
     }
 
