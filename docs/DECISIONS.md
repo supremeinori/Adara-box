@@ -139,11 +139,25 @@ Dokumen ini mencatat Architectural Decision Records (ADR) dan Open Questions res
 
 ---
 
+## ADR-011: Distribusi Paket Self-Contained win-x64 untuk MVP
+* **Tanggal:** 2026-10-31  
+* **Status:** ACCEPTED  
+* **Konteks:** Modul M06 mensyaratkan aplikasi dapat dipasang dan dijalankan pada komputer Windows bersih tanpa mengharuskan pengguna mengunduh atau memasang .NET Runtime 8 secara manual.  
+* **Keputusan:**  
+  1. Format publish bawaan adalah **Self-Contained win-x64** (`--self-contained true -r win-x64`).  
+  2. Paket berukuran ~163 MB (mencakup runtime .NET 8, WPF native composition engine, dan SQLite native library).  
+  3. Installer Inno Setup mengompresi paket ini dengan kompresi `lzma2/ultra64` menghasilkan setup executable yang padat.  
+* **Konsekuensi:**  
+  * Pengalaman pengguna mulus tanpa prasyarat instalasi runtime pihak ketiga.  
+  * Opsi instalasi *Framework-Dependent* (< 15 MB) dicatat sebagai opsi rilis alternatif pasca-MVP bagi pengguna yang sudah memiliki .NET 8 Desktop Runtime.
+
+---
+
 ## OPEN QUESTIONS
 
-| # | Pertanyaan | Modul Terkait | Target Keputusan | Catatan |
+| # | Pertanyaan | Modul Terkait | Target Keputusan | Catatan / Hasil Keputusan |
 |---|---|---|---|---|
-| Q1 | Bagaimana perilaku top bar pada setup multi-monitor (apakah muncul di primary monitor saja atau di monitor tempat kursor berada)? | M01 / M05 | M05 (Hardening) | Default awal MVP: Primary monitor. Multi-monitor tracking dievaluasi di M05. |
-| Q2 | Apa shortcut keyboard default untuk toggle/fokus top bar (misal `Win+Alt+A` atau `Ctrl+Alt+Space`) agar tidak konflik dengan hotkey Windows? | M01 / M05 | M05 (Hardening) | Akan diuji konflik hotkey di M05. |
-| Q3 | Bagaimana preferensi startup awal (Run on Windows Startup, Start minimized to tray, atau langsung Always Visible)? | M01 / M05 | M05 (Hardening) | Integrasi registry Run key diuji di M05. |
-| Q4 | Apakah drag-and-drop dari File Explorer langsung ke Workspace didukung pada MVP atau pasca-MVP? | M03 | M03 (Resource) | Prioritas picker standar dahulu; DnD dievaluasi sebagai enhancement P1 di M03. |
+| Q1 | Bagaimana perilaku top bar pada setup multi-monitor (apakah muncul di primary monitor saja atau di monitor tempat kursor berada)? | M01 / M05 | M05 | **Selesai (M05):** Mengikuti monitor aktif kursor; fallback monitor primer (`ScreenPositionHelper`). |
+| Q2 | Apa shortcut keyboard default untuk toggle/fokus top bar (misal `Win+Alt+A` atau `Ctrl+Alt+Space`) agar tidak konflik dengan hotkey Windows? | M01 / M05 | M05 | **Selesai (M05):** Default `Ctrl+Alt+Space` via Win32 `RegisterHotKey`. |
+| Q3 | Bagaimana preferensi startup awal (Run on Windows Startup, Start minimized to tray, atau langsung Always Visible)? | M01 / M05 | M05 | **Selesai (M05):** Default MATI; dapat diaktifkan di Pengaturan (`HKCU\...\Run\AdaraBox`). |
+| Q4 | Apakah drag-and-drop dari File Explorer langsung ke Workspace didukung pada MVP atau pasca-MVP? | M03 | M03 | **Selesai (M03):** Ditunda ke Pasca-MVP (v1.1) demi stabilitas MVP. |

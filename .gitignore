@@ -12,6 +12,7 @@
 *.db-wal
 *.db
 TestResults/
+artifacts/
 .idea/
 .vscode/
 *.DotSettings.user

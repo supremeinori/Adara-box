@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -61,7 +62,27 @@ public sealed partial class SettingsPanelViewModel : ObservableObject
     public string GlobalHotkeyLabel => UiText.SettingsGlobalHotkey;
     public string GlobalHotkeyDescription => UiText.SettingsGlobalHotkeyDescription;
     public string ApplyHotkeyButtonText => UiText.SaveHotkeyButton;
-    public string VersionLabel => string.Format(UiText.AppVersionLabel, "1.0.0-rc (MVP Complete)");
+    public string VersionLabel
+    {
+        get
+        {
+            var infoVer = typeof(SettingsPanelViewModel).Assembly
+                .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+
+            string verStr;
+            if (!string.IsNullOrEmpty(infoVer))
+            {
+                var plusIdx = infoVer.IndexOf('+');
+                verStr = plusIdx > 0 ? infoVer[..plusIdx] : infoVer;
+            }
+            else
+            {
+                verStr = typeof(SettingsPanelViewModel).Assembly.GetName().Version?.ToString(3) ?? "1.0.0";
+            }
+
+            return string.Format(UiText.AppVersionLabel, verStr);
+        }
+    }
 
     public bool IsHideTopBarEnabled
     {

@@ -14,7 +14,7 @@
 | M04 | Open the File | ✔ selesai | ☐ |
 | — | **MVP fungsional** (setelah M04) | ✔ tercapai | ☐ |
 | M05 | Hardening | ✔ selesai | ☐ |
-| M06 | Packaging & Rilis (v1.0.0) | ☐ belum | ☐ |
+| M06 | Packaging & Rilis (v1.0.0) | ✔ selesai | ☐ |
 | M07 | Stats (pasca-MVP) | ☐ belum | ☐ |
 | M08 | Media (pasca-MVP) | ☐ belum | ☐ |
 
@@ -30,6 +30,7 @@ Status: ☐ belum · ◐ sedang dikerjakan · ✔ selesai · ⛔ terblokir
 | M03 | Verifikasi visual dan fungsional Resource Management & Tampilan Grid/List (Penambahan 4 tipe resource: file batch multiselect, folder, aplikasi, tautan; validasi URL dan normalisasi; toggle mode Grid/List tanpa kehilangan data; form edit nama dan target; tombol urut naik/turun; indikator peringatan ketersediaan ⚠️; hapus referensi tanpa menghapus file fisik; serta dialog hapus workspace yang menampilkan jumlah resource sebenarnya) | Jalankan `src/AdaraBox.App/bin/Release/net8.0-windows/AdaraBox.App.exe`, ikuti 11 skenario di `docs/manual-tests/M03.md`. |
 | M04 | Verifikasi visual dan fungsional Open the File (Mode toggle & visual header aksen, checkbox di grid & list, counter realtime & bulk select/clear, peringatan >10 item, pemisahan mutlak mode kelola vs buka FR-OF-05, peluncuran multi-resource native Windows berurutan 150ms tanpa freeze, penanganan kegagalan per item tanpa memutus item lain FR-OF-06, ringkasan hasil dengan coba lagi yang gagal, pembersihan seleksi sementara FR-OF-08, serta shortcut keyboard Ctrl+A, Enter, Esc, Space) | Jalankan `src/AdaraBox.App/bin/Release/net8.0-windows/AdaraBox.App.exe`, ikuti 11 skenario di `docs/manual-tests/M04.md`. |
 | M05 | Verifikasi visual & ketahanan MVP Hardening (Deteksi DB korup/0 byte & dialog pemulihan, shortcut global `Ctrl+Alt+Space`, auto-start toggle di registry `HKCU\...\Run`, navigasi keyboard penuh F2/Delete/Enter/Esc, reposisi multi-monitor & DPI scaling PerMonitorV2, dan performa beban 200 resource < 300ms) | Jalankan `src/AdaraBox.App/bin/Release/net8.0-windows/AdaraBox.App.exe`, ikuti 6 skenario di `docs/manual-tests/M05.md`. |
+| M06 | Verifikasi rilis & installer pada lingkungan Windows bersih (Instalasi per-pengguna ke `%LOCALAPPDATA%\Programs\AdaraBox` tanpa hak admin, verifikasi uninstaller dengan perlindungan data pengguna, kompilasi Inno Setup via `build/build-installer.ps1`) | Jalankan `powershell -ExecutionPolicy Bypass -File build/build-installer.ps1` dan ikuti checklist di `docs/release-checklist.md`. |
 
 ## OPEN QUESTIONS
 
@@ -75,6 +76,38 @@ Status: ☐ belum · ◐ sedang dikerjakan · ✔ selesai · ⛔ terblokir
 | NFR-CP-04 (Windows minimum) | M00 (keputusan), M06 (installer) |
 
 ## Log Laporan Modul
+
+## Laporan M06 — 2026-10-31
+- Status: SELESAI (MVP Packaging, Documentation & Installer Complete)
+- Task selesai:
+  - T1 (Versioning & Changelog):
+    - `Directory.Build.props`: Versi dinaikkan ke SemVer resmi `<Version>1.0.0</Version>`.
+    - `SettingsPanelViewModel.cs`: Menampilkan versi dinamis dari `AssemblyInformationalVersion` / `Assembly.GetName().Version` ("Versi: 1.0.0").
+    - `CHANGELOG.md`: Dokumentasi lengkap mengikuti format Keep a Changelog merangkum seluruh penambahan dan perbaikan dari M01 hingga M05.
+  - T2 (Konfigurasi Publish Self-Contained):
+    - `assets/app.ico`: Dibuat aset ikon aplikasi multi-resolusi (16, 32, 48, 256 pixel) yang disematkan ke executable `AdaraBox.App.exe` dan System Tray.
+    - `build/publish.ps1`: Skrip otomatisasi pengujian (`dotnet test -c Release`) dilanjutkan dengan publish mandiri `win-x64` (`--self-contained true`).
+    - Output publish mandiri diverifikasi: `artifacts/publish/AdaraBox.App.exe` (163.31 MB, 482 file mandiri, siap dijalankan pada komputer tanpa .NET Runtime terpasang).
+    - `app.manifest` (PerMonitorV2) dan `app.ico` disalin ke folder output.
+    - `.gitignore`: Menambahkan folder `artifacts/` agar biner rilis tidak tercampur ke repository Git.
+  - T3 (Installer Inno Setup):
+    - `installer/AdaraBox.iss`: Skrip installer per-pengguna (`PrivilegesRequired=lowest`) memasang ke `{localappdata}\Programs\AdaraBox` tanpa hak admin.
+    - Pintasan Start Menu, pintasan Desktop opsional (default unchecked), dan opsi "Jalankan Adara Box saat Windows dimulai" (default unchecked, sinkron dengan kunci Registry `HKCU\...\Run\AdaraBox`).
+    - Validasi versi minimum Windows 10 build ≥ 19044 (`MinVersion=10.0.19044`).
+    - Pengecekan proses berjalan via mutex `Global\AdaraBox.SingleInstance` dan `CloseApplications=yes`.
+    - Uninstaller bersih dengan proteksi data pengguna: menanyakan konfirmasi sebelum menghapus `%LOCALAPPDATA%\AdaraBox\` (default: TIDAK, data pengguna aman).
+    - `build/build-installer.ps1`: Skrip otomatisasi kompilasi yang mendeteksi `ISCC.exe` di PATH atau Program Files dan memberikan panduan instalasi jika Inno Setup belum terpasang.
+  - T4 (Dokumentasi):
+    - `README.md`: Panduan lengkap proyek, fitur MVP, cara instalasi (installer & portable), cara build dari sumber, struktur repo, lokasi data & log, dan keterbatasan yang diketahui.
+    - `LICENSE`: Lisensi open-source MIT.
+    - `docs/USER_GUIDE.md`: Panduan pengguna ringkas berbahasa Indonesia (manajemen workspace, penambahan resource, mode Grid/List, Open the File, pintasan keyboard, backup manual, dan status jujur Media/Stats).
+    - `docs/KNOWN_ISSUES.md`: Dokumentasi utang teknis dan bug P2/P3 yang ditunda (DirectX exclusive fullscreen, prompt UAC pada target admin, drag-and-drop post-MVP, dan SmartScreen warning).
+    - `docs/DECISIONS.md`: Ditambahkan ADR-011 (Distribusi Paket Self-Contained win-x64).
+  - T5 (Verifikasi Rilis):
+    - `docs/release-checklist.md`: Panduan checklist pengujian pra-rilis pada mesin bersih / VM tanpa .NET SDK.
+    - Seluruh 157 automated unit & integration tests lulus (100%).
+  - T6 (Tag Rilis):
+    - Menunggu persetujuan manusia sebelum pembuatan tag git `v1.0.0` (sesuai aturan Master Guide: agent tidak membuat atau mem-push tag tanpa instruksi eksplisit).
 
 ## Laporan M05 — 2026-10-31
 - Status: SELESAI (MVP Hardening, Stability & Verification Complete)

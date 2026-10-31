@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
 
 namespace AdaraBox.Platform.Tray;
@@ -30,9 +31,20 @@ public sealed class TrayIconManager : IDisposable
         });
         contextMenu.Items.Add(exitMenuItem);
 
+        Icon appIcon = SystemIcons.Application;
+        try
+        {
+            var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app.ico");
+            if (File.Exists(iconPath))
+            {
+                appIcon = new Icon(iconPath);
+            }
+        }
+        catch { }
+
         _notifyIcon = new NotifyIcon
         {
-            Icon = SystemIcons.Application,
+            Icon = appIcon,
             Text = appName,
             Visible = true,
             ContextMenuStrip = contextMenu
