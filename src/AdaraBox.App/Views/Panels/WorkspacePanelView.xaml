@@ -469,7 +469,7 @@
 
             <!-- B. WORKSPACES GRID LIST (When not in detail view) -->
             <ScrollViewer VerticalScrollBarVisibility="Auto"
-                          MaxHeight="310"
+                          MaxHeight="365"
                           Visibility="{Binding IsWorkspaceListVisible, Converter={StaticResource BoolToVis}}">
                 <Grid>
                     <!-- Empty State for Workspaces -->
@@ -500,12 +500,12 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type vm:WorkspaceItemViewModel}">
-                                <Border Height="142"
+                                <Border Height="176"
                                         Background="#18181E"
                                         BorderBrush="#25FFFFFF"
                                         BorderThickness="1"
                                         CornerRadius="8"
-                                        Padding="6"
+                                        Padding="6,8,6,6"
                                         Margin="4"
                                         Focusable="True"
                                         Cursor="Hand"
@@ -546,28 +546,31 @@
 
                                     <Grid>
                                         <Grid.RowDefinitions>
-                                            <RowDefinition Height="*" />
                                             <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="*" />
                                         </Grid.RowDefinitions>
 
-
-                                        <!-- Top: Full-Bleed Large Workspace Artwork / Logo -->
+                                        <!-- Top: 1:1 Aspect Ratio Square Artwork / Logo (120x120) -->
                                         <Border Grid.Row="0"
-                                                Height="88"
-                                                CornerRadius="6"
+                                                Width="120"
+                                                Height="120"
+                                                CornerRadius="8"
                                                 Background="#111116"
                                                 BorderBrush="#1FFFFFFF"
                                                 BorderThickness="1"
-                                                Margin="0,0,0,5"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Top"
                                                 ClipToBounds="True">
                                             <Grid>
                                                 <Image Source="{Binding ImageSource}"
                                                        Stretch="UniformToFill"
+                                                       Width="120"
+                                                       Height="120"
                                                        HorizontalAlignment="Center"
                                                        VerticalAlignment="Center"
                                                        Visibility="{Binding HasCustomImage, Converter={StaticResource BoolToVis}}" />
                                                 <TextBlock Text="{Binding DisplayEmoji}"
-                                                           FontSize="38"
+                                                           FontSize="44"
                                                            HorizontalAlignment="Center"
                                                            VerticalAlignment="Center"
                                                            Visibility="{Binding HasCustomImage, Converter={StaticResource InverseBoolToVis}}" />
@@ -575,11 +578,21 @@
                                         </Border>
 
                                         <!-- Bottom: Workspace Name & Resource Count -->
-                                        <StackPanel Grid.Row="1" VerticalAlignment="Bottom" HorizontalAlignment="Center">
-                                            <TextBlock Text="{Binding Name}" FontSize="11" FontWeight="SemiBold" Foreground="#F4F4F5"
-                                                       MaxWidth="130" TextTrimming="CharacterEllipsis" TextAlignment="Center" HorizontalAlignment="Center" />
-                                            <TextBlock Text="{Binding ResourceCountText}" FontSize="10" Foreground="#8E8E93"
-                                                       TextAlignment="Center" HorizontalAlignment="Center" Margin="0,1,0,0" />
+                                        <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,5,0,0">
+                                            <TextBlock Text="{Binding Name}"
+                                                       FontSize="11"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="#F4F4F5"
+                                                       MaxWidth="130"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       TextAlignment="Center"
+                                                       HorizontalAlignment="Center" />
+                                            <TextBlock Text="{Binding ResourceCountText}"
+                                                       FontSize="10"
+                                                       Foreground="#8E8E93"
+                                                       TextAlignment="Center"
+                                                       HorizontalAlignment="Center"
+                                                       Margin="0,1,0,0" />
                                         </StackPanel>
                                     </Grid>
                                 </Border>

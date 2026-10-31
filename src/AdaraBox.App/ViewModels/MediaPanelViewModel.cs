@@ -49,10 +49,12 @@ public sealed partial class MediaPanelViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CollapseButtonText))]
+    [NotifyPropertyChangedFor(nameof(IsSecondarySessionsVisible))]
     private bool _isCollapsed = true;
 
     public bool HasMultipleSessions => SecondarySessions.Count > 0;
     public bool HasActiveSessions => PrimarySession != null;
+    public bool IsSecondarySessionsVisible => HasMultipleSessions && !IsCollapsed;
 
     public string CollapseButtonText => IsCollapsed
         ? $"Sesi Lainnya ({SecondarySessions.Count}) ▼"
@@ -206,6 +208,7 @@ public sealed partial class MediaPanelViewModel : ObservableObject
         OnPropertyChanged(nameof(HasMultipleSessions));
         OnPropertyChanged(nameof(HasActiveSessions));
         OnPropertyChanged(nameof(CollapseButtonText));
+        OnPropertyChanged(nameof(IsSecondarySessionsVisible));
     }
 
     private void UpdateTrackDisplay(MediaTrackInfo? track)
@@ -229,6 +232,7 @@ public sealed partial class MediaPanelViewModel : ObservableObject
     {
         IsCollapsed = !IsCollapsed;
         OnPropertyChanged(nameof(CollapseButtonText));
+        OnPropertyChanged(nameof(IsSecondarySessionsVisible));
     }
 
     public async Task TogglePlayPauseSessionAsync(MediaSessionItemViewModel session)

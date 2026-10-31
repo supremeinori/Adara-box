@@ -295,21 +295,8 @@
 
             <!-- Collapsible Secondary Sessions List -->
             <ItemsControl ItemsSource="{Binding SecondarySessions}"
+                          Visibility="{Binding IsSecondarySessionsVisible, Converter={StaticResource BoolToVis}}"
                           Margin="0,2,0,0">
-                <ItemsControl.Style>
-                    <Style TargetType="ItemsControl">
-                        <Setter Property="Visibility" Value="Collapsed" />
-                        <Style.Triggers>
-                            <MultiDataTrigger>
-                                <MultiDataTrigger.Conditions>
-                                    <Condition Binding="{Binding HasMultipleSessions}" Value="True" />
-                                    <Condition Binding="{Binding IsCollapsed}" Value="False" />
-                                </MultiDataTrigger.Conditions>
-                                <Setter Property="Visibility" Value="Visible" />
-                            </MultiDataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </ItemsControl.Style>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="{x:Type vm:MediaSessionItemViewModel}">
                         <Border Background="#141418"
