@@ -1,13 +1,26 @@
 using System;
+using System.Linq;
 
 namespace AdaraBox.Core.Media;
 
 /// <summary>
 /// Detects and normalizes media platforms and track metadata.
-/// Strictly filters to Spotify, YouTube, and YouTube Music.
+/// Supports Spotify (Desktop & Web), YouTube Music, and YouTube (across all browsers including Opera, Chrome, Edge, Brave, Firefox).
 /// </summary>
 public static class MediaPlatformDetector
 {
+    private static readonly string[] BrowserKeywords = new[]
+    {
+        "opera", "chrome", "edge", "msedge", "brave", "firefox", "vivaldi", "arc", "browser", "waterfox", "librewolf", "floorp"
+    };
+
+    public static bool IsBrowser(string? sourceAppId)
+    {
+        if (string.IsNullOrWhiteSpace(sourceAppId)) return false;
+        var app = sourceAppId.ToLowerInvariant();
+        return BrowserKeywords.Any(k => app.Contains(k));
+    }
+
     public static MediaPlatform Detect(string? sourceAppId, string? title, string? albumTitle, string? artist)
     {
         var app = sourceAppId ?? string.Empty;
@@ -15,7 +28,7 @@ public static class MediaPlatformDetector
         var a = albumTitle ?? string.Empty;
         var art = artist ?? string.Empty;
 
-        // 1. Check Spotify (Desktop app or browser web player)
+        // 1. Check Spotify (Desktop App or Web Player)
         if (app.IndexOf("spotify", StringComparison.OrdinalIgnoreCase) >= 0 ||
             t.IndexOf("spotify", StringComparison.OrdinalIgnoreCase) >= 0 ||
             a.IndexOf("spotify", StringComparison.OrdinalIgnoreCase) >= 0)
@@ -23,7 +36,7 @@ public static class MediaPlatformDetector
             return MediaPlatform.Spotify;
         }
 
-        // 2. Check YouTube Music (Must precede generic YouTube check)
+        // 2. Check YouTube Music (PWA, Web App, or Browser metadata)
         if (t.IndexOf("youtube music", StringComparison.OrdinalIgnoreCase) >= 0 ||
             a.IndexOf("youtube music", StringComparison.OrdinalIgnoreCase) >= 0 ||
             app.IndexOf("youtubemusic", StringComparison.OrdinalIgnoreCase) >= 0 ||
@@ -32,10 +45,17 @@ public static class MediaPlatformDetector
             return MediaPlatform.YouTubeMusic;
         }
 
-        // 3. Check YouTube
+        // 3. Check YouTube (Explicit in title/album/source)
         if (t.IndexOf("youtube", StringComparison.OrdinalIgnoreCase) >= 0 ||
             a.IndexOf("youtube", StringComparison.OrdinalIgnoreCase) >= 0 ||
             app.IndexOf("youtube", StringComparison.OrdinalIgnoreCase) >= 0)
+        {
+            return MediaPlatform.YouTube;
+        }
+
+        // 4. Browser Fallback: Any active media playing in Opera, Chrome, Edge, Brave, Firefox, etc.
+        // is YouTube / Web playback and should ALWAYS be detected!
+        if (IsBrowser(app))
         {
             return MediaPlatform.YouTube;
         }

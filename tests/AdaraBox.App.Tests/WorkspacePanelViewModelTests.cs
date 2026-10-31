@@ -387,4 +387,39 @@ public class WorkspacePanelViewModelTests
             if (File.Exists(tempFile)) File.Delete(tempFile);
         }
     }
+
+    [Fact]
+    public async Task SearchQuery_FiltersWorkspacesByName()
+    {
+        var id1 = Guid.NewGuid();
+        var id2 = Guid.NewGuid();
+        var ws1 = new Workspace(id1, "Development Studio", _fixedTime, _fixedTime, 0);
+        var ws2 = new Workspace(id2, "Music Production", _fixedTime, _fixedTime, 1);
+
+        _workspaceService.ListAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<IReadOnlyList<Workspace>>(new[] { ws1, ws2 }));
+        _workspaceService.GetResourceCountAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(0);
+
+        var vm = CreateVm();
+        await vm.LoadWorkspacesAsync();
+
+        Assert.Equal(2, vm.Workspaces.Count);
+        Assert.False(vm.HasSearchQuery);
+
+        // Filter for "Music"
+        vm.SearchQuery = "Music";
+        Assert.True(vm.HasSearchQuery);
+
+        var filtered = vm.FilteredWorkspaces.Cast<WorkspaceItemViewModel>().ToList();
+        Assert.Single(filtered);
+        Assert.Equal("Music Production", filtered[0].Name);
+
+        // Clear search
+        vm.ClearSearchCommand.Execute(null);
+        Assert.False(vm.HasSearchQuery);
+        Assert.Empty(vm.SearchQuery);
+
+        filtered = vm.FilteredWorkspaces.Cast<WorkspaceItemViewModel>().ToList();
+        Assert.Equal(2, filtered.Count);
+    }
 }

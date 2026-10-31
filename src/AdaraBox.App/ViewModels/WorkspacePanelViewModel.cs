@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -214,6 +216,14 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
     [ObservableProperty]
     private LaunchSummary? _lastLaunchSummary;
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSearchQuery))]
+    private string _searchQuery = string.Empty;
+
+    public bool HasSearchQuery => !string.IsNullOrWhiteSpace(SearchQuery);
+
+    public ICollectionView FilteredWorkspaces { get; }
+
     public ObservableCollection<WorkspaceItemViewModel> Workspaces { get; } = new();
     public ObservableCollection<ResourceItemViewModel> Resources { get; } = new();
     public ObservableCollection<LaunchResultItemViewModel> FailedResults { get; } = new();
@@ -233,8 +243,10 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
 
     public bool CanManageResources => !IsOpenMode;
 
-    public bool HasWorkspaces => Workspaces.Count > 0;
-    public bool IsEmpty => !IsLoading && Workspaces.Count == 0;
+    public bool HasWorkspaces => Workspaces.Count > 0 && (FilteredWorkspaces == null || !FilteredWorkspaces.IsEmpty);
+    public bool IsEmpty => !IsLoading && (Workspaces.Count == 0 || (FilteredWorkspaces != null && FilteredWorkspaces.IsEmpty));
+    public string CurrentEmptyTitle => HasSearchQuery ? "Tidak ditemukan" : EmptyTitle;
+    public string CurrentEmptyDescription => HasSearchQuery ? $"Tidak ada workspace dengan nama \"{SearchQuery}\"." : EmptyDescription;
     public bool HasFormError => !string.IsNullOrEmpty(FormError);
     public bool HasResourceFormError => !string.IsNullOrEmpty(ResourceFormError);
 
@@ -283,7 +295,32 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
         _multiLaunchService = multiLaunchService;
         _resourceLauncher = resourceLauncher;
 
+        FilteredWorkspaces = CollectionViewSource.GetDefaultView(Workspaces);
+        FilteredWorkspaces.Filter = FilterWorkspaceItem;
+
         _ = InitializeAsync();
+    }
+
+    private bool FilterWorkspaceItem(object obj)
+    {
+        if (string.IsNullOrWhiteSpace(SearchQuery)) return true;
+        if (obj is WorkspaceItemViewModel ws)
+        {
+            return ws.Name.IndexOf(SearchQuery, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+        return true;
+    }
+
+    partial void OnSearchQueryChanged(string value)
+    {
+        FilteredWorkspaces.Refresh();
+        NotifyListStateChanged();
+    }
+
+    [RelayCommand]
+    public void ClearSearch()
+    {
+        SearchQuery = string.Empty;
     }
 
     private async Task InitializeAsync()
@@ -978,8 +1015,11 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
 
     private void NotifyListStateChanged()
     {
+        FilteredWorkspaces?.Refresh();
         OnPropertyChanged(nameof(HasWorkspaces));
         OnPropertyChanged(nameof(IsEmpty));
+        OnPropertyChanged(nameof(CurrentEmptyTitle));
+        OnPropertyChanged(nameof(CurrentEmptyDescription));
         OnPropertyChanged(nameof(IsWorkspaceListVisible));
         OnPropertyChanged(nameof(IsWorkspaceDetailVisible));
     }

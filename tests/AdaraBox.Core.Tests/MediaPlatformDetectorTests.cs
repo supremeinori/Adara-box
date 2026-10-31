@@ -8,14 +8,19 @@ public class MediaPlatformDetectorTests
     [Theory]
     [InlineData("Spotify.exe", "Track", "Album", "Artist", MediaPlatform.Spotify)]
     [InlineData("SpotifyAB.SpotifyMusic_z6rc5r9iwwwb8", "Track", "Album", "Artist", MediaPlatform.Spotify)]
+    [InlineData("opera.exe", "Rick Astley - Never Gonna Give You Up - YouTube", "", "", MediaPlatform.YouTube)]
+    [InlineData("opera_gx.exe", "Gaming Beats", "", "", MediaPlatform.YouTube)] // Opera GX browser fallback
     [InlineData("chrome.exe", "Rick Astley - Never Gonna Give You Up - YouTube", "", "", MediaPlatform.YouTube)]
+    [InlineData("chrome.exe", "Song Without YouTube in Title", "", "", MediaPlatform.YouTube)] // Chrome browser fallback
     [InlineData("msedge.exe", "Chill Beats - YouTube", "", "", MediaPlatform.YouTube)]
+    [InlineData("msedge.exe", "Lofi Music", "", "", MediaPlatform.YouTube)] // Edge browser fallback
     [InlineData("chrome.exe", "Starboy", "YouTube Music", "The Weeknd", MediaPlatform.YouTubeMusic)]
     [InlineData("music.youtube.pwa", "Song", "Album", "Artist", MediaPlatform.YouTubeMusic)]
+    [InlineData("opera.exe", "Song Name - Spotify", "", "", MediaPlatform.Spotify)]
     [InlineData("chrome.exe", "Song Name - Spotify", "", "", MediaPlatform.Spotify)]
     [InlineData("vlc.exe", "MyMovie.mkv", "", "", MediaPlatform.Unknown)]
-    [InlineData("chrome.exe", "Twitter / X Video Player", "", "", MediaPlatform.Unknown)]
-    [InlineData("brave.exe", "Random Sound Clip", "Reddit", "", MediaPlatform.Unknown)]
+    [InlineData("potplayer.exe", "Local Video", "", "", MediaPlatform.Unknown)]
+    [InlineData("discord.exe", "Voice Call", "", "", MediaPlatform.Unknown)]
     public void Detect_ReturnsExpectedPlatform(string app, string title, string album, string artist, MediaPlatform expected)
     {
         var platform = MediaPlatformDetector.Detect(app, title, album, artist);
