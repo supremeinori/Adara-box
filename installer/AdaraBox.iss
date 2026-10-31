@@ -48,13 +48,9 @@ WizardStyle=modern
 DirExistsWarning=no
 
 [Languages]
-Name: "indonesian"; MessagesFile: "compiler:Languages\Indonesian.isl"
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [CustomMessages]
-indonesian.RunAtStartup=Jalankan Adara Box saat Windows dimulai
-indonesian.CreateDesktopIcon=Buat ikon di Desktop
-indonesian.ConfirmDeleteUserData=Apakah Anda ingin menghapus seluruh data workspace, riwayat, dan pengaturan Adara Box?%n%nPilih 'Tidak' jika Anda ingin menyimpan data Anda untuk penggunaan mendatang.
 english.RunAtStartup=Start Adara Box when Windows starts
 english.CreateDesktopIcon=Create a desktop shortcut
 english.ConfirmDeleteUserData=Do you want to completely delete all Adara Box workspaces, history, and settings?%n%nSelect 'No' if you wish to keep your data for future use.

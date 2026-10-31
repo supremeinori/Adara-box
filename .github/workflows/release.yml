@@ -1,0 +1,64 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET 8 SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', 'Directory.Build.props') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
+    - name: Install Inno Setup
+      run: choco install innosetup --no-progress -y
+
+    - name: Restore dependencies
+      run: dotnet restore AdaraBox.sln
+
+    - name: Run Automated Tests
+      run: dotnet test AdaraBox.sln -c Release --no-restore --verbosity normal
+
+    - name: Publish Self-Contained App
+      run: |
+        dotnet publish src/AdaraBox.App -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -p:IncludeNativeLibrariesForSelfExtract=true -o artifacts/publish --nologo
+
+    - name: Build Inno Setup Installer
+      run: |
+        & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer/AdaraBox.iss
+
+    - name: Package Portable ZIP
+      run: |
+        Compress-Archive -Path artifacts/publish/* -DestinationPath artifacts/installer/AdaraBox-Portable-win-x64.zip
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        name: Adara Box ${{ github.ref_name }}
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+        files: |
+          artifacts/installer/AdaraBox-Setup-1.0.0.exe
+          artifacts/installer/AdaraBox-Portable-win-x64.zip

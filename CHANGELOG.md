@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.0] - 2026-10-31
+
+### Added
+- **Apple Design & Dark Neomorphism Overhaul**
+  - Ultra-compact Top Bar height (30 DIP, matching macOS Menu Bar format) and expanded 640 DIP width.
+  - Dark Neomorphism surface styling: matte obsidian `#16161B`, hairline top highlights `#25FFFFFF`, dual-layer ambient drop shadows, and tactile micro-press feedback (`scale 0.97`) on all interactive buttons and cards.
+  - Fluid Pop-Down & Pop-Up sheet animations (`TranslateTransform.Y` + `Opacity` with `CubicEase`) for opening and closing module panels.
+  - Pure high-contrast monochrome color palette removing all AI-slop gradients and harsh bright blues.
+- **Windows GSMTC Native Media Controller**
+  - Zero-Chromium native media playback control via Windows WinRT `GlobalSystemMediaTransportControlsSessionManager`.
+  - Supports Spotify Desktop, Chrome/Edge browser tabs (YouTube, SoundCloud, Spotify Web), Apple Music, and VLC.
+  - Controls Play/Pause, Next Track, Previous Track with live Now Playing metadata display (`Track — Artist`) both in the compact Top Bar and Media Panel.
+- **1-Click Instant Shortcut Launch**
+  - Single-click on any workspace file, folder, application, or link immediately launches it.
+  - Added "🚀 Buka Semua" (Launch All) button in workspace header for simultaneous one-click batch launching with background pacing.
+- **Workspace Grid View & Custom Logo Image / Emoji Picker**
+  - Replaced single-column vertical workspace list with a responsive, modern Grid View (`WrapPanel`).
+  - Added support for custom logo image files (`.png`, `.jpg`, `.ico`, `.webp`) with automatic, secure caching in `%LOCALAPPDATA%\AdaraBox\workspace-icons\`.
+  - Preset emoji picker (📁, 💼, 🚀, 💻, 🎨, 📚, 🎮, 🎧, ⚡, 🌐, ☕, 🛠️, 📊, 🎯, 🎬, 💡) and custom emoji input for workspaces without image uploads.
+  - SQLite database schema migration #003 adding `icon` column to `workspace` table.
+- **Automated Inno Setup Installer & GitHub Release Workflow**
+  - Single-file installer executable `AdaraBox-Setup-1.0.0.exe` (~52 MB) with per-user installation (no admin privileges required).
+  - GitHub Actions automated release pipeline (`.github/workflows/release.yml`) for automated building, testing, installer packaging, and release artifact generation.
+  - Increased automated test suite to 229 tests (100% passing).
+
+---
+
 ## [1.1.0] - 2026-10-31
 
 ### Added
