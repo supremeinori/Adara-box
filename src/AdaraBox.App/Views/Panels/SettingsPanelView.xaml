@@ -1,0 +1,34 @@
+<UserControl x:Class="AdaraBox.App.Views.Panels.SettingsPanelView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:AdaraBox.App.ViewModels"
+             d:DataContext="{d:DesignInstance vm:SettingsPanelViewModel}"
+             mc:Ignorable="d" 
+             d:DesignHeight="220" d:DesignWidth="440">
+    <Grid Margin="16">
+        <Border Background="#1C1C21" BorderBrush="#2E2E38" BorderThickness="1" CornerRadius="8" Padding="16">
+            <StackPanel>
+                <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="Bold" Foreground="#F4F4F5" Margin="0,0,0,12" />
+
+                <!-- Visibility Setting -->
+                <Border Background="#27272A" BorderBrush="#3F3F46" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12">
+                    <DockPanel LastChildFill="True">
+                        <CheckBox DockPanel.Dock="Right" 
+                                  IsChecked="{Binding IsHideTopBarEnabled, Mode=TwoWay}" 
+                                  VerticalAlignment="Center" 
+                                  Cursor="Hand" />
+                        <StackPanel Margin="0,0,12,0">
+                            <TextBlock Text="{Binding HideTopBarLabel}" FontWeight="SemiBold" Foreground="#F4F4F5" FontSize="12" />
+                            <TextBlock Text="{Binding HideTopBarDescription}" Foreground="#A1A1AA" FontSize="11" Margin="0,2,0,0" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+
+                <!-- App Version -->
+                <TextBlock Text="{Binding VersionLabel}" Foreground="#71717A" FontSize="11" Margin="4,0,0,0" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

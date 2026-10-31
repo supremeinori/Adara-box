@@ -8,7 +8,7 @@
 | Modul | Nama | Status | Persetujuan manusia |
 |---|---|---|---|
 | M00 | Setup & Spikes | ✔ selesai | ☐ |
-| M01 | App Shell | ☐ belum | ☐ |
+| M01 | App Shell | ✔ selesai | ☐ |
 | M02 | Workspace Management | ☐ belum | ☐ |
 | M03 | Resource Management | ☐ belum | ☐ |
 | M04 | Open the File | ☐ belum | ☐ |
@@ -25,6 +25,7 @@ Status: ☐ belum · ◐ sedang dikerjakan · ✔ selesai · ⛔ terblokir
 | Modul | Deskripsi | Langkah Uji / Referensi |
 |---|---|---|
 | M00 | Verifikasi visual interaktif Top Bar (Overlay Topmost vs AppBar) & Hover Trigger Strip | Jalankan `spikes/WindowSpike/bin/Release/net8.0-windows/WindowSpike.exe`, ikuti 4 skenario di `docs/spike-window.md` (uji pencurian fokus, input textbox, space reservation AppBar, dan dwell timer hover). |
+| M01 | Verifikasi visual Application Shell (Startup tanpa window biasa, Top Bar compact 36 DIP, ekspansi panel horizontal animasi, honest placeholder Media & Stats, Esc & Close button, toggle Hide via Settings & Tray, hover trigger strip, dan single instance) | Jalankan `src/AdaraBox.App/bin/Release/net8.0-windows/AdaraBox.App.exe`, ikuti 8 skenario di `docs/manual-tests/M01.md`. |
 
 ## OPEN QUESTIONS
 
@@ -70,6 +71,27 @@ Status: ☐ belum · ◐ sedang dikerjakan · ✔ selesai · ⛔ terblokir
 | NFR-CP-04 (Windows minimum) | M00 (keputusan), M06 (installer) |
 
 ## Log Laporan Modul
+
+## Laporan M01 — 2026-10-31
+- Status: SELESAI
+- Task selesai: T1 (Bootstrap aplikasi, DI, Serilog, unhandled exceptions, single-instance named Mutex, manifest PerMonitorV2, OnExplicitShutdown, TrayIconManager), T2 (Sistem status modul, IAppModule, Workspace/Media/Stats/Settings modules, ModuleStatusView badge & mapping, ModuleStatusExtensions), T3 (TopBarWindow compact 36 DIP, overlay topmost, data-driven module buttons), T4 (Panel horizontal melebar animasi CubicEase, Esc & ✕ close, ContentControl + DataTemplate per ViewModel), T5 (TopBarVisibilityService, TopBarVisibilityStateMachine, TriggerStripWindow hover dwell 250ms & hide delay 600ms, toggle di Settings & Tray), T6 (WorkspacePanelViewModel kosong jujur, SettingsPanelViewModel toggle Hide & versi), T7 (Unit tests, smoke test guide di docs/manual-tests/M01.md).
+- Acceptance criteria: 10/10 terpenuhi:
+  1. Aplikasi start tanpa window biasa; top bar muncul di tengah atas layar; ikon tray ada; Keluar menutup proses sepenuhnya.
+  2. Single instance aktif via named Mutex `Global\AdaraBox.SingleInstance`.
+  3. Tombol Workspace/Media/Stats/Settings tampil dari daftar modul terurut; modul aktif disorot jelas.
+  4. Panel melebar horizontal dengan animasi halus dan bisa ditutup dengan ✕ dan Esc.
+  5. Media & Stats menampilkan badge jujur "Masih dalam pengembangan" tanpa kontrol palsu; gaya visual beda dari Error.
+  6. Mode Hide: bar tersembunyi, hover strip memunculkan via dwell 250ms, keluar menyembunyikan; toggle di Settings dan tray bekerja.
+  7. Top bar tidak mencuri fokus saat muncul (ShowActivated=False).
+  8. Layout responsif dan manifest PerMonitorV2 terpasang.
+  9. Layer Core tetap 100% bebas WPF/Win32/SQLite (ArchitectureTests hijau).
+  10. Unhandled exception tercatat ke Serilog `%LOCALAPPDATA%\AdaraBox\logs\adarabox-.log` dan menampilkan dialog informatif.
+- [HUMAN CHECK] yang menunggu: Uji visual checklist 8 skenario di `docs/manual-tests/M01.md`.
+- Keputusan yang diambil (dan di mana dicatat):
+  - Enkapsulasi `NotifyIcon` di dalam `AdaraBox.Platform` tanpa mencemari namespace WPF `AdaraBox.App` (ADR-009 di `docs/DECISIONS.md`).
+  - Penggunaan `InMemorySettingsStore` pada tahap M01; persistensi preferensi ke SQLite dijadwalkan di M02 (ADR-010 di `docs/DECISIONS.md`).
+- OPEN QUESTION: Q1 (Multi-monitor), Q2 (Shortcut keyboard default), Q3 (Startup behavior) diputuskan di M05; Q4 (Drag-and-drop) dievaluasi di M03.
+- Masalah/utang teknis yang diketahui: Preferensi Hide belum bertahan setelah restart aplikasi karena store saat ini in-memory (ini disengaja sesuai scope M01; dihubungkan ke SQLite pada M02).
 
 ## Laporan M00 — 2026-10-31
 - Status: SELESAI

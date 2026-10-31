@@ -1,0 +1,77 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using AdaraBox.Core.Modules;
+using AdaraBox.Core.Visibility;
+
+namespace AdaraBox.App.ViewModels;
+
+public sealed partial class TopBarViewModel : ObservableObject
+{
+    private readonly ITopBarVisibilityService _visibilityService;
+    private readonly WorkspacePanelViewModel _workspaceVm;
+    private readonly MediaPanelViewModel _mediaVm;
+    private readonly StatsPanelViewModel _statsVm;
+    private readonly SettingsPanelViewModel _settingsVm;
+
+    [ObservableProperty]
+    private IAppModule? _selectedModule;
+
+    [ObservableProperty]
+    private ObservableObject? _activePanelViewModel;
+
+    public IReadOnlyList<IAppModule> Modules { get; }
+    public ITopBarVisibilityService VisibilityService => _visibilityService;
+
+    public bool IsPanelOpen => SelectedModule != null;
+
+    public TopBarViewModel(
+        IEnumerable<IAppModule> modules,
+        ITopBarVisibilityService visibilityService,
+        WorkspacePanelViewModel workspaceVm,
+        MediaPanelViewModel mediaVm,
+        StatsPanelViewModel statsVm,
+        SettingsPanelViewModel settingsVm)
+    {
+        Modules = modules.OrderBy(m => m.Order).ToList();
+        _visibilityService = visibilityService;
+        _workspaceVm = workspaceVm;
+        _mediaVm = mediaVm;
+        _statsVm = statsVm;
+        _settingsVm = settingsVm;
+    }
+
+    [RelayCommand]
+    public void SelectModule(IAppModule? module)
+    {
+        if (module == null || SelectedModule?.Id == module.Id)
+        {
+            ClosePanel();
+            return;
+        }
+
+        SelectedModule = module;
+        ActivePanelViewModel = module.Id switch
+        {
+            "workspace" => _workspaceVm,
+            "media" => _mediaVm,
+            "stats" => _statsVm,
+            "settings" => _settingsVm,
+            _ => null
+        };
+
+        OnPropertyChanged(nameof(IsPanelOpen));
+        _visibilityService.SetPanelOpen(true);
+    }
+
+    [RelayCommand]
+    public void ClosePanel()
+    {
+        SelectedModule = null;
+        ActivePanelViewModel = null;
+        OnPropertyChanged(nameof(IsPanelOpen));
+        _visibilityService.SetPanelOpen(false);
+    }
+}

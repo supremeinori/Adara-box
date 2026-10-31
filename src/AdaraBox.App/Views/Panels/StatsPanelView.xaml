@@ -1,0 +1,14 @@
+<UserControl x:Class="AdaraBox.App.Views.Panels.StatsPanelView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:components="clr-namespace:AdaraBox.App.Views.Components"
+             xmlns:vm="clr-namespace:AdaraBox.App.ViewModels"
+             d:DataContext="{d:DesignInstance vm:StatsPanelViewModel}"
+             mc:Ignorable="d" 
+             d:DesignHeight="180" d:DesignWidth="400">
+    <Grid Margin="16">
+        <components:ModuleStatusView Status="{Binding Status}" StatusMessage="{Binding StatusMessage}" />
+    </Grid>
+</UserControl>

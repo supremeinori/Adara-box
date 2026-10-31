@@ -121,6 +121,24 @@ Dokumen ini mencatat Architectural Decision Records (ADR) dan Open Questions res
 
 ---
 
+## ADR-009: Implementasi Tray Icon via Enkapsulasi di AdaraBox.Platform
+* **Tanggal:** 2026-10-31  
+* **Status:** ACCEPTED  
+* **Konteks:** Modul M01 Task T1 membutuhkan ikon tray (NotifyIcon) dengan menu Tampilkan dan Keluar. Di .NET 8, `System.Windows.Forms.NotifyIcon` dapat digunakan melalui `<UseWindowsForms>true</UseWindowsForms>`, namun jika diaktifkan langsung di proyek WPF `AdaraBox.App`, terjadi bentrok nama (*namespace ambiguity*) antara `System.Windows.Forms.*` dan `System.Windows.*` (Application, UserControl, MouseEventArgs, KeyEventArgs, Brush).  
+* **Keputusan:** Mengisolasi penggunaan `NotifyIcon` dan Windows Forms murni di dalam library `AdaraBox.Platform` melalui kelas `TrayIconManager`. Proyek `AdaraBox.App` tetap murni WPF (`<UseWindowsForms>false</UseWindowsForms>`).  
+* **Konsekuensi:** Proyek WPF UI tetap bersih dari polusi namespace WinForms, mematuhi prinsip pemisahan tanggung jawab (**NFR-MN-01**).
+
+---
+
+## ADR-010: InMemorySettingsStore untuk Modul M01
+* **Tanggal:** 2026-10-31  
+* **Status:** ACCEPTED  
+* **Konteks:** Modul M01 Task T1/T5 membutuhkan penyimpanan preferensi visibilitas (AlwaysVisible / Hidden), namun modul SQLite dan skema database baru dijadwalkan pada M02.  
+* **Keputusan:** Menggunakan `InMemorySettingsStore` pada Modul M01 sebagai implementasi transisi `ISettingsStore`. Preferensi visibilitas berfungsi selama aplikasi berjalan namun belum bertahan (*persist*) saat aplikasi dimulai ulang. Persistensi ke SQLite akan diaktifkan penuh di M02 (FR-TB-05).  
+* **Konsekuensi:** Scope M01 terjaga bersih tanpa mendahului pengerjaan repositori data M02.
+
+---
+
 ## OPEN QUESTIONS
 
 | # | Pertanyaan | Modul Terkait | Target Keputusan | Catatan |

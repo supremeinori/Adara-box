@@ -14,7 +14,34 @@ public static class UiConstants
     /// <summary>
     /// Default width for the compact Top Bar in device-independent pixels (DIP).
     /// </summary>
-    public const double TopBarDefaultWidthDip = 600.0;
+    public const double TopBarCompactWidthDip = 480.0;
+    public const double TopBarDefaultWidthDip = 480.0;
+
+    /// <summary>
+    /// Default expanded width for module panels in DIP.
+    /// </summary>
+    public const double PanelDefaultWidthDip = 560.0;
+
+    /// <summary>
+    /// Maximum panel width ratio relative to the monitor work area width.
+    /// </summary>
+    public const double PanelMaxScreenWidthRatio = 0.90;
+
+    /// <summary>
+    /// Maximum panel height ratio relative to the monitor work area height.
+    /// </summary>
+    public const double PanelMaxScreenHeightRatio = 0.70;
+
+    /// <summary>
+    /// Panel horizontal expansion animation duration in milliseconds.
+    /// </summary>
+    public const int PanelAnimationDurationMs = 180;
+
+    /// <summary>
+    /// Policy determining whether module panels close automatically when window loses focus.
+    /// Default is false (panels remain open until explicitly closed by user or Esc).
+    /// </summary>
+    public const bool ClosePanelOnFocusLost = false;
 
     /// <summary>
     /// Height of the hover trigger strip at the very top edge of the screen (DIP).
