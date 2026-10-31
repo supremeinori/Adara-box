@@ -8,6 +8,7 @@ using AdaraBox.App.Resources;
 using AdaraBox.App.Services;
 using AdaraBox.App.ViewModels;
 using AdaraBox.Core.Common;
+using AdaraBox.Core.Launcher;
 using AdaraBox.Core.Resources;
 using AdaraBox.Core.Settings;
 using AdaraBox.Core.Visibility;
@@ -28,6 +29,7 @@ public class WorkspacePanelViewModelTests
     private readonly IFilePickerService _filePickerService = Substitute.For<IFilePickerService>();
     private readonly IDialogService _dialogService = Substitute.For<IDialogService>();
     private readonly ISettingsStore _settingsStore = Substitute.For<ISettingsStore>();
+    private readonly IMultiLaunchService _multiLaunchService = Substitute.For<IMultiLaunchService>();
     private readonly DateTimeOffset _fixedTime = new(2026, 10, 31, 10, 0, 0, TimeSpan.Zero);
 
     public WorkspacePanelViewModelTests()
@@ -47,7 +49,8 @@ public class WorkspacePanelViewModelTests
             _iconProvider,
             _filePickerService,
             _dialogService,
-            _settingsStore);
+            _settingsStore,
+            _multiLaunchService);
     }
 
     [Fact]

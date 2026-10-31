@@ -10,4 +10,8 @@
     <ProjectReference Include="..\AdaraBox.Core\AdaraBox.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Serilog" Version="4.1.0" />
+  </ItemGroup>
+
 </Project>

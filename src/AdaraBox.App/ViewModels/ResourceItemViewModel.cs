@@ -22,6 +22,9 @@ public sealed partial class ResourceItemViewModel : ObservableObject
     [ObservableProperty]
     private ResourceAvailability _availability = ResourceAvailability.Unknown;
 
+    [ObservableProperty]
+    private bool _isSelected;
+
     public Guid Id => Resource.Id;
     public Guid WorkspaceId => Resource.WorkspaceId;
     public string Name => Resource.Name;
@@ -49,6 +52,9 @@ public sealed partial class ResourceItemViewModel : ObservableObject
         ? UiText.AvailabilityMissing
         : (IsAccessDenied ? UiText.AvailabilityAccessDenied : string.Empty);
 
+    public bool IsOpenMode => _parent.IsOpenMode;
+    public bool CanManage => !_parent.IsOpenMode;
+
     public ResourceItemViewModel(
         Resource resource,
         WorkspacePanelViewModel parent,
@@ -57,6 +63,21 @@ public sealed partial class ResourceItemViewModel : ObservableObject
         _parent = parent;
         _resource = resource;
         _icon = iconProvider.GetIcon(resource.Type, resource.Target);
+    }
+
+    partial void OnIsSelectedChanged(bool value)
+    {
+        _parent.NotifySelectionChanged();
+    }
+
+    public void NotifyCanManageChanged()
+    {
+        OnPropertyChanged(nameof(IsOpenMode));
+        OnPropertyChanged(nameof(CanManage));
+        EditCommand.NotifyCanExecuteChanged();
+        DeleteCommand.NotifyCanExecuteChanged();
+        MoveUpCommand.NotifyCanExecuteChanged();
+        MoveDownCommand.NotifyCanExecuteChanged();
     }
 
     public void UpdateResource(Resource updatedResource)
@@ -77,17 +98,26 @@ public sealed partial class ResourceItemViewModel : ObservableObject
         OnPropertyChanged(nameof(AvailabilityWarningText));
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanManage))]
     private void Edit() => _parent.BeginEditResource(this);
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanManage))]
     private void Delete() => _ = _parent.DeleteResourceAsync(this);
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanManage))]
     private void MoveUp() => _ = _parent.MoveResourceAsync(this, -1);
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanManage))]
     private void MoveDown() => _ = _parent.MoveResourceAsync(this, 1);
+
+    [RelayCommand]
+    private void ToggleSelect()
+    {
+        if (_parent.IsOpenMode)
+        {
+            IsSelected = !IsSelected;
+        }
+    }
 
     private static string GetDistinctiveInfo(Resource res)
     {

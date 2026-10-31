@@ -79,6 +79,21 @@ public static class UiText
     public const string DeleteResourceTitle = "Hapus Resource";
     public const string DeleteResourceConfirm = "Hapus \"{0}\" dari workspace?\n\nFile, folder, atau aplikasi aslinya tidak akan dihapus.";
 
+    // Open the File (M04) Texts
+    public const string OpenTheFileToggle = "Open the File";
+    public const string ExitOpenMode = "Selesai";
+    public const string OpenButton = "Open";
+    public const string OpeningWithProgress = "Membuka ({0}/{1})...";
+    public const string SelectedCountFormat = "{0} dipilih";
+    public const string SelectAll = "Pilih Semua";
+    public const string ClearSelection = "Bersihkan";
+    public const string ManyItemsWarning = "Membuka banyak resource sekaligus dapat membebani komputer.";
+    public const string LaunchSummaryTitle = "Ringkasan Hasil Pembukaan";
+    public const string LaunchSummaryAllSuccessFormat = "Semua resource ({0} item) berhasil dibuka.";
+    public const string LaunchSummaryPartialFormat = "{0} berhasil dibuka, {1} gagal.";
+    public const string RetryFailedButton = "Coba Lagi yang Gagal";
+    public const string CloseSummaryButton = "Tutup";
+
     // Settings Panel Texts
     public const string SettingsTitle = "Pengaturan";
     public const string SettingsHideTopBar = "Sembunyikan top bar otomatis";

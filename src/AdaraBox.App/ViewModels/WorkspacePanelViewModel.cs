@@ -8,6 +8,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using AdaraBox.App.Resources;
 using AdaraBox.App.Services;
+using AdaraBox.Core.Launcher;
 using AdaraBox.Core.Resources;
 using AdaraBox.Core.Settings;
 using AdaraBox.Core.Workspaces;
@@ -25,6 +26,7 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
     private readonly IFilePickerService _filePickerService;
     private readonly IDialogService _dialogService;
     private readonly ISettingsStore _settingsStore;
+    private readonly IMultiLaunchService _multiLaunchService;
 
     [ObservableProperty]
     private bool _isLoading;
@@ -83,8 +85,54 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
     [ObservableProperty]
     private string? _resourceFormError;
 
+    // Open the File (M04) State
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanManageResources))]
+    private bool _isOpenMode;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanOpen))]
+    [NotifyPropertyChangedFor(nameof(OpenButtonText))]
+    private bool _isLaunching;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(OpenButtonText))]
+    private int _launchProgressCurrent;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(OpenButtonText))]
+    private int _launchProgressTotal;
+
+    [ObservableProperty]
+    private bool _isLaunchSummaryOpen;
+
+    [ObservableProperty]
+    private string _launchSummaryTitle = UiText.LaunchSummaryTitle;
+
+    [ObservableProperty]
+    private string _launchSummaryMessage = string.Empty;
+
+    [ObservableProperty]
+    private LaunchSummary? _lastLaunchSummary;
+
     public ObservableCollection<WorkspaceItemViewModel> Workspaces { get; } = new();
     public ObservableCollection<ResourceItemViewModel> Resources { get; } = new();
+    public ObservableCollection<LaunchResultItemViewModel> FailedResults { get; } = new();
+    public ObservableCollection<LaunchResultItemViewModel> SuccessfulResults { get; } = new();
+
+    public int SelectedCount => Resources.Count(r => r.IsSelected);
+    public string SelectedCountText => string.Format(UiText.SelectedCountFormat, SelectedCount);
+    public bool CanOpen => IsOpenMode && SelectedCount > 0 && !IsLaunching;
+    public bool HasSelected => SelectedCount > 0;
+    public bool HasManySelected => IsOpenMode && SelectedCount > 10;
+    public string ManySelectedWarningText => UiText.ManyItemsWarning;
+    public bool HasFailedResults => FailedResults.Count > 0;
+    public bool HasSuccessfulResults => SuccessfulResults.Count > 0;
+    public string OpenButtonText => IsLaunching
+        ? string.Format(UiText.OpeningWithProgress, LaunchProgressCurrent, LaunchProgressTotal)
+        : UiText.OpenButton;
+
+    public bool CanManageResources => !IsOpenMode;
 
     public bool HasWorkspaces => Workspaces.Count > 0;
     public bool IsEmpty => !IsLoading && Workspaces.Count == 0;
@@ -117,7 +165,8 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
         IIconProvider iconProvider,
         IFilePickerService filePickerService,
         IDialogService dialogService,
-        ISettingsStore settingsStore)
+        ISettingsStore settingsStore,
+        IMultiLaunchService multiLaunchService)
     {
         _workspaceService = workspaceService;
         _resourceService = resourceService;
@@ -126,6 +175,7 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
         _filePickerService = filePickerService;
         _dialogService = dialogService;
         _settingsStore = settingsStore;
+        _multiLaunchService = multiLaunchService;
 
         _ = InitializeAsync();
     }
@@ -245,6 +295,9 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
 
     public void OpenWorkspace(WorkspaceItemViewModel item)
     {
+        IsOpenMode = false;
+        IsLaunchSummaryOpen = false;
+        ClearSelection();
         SelectedWorkspace = item;
         OnPropertyChanged(nameof(IsDetailViewActive));
         OnPropertyChanged(nameof(DetailTitle));
@@ -256,6 +309,9 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
     [RelayCommand]
     public void BackToList()
     {
+        IsOpenMode = false;
+        IsLaunchSummaryOpen = false;
+        ClearSelection();
         SelectedWorkspace = null;
         Resources.Clear();
         IsResourceFormOpen = false;
@@ -283,6 +339,9 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
         Workspaces.Remove(item);
         if (SelectedWorkspace?.Id == item.Id)
         {
+            IsOpenMode = false;
+            IsLaunchSummaryOpen = false;
+            ClearSelection();
             SelectedWorkspace = null;
             Resources.Clear();
             OnPropertyChanged(nameof(IsDetailViewActive));
@@ -351,7 +410,7 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
     [RelayCommand]
     public async Task AddFilesAsync()
     {
-        if (SelectedWorkspace == null) return;
+        if (SelectedWorkspace == null || IsOpenMode) return;
 
         var files = await _filePickerService.PickFilesAsync();
         if (files == null || files.Length == 0) return;
@@ -374,7 +433,7 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
     [RelayCommand]
     public async Task AddFolderAsync()
     {
-        if (SelectedWorkspace == null) return;
+        if (SelectedWorkspace == null || IsOpenMode) return;
 
         var folder = await _filePickerService.PickFolderAsync();
         if (string.IsNullOrEmpty(folder)) return;
@@ -394,7 +453,7 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
     [RelayCommand]
     public async Task AddApplicationAsync()
     {
-        if (SelectedWorkspace == null) return;
+        if (SelectedWorkspace == null || IsOpenMode) return;
 
         var app = await _filePickerService.PickApplicationAsync();
         if (string.IsNullOrEmpty(app)) return;
@@ -414,6 +473,7 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
     [RelayCommand]
     public void BeginAddLink()
     {
+        if (IsOpenMode) return;
         IsEditingResource = false;
         EditingResourceId = null;
         FormResourceType = ResourceType.Link;
@@ -426,6 +486,7 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
 
     public void BeginEditResource(ResourceItemViewModel item)
     {
+        if (IsOpenMode) return;
         IsEditingResource = true;
         EditingResourceId = item.Id;
         FormResourceType = item.Type;
@@ -513,7 +574,7 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
     [RelayCommand]
     public async Task DeleteResourceAsync(ResourceItemViewModel? item)
     {
-        if (item == null || SelectedWorkspace == null) return;
+        if (item == null || SelectedWorkspace == null || IsOpenMode) return;
 
         var confirmed = await _dialogService.ConfirmDeleteResourceAsync(item.Name);
         if (!confirmed) return;
@@ -533,7 +594,7 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
 
     public async Task MoveResourceAsync(ResourceItemViewModel? item, int direction)
     {
-        if (item == null || SelectedWorkspace == null) return;
+        if (item == null || SelectedWorkspace == null || IsOpenMode) return;
 
         var result = await _resourceService.MoveAsync(item.Id, direction);
         if (result.Success)
@@ -545,6 +606,169 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
                 Resources.Move(currentIndex, newIndex);
             }
         }
+    }
+
+    #endregion
+
+    #region Open the File Actions (M04)
+
+    [RelayCommand]
+    public void ToggleOpenMode()
+    {
+        if (IsLaunching) return;
+
+        IsOpenMode = !IsOpenMode;
+        if (!IsOpenMode)
+        {
+            ClearSelection();
+        }
+        NotifyModeChanged();
+    }
+
+    [RelayCommand]
+    public void ExitOpenMode()
+    {
+        if (IsLaunching) return;
+
+        IsOpenMode = false;
+        ClearSelection();
+        NotifyModeChanged();
+    }
+
+    [RelayCommand]
+    public void SelectAll()
+    {
+        if (!IsOpenMode || IsLaunching) return;
+
+        foreach (var res in Resources)
+        {
+            res.IsSelected = true;
+        }
+        NotifySelectionChanged();
+    }
+
+    [RelayCommand]
+    public void ClearSelection()
+    {
+        foreach (var res in Resources)
+        {
+            res.IsSelected = false;
+        }
+        NotifySelectionChanged();
+    }
+
+    [RelayCommand]
+    public async Task OpenSelectedAsync()
+    {
+        if (!CanOpen) return;
+
+        var selectedItems = Resources.Where(r => r.IsSelected).ToList();
+        if (selectedItems.Count == 0) return;
+
+        try
+        {
+            IsLaunching = true;
+            LaunchProgressTotal = selectedItems.Count;
+            LaunchProgressCurrent = 0;
+            NotifyOpenStateChanged();
+
+            var targetResources = selectedItems.Select(s => s.Resource).ToList();
+            var progress = new Progress<LaunchResult>(_ =>
+            {
+                LaunchProgressCurrent++;
+                OnPropertyChanged(nameof(OpenButtonText));
+            });
+
+            var summary = await _multiLaunchService.LaunchAllAsync(targetResources, progress);
+            LastLaunchSummary = summary;
+
+            FailedResults.Clear();
+            SuccessfulResults.Clear();
+            foreach (var r in summary.Results)
+            {
+                if (r.Success)
+                {
+                    SuccessfulResults.Add(new LaunchResultItemViewModel(r));
+                }
+                else
+                {
+                    FailedResults.Add(new LaunchResultItemViewModel(r));
+                }
+            }
+
+            if (summary.FailureCount == 0)
+            {
+                LaunchSummaryMessage = string.Format(UiText.LaunchSummaryAllSuccessFormat, summary.SuccessCount);
+            }
+            else
+            {
+                LaunchSummaryMessage = string.Format(UiText.LaunchSummaryPartialFormat, summary.SuccessCount, summary.FailureCount);
+            }
+
+            OnPropertyChanged(nameof(HasFailedResults));
+            OnPropertyChanged(nameof(HasSuccessfulResults));
+            IsLaunchSummaryOpen = true;
+        }
+        finally
+        {
+            IsLaunching = false;
+            NotifyOpenStateChanged();
+        }
+    }
+
+    [RelayCommand]
+    public async Task RetryFailedAsync()
+    {
+        if (IsLaunching || LastLaunchSummary == null || FailedResults.Count == 0) return;
+
+        var failedIds = FailedResults.Select(f => f.ResourceId).ToHashSet();
+        var itemsToRetry = Resources.Where(r => failedIds.Contains(r.Id)).ToList();
+        if (itemsToRetry.Count == 0) return;
+
+        IsLaunchSummaryOpen = false;
+
+        // Keep only failed items selected
+        foreach (var res in Resources)
+        {
+            res.IsSelected = failedIds.Contains(res.Id);
+        }
+        NotifySelectionChanged();
+
+        await OpenSelectedAsync();
+    }
+
+    [RelayCommand]
+    public void CloseLaunchSummary()
+    {
+        IsLaunchSummaryOpen = false;
+    }
+
+    public void NotifySelectionChanged()
+    {
+        OnPropertyChanged(nameof(SelectedCount));
+        OnPropertyChanged(nameof(SelectedCountText));
+        OnPropertyChanged(nameof(CanOpen));
+        OnPropertyChanged(nameof(HasSelected));
+        OnPropertyChanged(nameof(HasManySelected));
+        OpenSelectedCommand.NotifyCanExecuteChanged();
+    }
+
+    private void NotifyModeChanged()
+    {
+        OnPropertyChanged(nameof(IsOpenMode));
+        OnPropertyChanged(nameof(CanManageResources));
+        NotifySelectionChanged();
+        foreach (var item in Resources)
+        {
+            item.NotifyCanManageChanged();
+        }
+    }
+
+    private void NotifyOpenStateChanged()
+    {
+        OnPropertyChanged(nameof(CanOpen));
+        OnPropertyChanged(nameof(OpenButtonText));
+        OpenSelectedCommand.NotifyCanExecuteChanged();
     }
 
     #endregion

@@ -93,6 +93,41 @@ public partial class WorkspacePanelView : UserControl
         }
     }
 
+    private void ResourceCard_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        // Ignore clicks directly on child buttons (like action buttons)
+        if (e.OriginalSource is DependencyObject source)
+        {
+            var btn = FindParent<Button>(source);
+            if (btn != null) return;
+
+            // If user clicked directly on CheckBox, let WPF toggle it naturally
+            var chk = FindParent<CheckBox>(source);
+            if (chk != null) return;
+        }
+
+        if (ViewModel != null && ViewModel.IsOpenMode)
+        {
+            if (sender is FrameworkElement element && element.DataContext is ResourceItemViewModel item)
+            {
+                item.ToggleSelectCommand.Execute(null);
+                e.Handled = true;
+            }
+        }
+    }
+
+    private void ResourceCard_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Space && ViewModel != null && ViewModel.IsOpenMode)
+        {
+            if (sender is FrameworkElement element && element.DataContext is ResourceItemViewModel item)
+            {
+                item.ToggleSelectCommand.Execute(null);
+                e.Handled = true;
+            }
+        }
+    }
+
     private static T? FindParent<T>(DependencyObject child) where T : DependencyObject
     {
         DependencyObject? parent = child;

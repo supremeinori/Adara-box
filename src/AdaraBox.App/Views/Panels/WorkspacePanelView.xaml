@@ -109,6 +109,81 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- Accent (Emerald) Button Style (Open Action) -->
+        <Style x:Key="AccentActionBtnStyle" TargetType="Button">
+            <Setter Property="Background" Value="#059669" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="#10B981" />
+            <Setter Property="Padding" Value="12,4" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#047857" />
+                                <Setter Property="BorderBrush" Value="#34D399" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Background" Value="#27272A" />
+                                <Setter Property="Foreground" Value="#71717A" />
+                                <Setter Property="BorderBrush" Value="#3F3F46" />
+                                <Setter Property="Cursor" Value="Arrow" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Open the File Toggle Button Style -->
+        <Style x:Key="OpenTheFileToggleBtnStyle" TargetType="Button">
+            <Setter Property="Background" Value="#27272A" />
+            <Setter Property="Foreground" Value="#D4D4D8" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="#3F3F46" />
+            <Setter Property="Padding" Value="9,4" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#3F3F46" />
+                                <Setter Property="Foreground" Value="#FFFFFF" />
+                            </Trigger>
+                            <DataTrigger Binding="{Binding IsOpenMode}" Value="True">
+                                <Setter Property="Background" Value="#064E3B" />
+                                <Setter Property="Foreground" Value="#A7F3D0" />
+                                <Setter Property="BorderBrush" Value="#10B981" />
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
 
     <Grid Margin="14" MinWidth="430">
@@ -161,9 +236,16 @@
                     <TextBlock Text="{Binding DetailResourceCountText}" FontSize="11" Foreground="#71717A" Margin="0,1,0,0" />
                 </StackPanel>
 
-                <!-- Header Actions: View Mode Toggle, Rename & Delete Workspace -->
+                <!-- Header Actions: Open the File Toggle, View Mode Toggle, Rename & Delete Workspace -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center"
                             Visibility="{Binding IsFormOpen, Converter={StaticResource InverseBoolToVis}}">
+                    <!-- Toggle Open the File Mode (FR-OF-01) -->
+                    <Button Content="Open the File"
+                            Command="{Binding ToggleOpenModeCommand}"
+                            Style="{StaticResource OpenTheFileToggleBtnStyle}"
+                            ToolTip="Pilih beberapa resource untuk dibuka sekaligus"
+                            Margin="0,0,8,0" />
+
                     <!-- ViewMode Toggle: Grid vs List (FR-VW-01..05) -->
                     <Border Background="#27272A" BorderBrush="#3F3F46" BorderThickness="1" CornerRadius="4" Margin="0,0,8,0">
                         <StackPanel Orientation="Horizontal">
@@ -182,15 +264,19 @@
                         </StackPanel>
                     </Border>
 
-                    <Button Content="Ganti Nama"
-                            Command="{Binding BeginRenameCommand}"
-                            CommandParameter="{Binding SelectedWorkspace}"
-                            Style="{StaticResource SecondaryActionBtnStyle}"
-                            Margin="0,0,5,0" />
-                    <Button Content="Hapus"
-                            Command="{Binding DeleteWorkspaceCommand}"
-                            CommandParameter="{Binding SelectedWorkspace}"
-                            Style="{StaticResource DestructiveActionBtnStyle}" />
+                    <!-- Workspace Manage Actions (Hidden in Open Mode - FR-OF-05) -->
+                    <StackPanel Orientation="Horizontal"
+                                Visibility="{Binding CanManageResources, Converter={StaticResource BoolToVis}}">
+                        <Button Content="Ganti Nama"
+                                Command="{Binding BeginRenameCommand}"
+                                CommandParameter="{Binding SelectedWorkspace}"
+                                Style="{StaticResource SecondaryActionBtnStyle}"
+                                Margin="0,0,5,0" />
+                        <Button Content="Hapus"
+                                Command="{Binding DeleteWorkspaceCommand}"
+                                CommandParameter="{Binding SelectedWorkspace}"
+                                Style="{StaticResource DestructiveActionBtnStyle}" />
+                    </StackPanel>
                 </StackPanel>
             </Grid>
         </Grid>
@@ -322,29 +408,94 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <!-- Resource Toolbar (Add Buttons & Recheck) -->
+                <!-- 1. Resource Toolbar (Manage Mode - FR-OF-05) -->
                 <Grid Grid.Row="0" Margin="0,0,0,10"
-                      Visibility="{Binding IsResourceFormOpen, Converter={StaticResource InverseBoolToVis}}">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
+                      Visibility="{Binding CanManageResources, Converter={StaticResource BoolToVis}}">
+                    <Grid Visibility="{Binding IsResourceFormOpen, Converter={StaticResource InverseBoolToVis}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
 
-                    <!-- Add Resource Actions -->
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button Content="+ File" Command="{Binding AddFilesCommand}" Style="{StaticResource SecondaryActionBtnStyle}" ToolTip="Tambah satu atau beberapa file..." Margin="0,0,4,0" />
-                        <Button Content="+ Folder" Command="{Binding AddFolderCommand}" Style="{StaticResource SecondaryActionBtnStyle}" ToolTip="Tambah folder..." Margin="0,0,4,0" />
-                        <Button Content="+ Aplikasi" Command="{Binding AddApplicationCommand}" Style="{StaticResource SecondaryActionBtnStyle}" ToolTip="Tambah shortcut aplikasi (.exe, .lnk)..." Margin="0,0,4,0" />
-                        <Button Content="+ Tautan" Command="{Binding BeginAddLinkCommand}" Style="{StaticResource SecondaryActionBtnStyle}" ToolTip="Tambah URL tautan web..." />
-                    </StackPanel>
+                        <!-- Add Resource Actions -->
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Content="+ File" Command="{Binding AddFilesCommand}" Style="{StaticResource SecondaryActionBtnStyle}" ToolTip="Tambah satu atau beberapa file..." Margin="0,0,4,0" />
+                            <Button Content="+ Folder" Command="{Binding AddFolderCommand}" Style="{StaticResource SecondaryActionBtnStyle}" ToolTip="Tambah folder..." Margin="0,0,4,0" />
+                            <Button Content="+ Aplikasi" Command="{Binding AddApplicationCommand}" Style="{StaticResource SecondaryActionBtnStyle}" ToolTip="Tambah shortcut aplikasi (.exe, .lnk)..." Margin="0,0,4,0" />
+                            <Button Content="+ Tautan" Command="{Binding BeginAddLinkCommand}" Style="{StaticResource SecondaryActionBtnStyle}" ToolTip="Tambah URL tautan web..." />
+                        </StackPanel>
 
-                    <!-- Recheck Availability Action -->
-                    <Button Grid.Column="1"
-                            Content="⟳ Cek Ulang"
-                            Command="{Binding CheckAvailabilityCommand}"
-                            Style="{StaticResource SecondaryActionBtnStyle}"
-                            ToolTip="Cek ulang ketersediaan file/folder di disk" />
+                        <!-- Recheck Availability Action -->
+                        <Button Grid.Column="1"
+                                Content="⟳ Cek Ulang"
+                                Command="{Binding CheckAvailabilityCommand}"
+                                Style="{StaticResource SecondaryActionBtnStyle}"
+                                ToolTip="Cek ulang ketersediaan file/folder di disk" />
+                    </Grid>
                 </Grid>
+
+                <!-- 2. Open the File Action Bar (Open Mode - FR-OF-02..10) -->
+                <Border Grid.Row="0"
+                        Background="#132E27"
+                        BorderBrush="#10B981"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Padding="10,6"
+                        Margin="0,0,0,10"
+                        Visibility="{Binding IsOpenMode, Converter={StaticResource BoolToVis}}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Left: Counter & Bulk Selection -->
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding SelectedCountText}"
+                                       FontSize="12"
+                                       FontWeight="Bold"
+                                       Foreground="#A7F3D0"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,10,0" />
+
+                            <Button Content="Pilih Semua"
+                                    Command="{Binding SelectAllCommand}"
+                                    Style="{StaticResource SecondaryActionBtnStyle}"
+                                    Padding="6,2"
+                                    Margin="0,0,4,0" />
+
+                            <Button Content="Bersihkan"
+                                    Command="{Binding ClearSelectionCommand}"
+                                    Style="{StaticResource SecondaryActionBtnStyle}"
+                                    Padding="6,2" />
+                        </StackPanel>
+
+                        <!-- Center: Warning if > 10 items (FR-OF-10) -->
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding ManySelectedWarningText}"
+                                   FontSize="11"
+                                   Foreground="#FBBF24"
+                                   TextAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   Margin="8,0"
+                                   TextTrimming="CharacterEllipsis"
+                                   Visibility="{Binding HasManySelected, Converter={StaticResource BoolToVis}}" />
+
+                        <!-- Right: Open Button & Done -->
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Content="{Binding OpenButtonText}"
+                                    Command="{Binding OpenSelectedCommand}"
+                                    Style="{StaticResource AccentActionBtnStyle}"
+                                    IsEnabled="{Binding CanOpen}"
+                                    Margin="0,0,6,0" />
+
+                            <Button Content="Selesai"
+                                    Command="{Binding ExitOpenModeCommand}"
+                                    Style="{StaticResource SecondaryActionBtnStyle}" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
 
                 <!-- Resource Form (Add Link / Edit Resource) -->
                 <Border Grid.Row="1"
@@ -383,7 +534,82 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Resources Container (When resource form is NOT open) -->
+                <!-- 3. Launch Summary Dialog / Overlay (M04) -->
+                <Border Grid.Row="1"
+                        Background="#1E1E24"
+                        BorderBrush="#10B981"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="16"
+                        VerticalAlignment="Top"
+                        Panel.ZIndex="100"
+                        Visibility="{Binding IsLaunchSummaryOpen, Converter={StaticResource BoolToVis}}">
+                    <StackPanel>
+                        <!-- Header -->
+                        <Grid Margin="0,0,0,12">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="🚀" FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding LaunchSummaryTitle}" FontSize="13" FontWeight="Bold" Foreground="#F4F4F5" VerticalAlignment="Center" />
+                            </StackPanel>
+                            <Button Content="✕"
+                                    Command="{Binding CloseLaunchSummaryCommand}"
+                                    Background="Transparent"
+                                    Foreground="#A1A1AA"
+                                    BorderThickness="0"
+                                    FontSize="14"
+                                    Cursor="Hand"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center" />
+                        </Grid>
+
+                        <!-- Summary Message -->
+                        <Border Background="#27272A" CornerRadius="6" Padding="12,10" Margin="0,0,0,12">
+                            <TextBlock Text="{Binding LaunchSummaryMessage}" FontSize="12" FontWeight="SemiBold" Foreground="#F4F4F5" />
+                        </Border>
+
+                        <!-- Failed Items List (if any) -->
+                        <StackPanel Visibility="{Binding HasFailedResults, Converter={StaticResource BoolToVis}}" Margin="0,0,0,12">
+                            <TextBlock Text="Item yang Gagal Dibuka:" FontSize="11" FontWeight="SemiBold" Foreground="#F87171" Margin="0,0,0,6" />
+                            <ScrollViewer MaxHeight="140" VerticalScrollBarVisibility="Auto">
+                                <ItemsControl ItemsSource="{Binding FailedResults}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type vm:LaunchResultItemViewModel}">
+                                            <Border Background="#2B1D1D" BorderBrush="#7F1D1D" BorderThickness="1" CornerRadius="4" Padding="8,6" Margin="0,0,0,4">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Grid.Column="0">
+                                                        <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold" Foreground="#F4F4F5" TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Text="{Binding Message}" FontSize="11" Foreground="#FCA5A5" TextWrapping="Wrap" Margin="0,2,0,0" />
+                                                    </StackPanel>
+                                                    <Border Grid.Column="1" Background="#7F1D1D" CornerRadius="3" Padding="6,2" VerticalAlignment="Center" Margin="8,0,0,0">
+                                                        <TextBlock Text="{Binding ReasonBadge}" FontSize="10" FontWeight="SemiBold" Foreground="#FEE2E2" />
+                                                    </Border>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </StackPanel>
+
+                        <!-- Footer Actions -->
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,4,0,0">
+                            <Button Content="Coba Lagi yang Gagal"
+                                    Command="{Binding RetryFailedCommand}"
+                                    Style="{StaticResource PrimaryActionBtnStyle}"
+                                    Margin="0,0,8,0"
+                                    Visibility="{Binding HasFailedResults, Converter={StaticResource BoolToVis}}" />
+                            <Button Content="Tutup"
+                                    Command="{Binding CloseLaunchSummaryCommand}"
+                                    Style="{StaticResource SecondaryActionBtnStyle}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- 4. Resources Container (When resource form and launch summary are closed) -->
                 <Grid Grid.Row="1" Visibility="{Binding IsResourceFormOpen, Converter={StaticResource InverseBoolToVis}}">
 
                     <!-- Empty Resources State -->
@@ -406,7 +632,7 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- MODE 1: GRID VIEW (FR-VW-01, FR-VW-03, FR-VW-05) -->
+                    <!-- MODE 1: GRID VIEW (FR-VW-01, FR-VW-03, FR-VW-05, FR-OF-02) -->
                     <ScrollViewer VerticalScrollBarVisibility="Auto"
                                   MaxHeight="360"
                                   Visibility="{Binding IsGridView, Converter={StaticResource BoolToVis}}">
@@ -426,7 +652,10 @@
                                             CornerRadius="6"
                                             Padding="8"
                                             Margin="0,0,8,8"
-                                            ToolTip="{Binding FullTooltip}">
+                                            ToolTip="{Binding FullTooltip}"
+                                            Focusable="True"
+                                            MouseLeftButtonUp="ResourceCard_MouseLeftButtonUp"
+                                            KeyDown="ResourceCard_KeyDown">
                                         <Border.Style>
                                             <Style TargetType="Border">
                                                 <Style.Triggers>
@@ -434,6 +663,10 @@
                                                         <Setter Property="Background" Value="#27272F" />
                                                         <Setter Property="BorderBrush" Value="#4B5563" />
                                                     </Trigger>
+                                                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                        <Setter Property="Background" Value="#132E27" />
+                                                        <Setter Property="BorderBrush" Value="#10B981" />
+                                                    </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
                                         </Border.Style>
@@ -454,11 +687,26 @@
                                                 <RowDefinition Height="Auto" />
                                             </Grid.RowDefinitions>
 
-                                            <!-- Top: Icon + Availability Badge -->
+                                            <!-- Top: CheckBox + Icon + Availability Badge -->
                                             <Grid Grid.Row="0">
-                                                <Image Source="{Binding Icon}" Width="28" Height="28" HorizontalAlignment="Center" />
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <!-- CheckBox in Open Mode (FR-OF-02) -->
+                                                <CheckBox Grid.Column="0"
+                                                          IsChecked="{Binding IsSelected}"
+                                                          Visibility="{Binding IsOpenMode, Converter={StaticResource BoolToVis}}"
+                                                          VerticalAlignment="Center"
+                                                          Margin="0,0,4,0" />
+
+                                                <Image Grid.Column="1" Source="{Binding Icon}" Width="28" Height="28" HorizontalAlignment="Center" />
+
                                                 <!-- Warning Badge (⚠️) if Missing or AccessDenied -->
-                                                <TextBlock Text="⚠️"
+                                                <TextBlock Grid.Column="2"
+                                                           Text="⚠️"
                                                            FontSize="12"
                                                            Foreground="#EF4444"
                                                            HorizontalAlignment="Right"
@@ -493,7 +741,7 @@
                         </ItemsControl>
                     </ScrollViewer>
 
-                    <!-- MODE 2: LIST VIEW (FR-VW-02, FR-VW-03, FR-VW-05) -->
+                    <!-- MODE 2: LIST VIEW (FR-VW-02, FR-VW-03, FR-VW-05, FR-OF-02) -->
                     <ScrollViewer VerticalScrollBarVisibility="Auto"
                                   MaxHeight="360"
                                   Visibility="{Binding IsListView, Converter={StaticResource BoolToVis}}">
@@ -512,7 +760,10 @@
                                             CornerRadius="5"
                                             Padding="10,6"
                                             Margin="0,0,0,6"
-                                            ToolTip="{Binding FullTooltip}">
+                                            ToolTip="{Binding FullTooltip}"
+                                            Focusable="True"
+                                            MouseLeftButtonUp="ResourceCard_MouseLeftButtonUp"
+                                            KeyDown="ResourceCard_KeyDown">
                                         <Border.Style>
                                             <Style TargetType="Border">
                                                 <Style.Triggers>
@@ -520,6 +771,10 @@
                                                         <Setter Property="Background" Value="#27272F" />
                                                         <Setter Property="BorderBrush" Value="#4B5563" />
                                                     </Trigger>
+                                                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                        <Setter Property="Background" Value="#132E27" />
+                                                        <Setter Property="BorderBrush" Value="#10B981" />
+                                                    </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
                                         </Border.Style>
@@ -536,13 +791,21 @@
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
 
+                                            <!-- CheckBox in Open Mode (FR-OF-02) -->
+                                            <CheckBox Grid.Column="0"
+                                                      IsChecked="{Binding IsSelected}"
+                                                      Visibility="{Binding IsOpenMode, Converter={StaticResource BoolToVis}}"
+                                                      VerticalAlignment="Center"
+                                                      Margin="0,0,8,0" />
+
                                             <!-- Left: Icon + Warning -->
-                                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
                                                 <Image Source="{Binding Icon}" Width="20" Height="20" VerticalAlignment="Center" />
                                                 <TextBlock Text="⚠️"
                                                            FontSize="11"
@@ -553,13 +816,13 @@
                                             </StackPanel>
 
                                             <!-- Middle: Name & Path info -->
-                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <StackPanel Grid.Column="2" VerticalAlignment="Center">
                                                 <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold" Foreground="#F4F4F5" TextTrimming="CharacterEllipsis" />
                                                 <TextBlock Text="{Binding DistinctiveInfo}" FontSize="10" Foreground="#71717A" TextTrimming="CharacterEllipsis" />
                                             </StackPanel>
 
                                             <!-- Type Tag -->
-                                            <Border Grid.Column="2"
+                                            <Border Grid.Column="3"
                                                     Background="#27272A"
                                                     BorderBrush="#3F3F46"
                                                     BorderThickness="1"
@@ -570,8 +833,9 @@
                                                 <TextBlock Text="{Binding TypeDisplayName}" FontSize="10" Foreground="#A1A1AA" />
                                             </Border>
 
-                                            <!-- Action Buttons: Move Up/Down, Edit, Delete -->
-                                            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <!-- Action Buttons: Move Up/Down, Edit, Delete (FR-OF-05: Hidden in Open Mode) -->
+                                            <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center"
+                                                        Visibility="{Binding CanManage, Converter={StaticResource BoolToVis}}">
                                                 <Button Content="▲" ToolTip="Pindah ke Atas" Command="{Binding MoveUpCommand}" Background="Transparent" Foreground="#A1A1AA" BorderThickness="0" Padding="4,2" Cursor="Hand" />
                                                 <Button Content="▼" ToolTip="Pindah ke Bawah" Command="{Binding MoveDownCommand}" Background="Transparent" Foreground="#A1A1AA" BorderThickness="0" Padding="4,2" Cursor="Hand" />
                                                 <Button Content="✏" ToolTip="Edit" Command="{Binding EditCommand}" Background="Transparent" Foreground="#A1A1AA" BorderThickness="0" Padding="4,2" Cursor="Hand" Margin="2,0" />

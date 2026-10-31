@@ -161,12 +161,26 @@ public partial class TopBarWindow : Window
 
     private void TopBarWindow_KeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Escape)
+        if (ViewModel != null && ViewModel.IsPanelOpen)
         {
-            if (ViewModel != null && ViewModel.IsPanelOpen)
+            if (ViewModel.ActivePanelViewModel is WorkspacePanelViewModel wsVm)
             {
-                if (ViewModel.ActivePanelViewModel is WorkspacePanelViewModel wsVm)
+                if (e.Key == Key.Escape)
                 {
+                    if (wsVm.IsLaunchSummaryOpen)
+                    {
+                        wsVm.CloseLaunchSummaryCommand.Execute(null);
+                        e.Handled = true;
+                        return;
+                    }
+
+                    if (wsVm.IsOpenMode)
+                    {
+                        wsVm.ExitOpenModeCommand.Execute(null);
+                        e.Handled = true;
+                        return;
+                    }
+
                     if (wsVm.IsFormOpen)
                     {
                         wsVm.CancelFormCommand.Execute(null);
@@ -180,8 +194,32 @@ public partial class TopBarWindow : Window
                         e.Handled = true;
                         return;
                     }
+
+                    ViewModel.ClosePanelCommand.Execute(null);
+                    e.Handled = true;
+                    return;
                 }
 
+                // Keyboard shortcuts for Open the File mode
+                if (wsVm.IsOpenMode && !wsVm.IsResourceFormOpen && !wsVm.IsFormOpen)
+                {
+                    if (e.Key == Key.A && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+                    {
+                        wsVm.SelectAllCommand.Execute(null);
+                        e.Handled = true;
+                        return;
+                    }
+
+                    if (e.Key == Key.Enter && wsVm.CanOpen)
+                    {
+                        wsVm.OpenSelectedCommand.Execute(null);
+                        e.Handled = true;
+                        return;
+                    }
+                }
+            }
+            else if (e.Key == Key.Escape)
+            {
                 ViewModel.ClosePanelCommand.Execute(null);
                 e.Handled = true;
             }

@@ -10,6 +10,7 @@ using AdaraBox.App.Services;
 using AdaraBox.App.ViewModels;
 using AdaraBox.App.Views;
 using AdaraBox.Core.Common;
+using AdaraBox.Core.Launcher;
 using AdaraBox.Core.Modules;
 using AdaraBox.Core.Resources;
 using AdaraBox.Core.Settings;
@@ -20,6 +21,7 @@ using AdaraBox.Data.Migrations;
 using AdaraBox.Data.Repositories;
 using AdaraBox.Platform.Availability;
 using AdaraBox.Platform.Icons;
+using AdaraBox.Platform.Launcher;
 using AdaraBox.Platform.Tray;
 
 namespace AdaraBox.App;
@@ -169,6 +171,9 @@ public partial class App : Application
         services.AddSingleton<IIconProvider, IconProvider>();
         services.AddSingleton<IFilePickerService, WpfFilePickerService>();
         services.AddSingleton<IDialogService, WpfDialogService>();
+        services.AddSingleton<IProcessStarter, ShellProcessStarter>();
+        services.AddSingleton<IResourceLauncher, ResourceLauncher>();
+        services.AddSingleton<IMultiLaunchService, MultiLaunchService>();
 
         // Top Bar Visibility with initial mode loaded from ISettingsStore
         services.AddSingleton<ITopBarVisibilityService>(sp =>

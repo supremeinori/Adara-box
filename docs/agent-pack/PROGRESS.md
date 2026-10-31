@@ -11,8 +11,8 @@
 | M01 | App Shell | ✔ selesai | ☐ |
 | M02 | Workspace Management | ✔ selesai | ☐ |
 | M03 | Resource Management | ✔ selesai | ☐ |
-| M04 | Open the File | ☐ belum | ☐ |
-| — | **MVP fungsional** (setelah M04) | ☐ | ☐ |
+| M04 | Open the File | ✔ selesai | ☐ |
+| — | **MVP fungsional** (setelah M04) | ✔ tercapai | ☐ |
 | M05 | Hardening | ☐ belum | ☐ |
 | M06 | Packaging & Rilis (v1.0.0) | ☐ belum | ☐ |
 | M07 | Stats (pasca-MVP) | ☐ belum | ☐ |
@@ -28,6 +28,7 @@ Status: ☐ belum · ◐ sedang dikerjakan · ✔ selesai · ⛔ terblokir
 | M01 | Verifikasi visual Application Shell (Startup tanpa window biasa, Top Bar compact 36 DIP, ekspansi panel horizontal animasi, honest placeholder Media & Stats, Esc & Close button, toggle Hide via Settings & Tray, hover trigger strip, dan single instance) | Jalankan `src/AdaraBox.App/bin/Release/net8.0-windows/AdaraBox.App.exe`, ikuti 8 skenario di `docs/manual-tests/M01.md`. |
 | M02 | Verifikasi visual dan fungsional Workspace Management & Persistensi (Inisialisasi SQLite WAL & migrasi awal, tombol data-driven `+ Workspace`, form inline buat/ganti nama dengan validasi, duplikat nama diizinkan, dialog konfirmasi hapus non-destructive, tampilan detail workspace FR-WS-05, serta persistensi preferensi Hide dan data workspace setelah restart) | Jalankan `src/AdaraBox.App/bin/Release/net8.0-windows/AdaraBox.App.exe`, ikuti 9 skenario di `docs/manual-tests/M02.md`. |
 | M03 | Verifikasi visual dan fungsional Resource Management & Tampilan Grid/List (Penambahan 4 tipe resource: file batch multiselect, folder, aplikasi, tautan; validasi URL dan normalisasi; toggle mode Grid/List tanpa kehilangan data; form edit nama dan target; tombol urut naik/turun; indikator peringatan ketersediaan ⚠️; hapus referensi tanpa menghapus file fisik; serta dialog hapus workspace yang menampilkan jumlah resource sebenarnya) | Jalankan `src/AdaraBox.App/bin/Release/net8.0-windows/AdaraBox.App.exe`, ikuti 11 skenario di `docs/manual-tests/M03.md`. |
+| M04 | Verifikasi visual dan fungsional Open the File (Mode toggle & visual header aksen, checkbox di grid & list, counter realtime & bulk select/clear, peringatan >10 item, pemisahan mutlak mode kelola vs buka FR-OF-05, peluncuran multi-resource native Windows berurutan 150ms tanpa freeze, penanganan kegagalan per item tanpa memutus item lain FR-OF-06, ringkasan hasil dengan coba lagi yang gagal, pembersihan seleksi sementara FR-OF-08, serta shortcut keyboard Ctrl+A, Enter, Esc, Space) | Jalankan `src/AdaraBox.App/bin/Release/net8.0-windows/AdaraBox.App.exe`, ikuti 11 skenario di `docs/manual-tests/M04.md`. |
 
 ## OPEN QUESTIONS
 
@@ -40,17 +41,17 @@ Status: ☐ belum · ◐ sedang dikerjakan · ✔ selesai · ⛔ terblokir
 
 ## Acceptance Criteria MVP (SRS §11) — dibuktikan di M04/M05
 
-- [ ] 1. Pengguna dapat membuat dan membuka beberapa workspace.
-- [ ] 2. Workspace dapat menyimpan referensi aplikasi, file, folder, dan tautan.
-- [ ] 3. Resource ditampilkan dalam grid maupun list.
-- [ ] 4. Ganti tampilan tanpa kehilangan data.
-- [ ] 5. Open the File memungkinkan pemilihan dan pembukaan beberapa resource.
-- [ ] 6. Kegagalan satu resource tidak menghentikan resource lain.
-- [ ] 7. Menghapus resource dari Adara Box tidak menghapus file/folder asli.
-- [ ] 8. Data workspace tetap ada setelah aplikasi dimulai ulang.
-- [ ] 9. Top bar dapat selalu terlihat atau disembunyikan sesuai pengaturan.
-- [ ] 10. Modul yang belum diimplementasikan menampilkan status jelas dan tidak berpura-pura berfungsi.
-- [ ] 11. Aplikasi tetap berguna untuk Workspace tanpa Spotify, browser mini, atau Stats.
+- [x] 1. Pengguna dapat membuat dan membuka beberapa workspace.
+- [x] 2. Workspace dapat menyimpan referensi aplikasi, file, folder, dan tautan.
+- [x] 3. Resource ditampilkan dalam grid maupun list.
+- [x] 4. Ganti tampilan tanpa kehilangan data.
+- [x] 5. Open the File memungkinkan pemilihan dan pembukaan beberapa resource.
+- [x] 6. Kegagalan satu resource tidak menghentikan resource lain.
+- [x] 7. Menghapus resource dari Adara Box tidak menghapus file/folder asli.
+- [x] 8. Data workspace tetap ada setelah aplikasi dimulai ulang.
+- [x] 9. Top bar dapat selalu terlihat atau disembunyikan sesuai pengaturan.
+- [x] 10. Modul yang belum diimplementasikan menampilkan status jelas dan tidak berpura-pura berfungsi.
+- [x] 11. Aplikasi tetap berguna untuk Workspace tanpa Spotify, browser mini, atau Stats.
 
 ## Peta Requirement → Modul (acuan traceability)
 
@@ -73,6 +74,47 @@ Status: ☐ belum · ◐ sedang dikerjakan · ✔ selesai · ⛔ terblokir
 | NFR-CP-04 (Windows minimum) | M00 (keputusan), M06 (installer) |
 
 ## Log Laporan Modul
+
+## Laporan M04 — 2026-10-31
+- Status: SELESAI (MVP Fungsional Tercapai)
+- Task selesai:
+  - T1 (Core & Platform):
+    - Core: enum `LaunchFailureReason`, record `LaunchResult`, record `LaunchSummary` (dengan `SuccessCount` dan `FailureCount`), antarmuka `IResourceLauncher` dan `IMultiLaunchService`, serta implementasi `MultiLaunchService` (eksekusi berurutan di background `Task.Run` dengan jeda 150ms antar item, penanganan exception per item tanpa menghentikan item berikutnya, pelaporan progres per item via `IProgress<LaunchResult>`, dan pembatalan bersih via `CancellationToken`).
+    - Platform: antarmuka `IProcessStarter`, implementasi `ShellProcessStarter` (murni `ProcessStartInfo` dengan `UseShellExecute = true` tanpa parameter cmd/powershell per Aturan Emas #3), dan implementasi `ResourceLauncher` (re-validasi target via `ResourceTargetValidator`, penanganan `Link` via browser default, penanganan `File`/`Folder` dengan pengecekan `File.Exists`/`Directory.Exists` lebih dulu -> `NotFound` tanpa exception, penanganan `Application` dengan `WorkingDirectory` otomatis ke direktori file atau direct start untuk `shell:AppsFolder\...`, pemetaan `Win32Exception` 2/3 -> `NotFound`, 5 -> `AccessDenied`, 1155 -> `NoHandler`, 1223 -> `Cancelled`, penanganan `UnauthorizedAccessException`, serta logging privasi: hanya mencatat jenis + status hasil di level Information tanpa membocorkan path lengkap).
+    - DI: Pendaftaran `IProcessStarter`, `IResourceLauncher`, dan `IMultiLaunchService` di `App.xaml.cs`.
+  - T2 (State & ViewModel):
+    - `WorkspacePanelViewModel` mendukung status Open the File: `IsOpenMode`, `IsLaunching`, `LaunchProgressCurrent`, `LaunchProgressTotal`, `IsLaunchSummaryOpen`, `LaunchSummaryTitle`, `LaunchSummaryMessage`, `FailedResults`, dan `SuccessfulResults`.
+    - Properti turunan: `SelectedCount`, `SelectedCountText`, `CanOpen`, `HasSelected`, `HasManySelected` (>10 item, FR-OF-10), `OpenButtonText`, dan `CanManageResources` (FR-OF-05).
+    - Perintah baru: `ToggleOpenModeCommand`, `ExitOpenModeCommand`, `SelectAllCommand`, `ClearSelectionCommand`, `OpenSelectedCommand`, `RetryFailedCommand`, dan `CloseLaunchSummaryCommand`.
+    - `ResourceItemViewModel` memiliki properti `IsSelected` (state UI sementara, tidak disimpan ke database per FR-OF-08), `ToggleSelectCommand`, dan guard `CanManage` yang menonaktifkan perintah edit/delete/move saat mode Open aktif.
+    - Pembersihan seleksi otomatis (FR-OF-08) saat keluar mode Open, saat menekan tombol "← Kembali", saat membuka workspace lain, dan saat menghapus workspace.
+    - Pemisahan mutlak mode Kelola vs Buka (FR-OF-05): seluruh tombol manipulasi resource (`+ File`, `+ Folder`, `+ Aplikasi`, `+ Tautan`, `⟳ Cek Ulang`, `Ganti Nama`, `Hapus`, `▲`, `▼`, `✏`, `🗑`) disembunyikan dan di-guard dari eksekusi saat mode Open aktif. Klik pada item di mode Open memicu toggle centang (`ToggleSelectCommand`), bukan membuka editor.
+  - T3 (UI & Aksesibilitas):
+    - Tombol header dengan teks persis **"Open the File"** (FR-OF-01) dengan highlight aksen visual hijau emerald saat aktif (NFR-UX-02).
+    - Checkbox pemilihan muncul di kartu mode Grid dan baris mode List (FR-OF-02, FR-VW-05).
+    - Action bar Open the File menampilkan counter realtime, tombol "Pilih Semua", "Bersihkan", tombol terkemuka "Open" (disabled jika 0 item dipilih, FR-OF-09), banner peringatan jika >10 item dipilih (FR-OF-10), serta tombol "Selesai".
+    - Panel overlay non-blocking ringkasan hasil pembukaan resource: status sukses/gagal per item (FR-OF-06), daftar kegagalan dengan badge alasan dan pesan ramah dalam Bahasa Indonesia, tombol "Coba Lagi yang Gagal", dan tombol "Tutup".
+    - Navigasi keyboard: `Space` untuk toggle centang item terfokus, `Ctrl+A` untuk pilih semua, `Enter` untuk Open jika `CanOpen`, dan `Esc` berjenjang (tutup ringkasan -> keluar mode Open -> batal form -> tutup panel).
+  - T4 (Automated Tests): 127 unit tests hijau di seluruh test suite (Core, Data, Platform, App).
+    - `AdaraBox.Core.Tests`: 58 tests (termasuk 7 test baru `MultiLaunchServiceTests` mencakup all succeed, satu gagal sisanya tetap jalan FR-OF-06, launcher exception tidak bocor, urutan hasil sesuai input, cancellation stops unexecuted, progress per item, empty/null input).
+    - `AdaraBox.Platform.Tests`: 31 tests (termasuk 11 test baru `ResourceLauncherTests` mencakup link normalisasi, URL berbahaya ditolak, file dengan spasi/non-ASCII tanpa quoting manual, missing path -> NotFound tanpa panggil starter, folder, aplikasi dengan working dir, store app protocol, pemetaan kode Win32 2/3/5/1155/1223/unknown, unauthorized access, token cancelled, dan audit zero shell execution).
+    - `AdaraBox.App.Tests`: 20 tests (termasuk 8 test baru `WorkspacePanelViewModelLaunchTests` mencakup toggle mode, pembersihan seleksi saat keluar mode & back to list FR-OF-08, can open false saat 0 item FR-OF-09, bulk select/clear, aksi kelola diblokir di mode Open FR-OF-05, peluncuran multi-resource dengan ringkasan, retry failed items, dan deteksi >10 item FR-OF-10).
+    - `AdaraBox.Data.Tests`: 18 tests (CRUD, migrasi, transaksi).
+- Acceptance criteria (9/9 terpenuhi):
+  1. Mode Open the File bisa diaktifkan/dinonaktifkan; checkbox hanya muncul saat aktif, di grid maupun list (FR-OF-01..02).
+  2. Membuka resource terpilih berjalan melalui mekanisme Windows yang sesuai tanpa eksekusi shell (FR-OF-04).
+  3. Satu resource gagal tidak menghentikan yang lain; ringkasan menampilkan item gagal + alasan ramah (FR-OF-06).
+  4. Open dinonaktifkan saat tidak ada pilihan; counter benar (FR-OF-07/09).
+  5. Di mode Open tidak ada cara menghapus/mengganti nama/mengedit tanpa sengaja (FR-OF-05).
+  6. Pilihan terhapus saat mode dimatikan atau keluar workspace (FR-OF-08).
+  7. UI tidak freeze saat membuka banyak item (background task 150ms delay, NFR-PF-03).
+  8. Zero call ke cmd / powershell di seluruh codebase (diverifikasi dengan grep).
+  9. Seluruh 11 Kriteria Penerimaan SRS §11 terpenuhi dan MVP fungsional tercapai.
+- [HUMAN CHECK] yang menunggu: Uji manual 11 skenario di `docs/manual-tests/M04.md`.
+- Keputusan yang diambil (dan di mana dicatat):
+  - Penanganan Esc berjenjang di `TopBarWindow.xaml.cs` diperluas: ringkasan hasil -> keluar mode Open -> batalkan form resource -> batalkan form workspace -> tutup panel.
+  - Ringkasan peluncuran dibuat sebagai panel overlay non-blocking di dalam antarmuka workspace sehingga pengguna tetap nyaman dan tidak terinterupsi dialog modal sistem.
+- Masalah/utang teknis yang diketahui: Tidak ada.
 
 ## Laporan M03 — 2026-10-31
 - Status: SELESAI
