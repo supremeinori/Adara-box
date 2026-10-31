@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using AdaraBox.App.Services;
 using AdaraBox.Core.Modules;
 using AdaraBox.Core.Visibility;
 
@@ -23,12 +24,14 @@ public sealed partial class TopBarViewModel : ObservableObject
     private ObservableObject? _activePanelViewModel;
 
     public IReadOnlyList<IAppModule> Modules { get; }
+    public IReadOnlyList<ITopBarAction> Actions { get; }
     public ITopBarVisibilityService VisibilityService => _visibilityService;
 
     public bool IsPanelOpen => SelectedModule != null;
 
     public TopBarViewModel(
         IEnumerable<IAppModule> modules,
+        IEnumerable<ITopBarAction> actions,
         ITopBarVisibilityService visibilityService,
         WorkspacePanelViewModel workspaceVm,
         MediaPanelViewModel mediaVm,
@@ -36,6 +39,7 @@ public sealed partial class TopBarViewModel : ObservableObject
         SettingsPanelViewModel settingsVm)
     {
         Modules = modules.OrderBy(m => m.Order).ToList();
+        Actions = actions.OrderBy(a => a.Order).ToList();
         _visibilityService = visibilityService;
         _workspaceVm = workspaceVm;
         _mediaVm = mediaVm;

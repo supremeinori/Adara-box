@@ -16,7 +16,36 @@ public static class UiText
 
     // Panel & Component Texts
     public const string WorkspaceEmpty = "Belum ada workspace.";
+    public const string WorkspaceEmptyDescription = "Buat workspace pertamamu untuk mulai mengelompokkan file, aplikasi, dan tautan.";
+    public const string CreateFirstWorkspace = "Buat Workspace";
     public const string CloseButtonTooltip = "Tutup panel (Esc)";
+
+    // Workspace Management Texts
+    public const string WorkspaceModuleDisplayName = "Workspace";
+    public const string AddWorkspaceButton = "+ Workspace";
+    public const string WorkspaceListTitle = "Daftar Workspace";
+    public const string CreateWorkspaceTitle = "Buat Workspace Baru";
+    public const string RenameWorkspaceTitle = "Ganti Nama Workspace";
+    public const string WorkspaceNamePlaceholder = "Nama workspace...";
+    public const string WorkspaceNameLabel = "Nama Workspace";
+    public const string Save = "Simpan";
+    public const string Cancel = "Batal";
+    public const string Back = "Kembali";
+    public const string Rename = "Ganti Nama";
+    public const string Delete = "Hapus";
+    public const string WorkspaceDetailResourcesPlaceholder = "Resource untuk workspace ini belum ada.";
+    public const string WorkspaceDetailResourcesSubtext = "Pengelolaan file, folder, aplikasi, dan tautan akan hadir di Modul M03.";
+
+    // Workspace Validation & Error Messages
+    public const string ErrorWorkspaceNameEmpty = "Nama workspace tidak boleh kosong.";
+    public const string ErrorWorkspaceNameTooLong = "Nama workspace maksimal 60 karakter.";
+    public const string ErrorWorkspaceNameInvalid = "Nama workspace mengandung karakter kontrol yang tidak diizinkan.";
+    public const string ErrorWorkspaceNotFound = "Workspace tidak ditemukan.";
+    public const string ErrorUnknown = "Terjadi kesalahan yang tidak terduga.";
+
+    // Confirmation Dialogs
+    public const string DeleteWorkspaceTitle = "Hapus Workspace";
+    public const string DeleteWorkspaceConfirm = "Apakah Anda yakin ingin menghapus workspace \"{0}\"?\nJumlah resource: {1}.\n\nHanya menghapus workspace dari Adara Box. File, folder, aplikasi, dan tautan aslinya tidak terpengaruh.";
 
     // Settings Panel Texts
     public const string SettingsTitle = "Pengaturan";

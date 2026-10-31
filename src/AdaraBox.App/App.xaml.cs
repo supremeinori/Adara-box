@@ -9,9 +9,14 @@ using AdaraBox.App.Resources;
 using AdaraBox.App.Services;
 using AdaraBox.App.ViewModels;
 using AdaraBox.App.Views;
+using AdaraBox.Core.Common;
 using AdaraBox.Core.Modules;
 using AdaraBox.Core.Settings;
 using AdaraBox.Core.Visibility;
+using AdaraBox.Core.Workspaces;
+using AdaraBox.Data.Infrastructure;
+using AdaraBox.Data.Migrations;
+using AdaraBox.Data.Repositories;
 using AdaraBox.Platform.Tray;
 
 namespace AdaraBox.App;
@@ -40,7 +45,8 @@ public partial class App : Application
 
         // 2. Configure Serilog (Master Guide §8: %LOCALAPPDATA%\AdaraBox\logs\adarabox-.log, 14 days retention)
         var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        var logDirectory = Path.Combine(localAppData, "AdaraBox", "logs");
+        var appDataDir = Path.Combine(localAppData, "AdaraBox");
+        var logDirectory = Path.Combine(appDataDir, "logs");
         Directory.CreateDirectory(logDirectory);
         var logFilePath = Path.Combine(logDirectory, "adarabox-.log");
 
@@ -58,15 +64,37 @@ public partial class App : Application
         // 3. Register Global Unhandled Exception Handlers
         SetupExceptionHandling();
 
-        // 4. Configure Application Shell Settings
+        // 4. Initialize Database & Run Migrations (Synchronously before UI loads)
+        var dbPath = Path.Combine(appDataDir, "adarabox.db");
+        IDbConnectionFactory dbConnectionFactory = new SqliteConnectionFactory(dbPath);
+        var migrator = new DatabaseMigrator(dbConnectionFactory);
+
+        try
+        {
+            migrator.Migrate();
+            Log.Information("Database migrations executed successfully on {DbPath}", dbPath);
+        }
+        catch (Exception ex)
+        {
+            Log.Fatal(ex, "Failed to execute database migrations on {DbPath}. Application terminating.", dbPath);
+            MessageBox.Show(
+                "Gagal menginisialisasi database Adara Box. Aplikasi akan ditutup.",
+                UiText.UnhandledExceptionTitle,
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+            Shutdown(1);
+            return;
+        }
+
+        // 5. Configure Application Shell Settings
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
-        // 5. Build Dependency Injection Container
+        // 6. Build Dependency Injection Container
         var services = new ServiceCollection();
-        ConfigureServices(services);
+        ConfigureServices(services, dbConnectionFactory);
         _serviceProvider = services.BuildServiceProvider();
 
-        // 6. Initialize UI Windows & Services
+        // 7. Initialize UI Windows & Services
         var visibilityService = _serviceProvider.GetRequiredService<ITopBarVisibilityService>();
         _topBarWindow = _serviceProvider.GetRequiredService<TopBarWindow>();
         _triggerStripWindow = _serviceProvider.GetRequiredService<TriggerStripWindow>();
@@ -124,12 +152,33 @@ public partial class App : Application
         Log.Information("Adara Box application shell successfully initialized.");
     }
 
-    private void ConfigureServices(IServiceCollection services)
+    private void ConfigureServices(IServiceCollection services, IDbConnectionFactory dbConnectionFactory)
     {
-        // Core Services & Modules
-        services.AddSingleton<ISettingsStore, InMemorySettingsStore>();
-        services.AddSingleton<ITopBarVisibilityService, TopBarVisibilityService>();
+        // Core & Data Services
+        services.AddSingleton(dbConnectionFactory);
+        services.AddSingleton<ISettingsStore, SqliteSettingsStore>();
+        services.AddSingleton<IWorkspaceRepository, SqliteWorkspaceRepository>();
+        services.AddSingleton<IClock, SystemClock>();
+        services.AddSingleton<IWorkspaceService, WorkspaceService>();
+        services.AddSingleton<IDialogService, WpfDialogService>();
 
+        // Top Bar Visibility with initial mode loaded from ISettingsStore
+        services.AddSingleton<ITopBarVisibilityService>(sp =>
+        {
+            var settings = sp.GetRequiredService<ISettingsStore>();
+            var savedMode = Task.Run(() => settings.GetAsync(SettingKeys.TopBarVisibility)).GetAwaiter().GetResult();
+            var initialMode = TopBarVisibilityMode.AlwaysVisible;
+            if (Enum.TryParse<TopBarVisibilityMode>(savedMode, out var parsed))
+            {
+                initialMode = parsed;
+            }
+            return new TopBarVisibilityService(settings, initialMode);
+        });
+
+        // Top Bar Actions
+        services.AddSingleton<ITopBarAction, AddWorkspaceTopBarAction>();
+
+        // Modules
         services.AddSingleton<IAppModule, WorkspaceModule>();
         services.AddSingleton<IAppModule, MediaModule>();
         services.AddSingleton<IAppModule, StatsModule>();

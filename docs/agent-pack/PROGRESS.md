@@ -9,7 +9,7 @@
 |---|---|---|---|
 | M00 | Setup & Spikes | ✔ selesai | ☐ |
 | M01 | App Shell | ✔ selesai | ☐ |
-| M02 | Workspace Management | ☐ belum | ☐ |
+| M02 | Workspace Management | ✔ selesai | ☐ |
 | M03 | Resource Management | ☐ belum | ☐ |
 | M04 | Open the File | ☐ belum | ☐ |
 | — | **MVP fungsional** (setelah M04) | ☐ | ☐ |
@@ -26,6 +26,7 @@ Status: ☐ belum · ◐ sedang dikerjakan · ✔ selesai · ⛔ terblokir
 |---|---|---|
 | M00 | Verifikasi visual interaktif Top Bar (Overlay Topmost vs AppBar) & Hover Trigger Strip | Jalankan `spikes/WindowSpike/bin/Release/net8.0-windows/WindowSpike.exe`, ikuti 4 skenario di `docs/spike-window.md` (uji pencurian fokus, input textbox, space reservation AppBar, dan dwell timer hover). |
 | M01 | Verifikasi visual Application Shell (Startup tanpa window biasa, Top Bar compact 36 DIP, ekspansi panel horizontal animasi, honest placeholder Media & Stats, Esc & Close button, toggle Hide via Settings & Tray, hover trigger strip, dan single instance) | Jalankan `src/AdaraBox.App/bin/Release/net8.0-windows/AdaraBox.App.exe`, ikuti 8 skenario di `docs/manual-tests/M01.md`. |
+| M02 | Verifikasi visual dan fungsional Workspace Management & Persistensi (Inisialisasi SQLite WAL & migrasi awal, tombol data-driven `+ Workspace`, form inline buat/ganti nama dengan validasi, duplikat nama diizinkan, dialog konfirmasi hapus non-destructive, tampilan detail workspace FR-WS-05, serta persistensi preferensi Hide dan data workspace setelah restart) | Jalankan `src/AdaraBox.App/bin/Release/net8.0-windows/AdaraBox.App.exe`, ikuti 9 skenario di `docs/manual-tests/M02.md`. |
 
 ## OPEN QUESTIONS
 
@@ -71,6 +72,41 @@ Status: ☐ belum · ◐ sedang dikerjakan · ✔ selesai · ⛔ terblokir
 | NFR-CP-04 (Windows minimum) | M00 (keputusan), M06 (installer) |
 
 ## Log Laporan Modul
+
+## Laporan M02 — 2026-10-31
+- Status: SELESAI
+- Task selesai:
+  - T1 (Infrastruktur Data): `IDbConnectionFactory`, `SqliteConnectionFactory` (WAL mode, `PRAGMA foreign_keys = ON`), Dapper type handlers Guid & DateTimeOffset, `DatabaseMigrator` (transaksional per versi, `PRAGMA user_version`), `Migration001_InitialSchema` (tabel `workspace`, `resource` with `ON DELETE CASCADE`, `settings`), `SqliteWorkspaceRepository`, `SqliteSettingsStore` (upsert on conflict).
+  - T2 (Core Services): `IClock`, `SystemClock`, record `Workspace`, `IWorkspaceRepository`, `IWorkspaceService`, `WorkspaceNameValidator` (trim, empty/whitespace check, max 60 chars, control characters rejected, duplikat diizinkan sesuai FR-WS-07), `WorkspaceService` (Golden Rule #1: menghapus DB row tanpa menyentuh disk).
+  - T3 (Persistensi Preferensi Top Bar): `TopBarVisibilityService` membaca initial mode dari `ISettingsStore` (`SettingKeys.TopBarVisibility`) pada startup aplikasi dan menyimpan otomatis saat mode berubah. Runtime in-memory store digantikan dengan SQLite.
+  - T4 (UI Workspace):
+    - Tombol cepat data-driven **"+ Workspace"** di top bar via `ITopBarAction` & `AddWorkspaceTopBarAction`.
+    - `WorkspacePanelViewModel` dengan `ObservableCollection<WorkspaceItemViewModel>`, status loading, status kosong ("Belum ada workspace. Buat workspace pertamamu untuk mulai mengelompokkan file, aplikasi, dan tautan.").
+    - Form inline terpadu untuk Buat dan Ganti Nama workspace (TextBox dengan auto-focus, Enter = Simpan, Esc = Batal, pesan error validasi tampil di bawah field).
+    - Pencegahan penutupan shell window oleh tombol Esc saat form sedang aktif.
+    - Dialog konfirmasi hapus workspace via `IDialogService` & `WpfDialogService` menyebutkan nama, jumlah resource (0 resource), dan peringatan non-destructive: *"Hanya menghapus workspace dari Adara Box. File, folder, aplikasi, dan tautan aslinya tidak terpengaruh."*.
+    - Tampilan detail workspace saat item diklik (FR-WS-05) dengan judul workspace, tombol "← Kembali", dan placeholder jujur untuk resource yang akan hadir di M03.
+  - T5 (Automated Tests): 53 unit tests mencakup Core, Data, Platform, dan App.
+    - `AdaraBox.Core.Tests`: validator nama, CRUD workspace service, sorting, penanganan not found, duplikat nama diizinkan, dan test arsitektur.
+    - `AdaraBox.Data.Tests`: migrasi DB baru, idempotensi migrasi, rollback transaksi pada kegagalan migrasi, foreign key cascade, persistensi melintasi restart koneksi, upsert settings, dan path SQLite dengan spasi/non-ASCII.
+    - `AdaraBox.Platform.Tests`: launcher error code mapping, single-instance mutex, tray menu.
+    - `AdaraBox.App.Tests`: `WorkspacePanelViewModel` empty state, create flow, validation error, detail view navigation, rename flow, delete flow dengan confirmation dialog, dan persistensi `TopBarVisibilityService`.
+- Acceptance criteria (8/8 terpenuhi):
+  1. Pengguna dapat membuat, melihat, mengganti nama, dan menghapus workspace (FR-WS-01…05).
+  2. Nama kosong ditolak dengan pesan jelas; nama duplikat diizinkan (FR-WS-07).
+  3. Workspace dan preferensi Hide tetap ada setelah aplikasi ditutup dan dibuka lagi (FR-WS-06, FR-TB-05).
+  4. Hapus workspace meminta konfirmasi dan tidak menyentuh file asli (cek: 0 panggilan `File.Delete`/`Directory.Delete` di seluruh kode).
+  5. Migrasi berjalan di DB baru; skema versi terjaga dan rollback bila transaksi gagal.
+  6. Penulisan data memakai transaksi bila lebih dari satu statement (NFR-RL-04).
+  7. Tidak ada operasi DB di UI thread yang memblokir (semua async).
+  8. Test Core, Data, Platform, App, dan arsitektur hijau (53 tests passed; `dotnet build -c Release` 0 errors, 0 warnings).
+- [HUMAN CHECK] yang menunggu: Uji manual 9 skenario di `docs/manual-tests/M02.md`.
+- Keputusan yang diambil (dan di mana dicatat):
+  - Form inline terpadu untuk Create dan Rename Workspace dengan penanganan Esc berjenjang di `TopBarWindow.xaml.cs`.
+  - Abstraksi dialog via `IDialogService` di layer App agar ViewModel 100% dapat diuji secara otomatis tanpa memunculkan WPF modal dialog di unit tests.
+  - Aksi top bar data-driven via `ITopBarAction` (`AddWorkspaceTopBarAction`) yang terdaftar di DI.
+- OPEN QUESTION: Q1 (Multi-monitor), Q2 (Shortcut keyboard default), Q3 (Startup behavior) diputuskan di M05; Q4 (Drag-and-drop) dievaluasi di M03.
+- Masalah/utang teknis yang diketahui: Tidak ada. Semua dependensi mematuhi aturan arsitektur.
 
 ## Laporan M01 — 2026-10-31
 - Status: SELESAI

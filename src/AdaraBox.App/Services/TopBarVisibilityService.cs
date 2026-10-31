@@ -16,10 +16,10 @@ public sealed class TopBarVisibilityService : ITopBarVisibilityService
     public event EventHandler<TopBarVisibilityMode>? ModeChanged;
     public event EventHandler<TopBarDisplayState>? DisplayStateChanged;
 
-    public TopBarVisibilityService(ISettingsStore settingsStore)
+    public TopBarVisibilityService(ISettingsStore settingsStore, TopBarVisibilityMode initialMode = TopBarVisibilityMode.AlwaysVisible)
     {
         _settingsStore = settingsStore;
-        _stateMachine = new TopBarVisibilityStateMachine(TopBarVisibilityMode.AlwaysVisible);
+        _stateMachine = new TopBarVisibilityStateMachine(initialMode);
 
         _dwellTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(UiConstants.HoverDwellTimeMs) };
         _dwellTimer.Tick += (s, e) =>
