@@ -13,9 +13,11 @@ using AdaraBox.App.Views.Dialogs;
 using AdaraBox.Core.Common;
 using AdaraBox.Core.Hotkeys;
 using AdaraBox.Core.Launcher;
+using AdaraBox.Core.Media;
 using AdaraBox.Core.Modules;
 using AdaraBox.Core.Resources;
 using AdaraBox.Core.Settings;
+using AdaraBox.Core.Stats;
 using AdaraBox.Core.Visibility;
 using AdaraBox.Core.Workspaces;
 using AdaraBox.Data.Infrastructure;
@@ -26,6 +28,7 @@ using AdaraBox.Platform.Hotkeys;
 using AdaraBox.Platform.Icons;
 using AdaraBox.Platform.Launcher;
 using AdaraBox.Platform.Startup;
+using AdaraBox.Platform.Stats;
 using AdaraBox.Platform.Tray;
 
 namespace AdaraBox.App;
@@ -78,7 +81,7 @@ public partial class App : Application
         var backupsDir = Path.Combine(appDataDir, "backups");
         IDatabaseBackupService backupService = new DatabaseBackupService();
 
-        var integrity = DatabaseIntegrityChecker.Check(dbPath, maxKnownVersion: 1);
+        var integrity = DatabaseIntegrityChecker.Check(dbPath, maxKnownVersion: 2);
         if (integrity.Status != DatabaseIntegrityStatus.Ok)
         {
             Log.Warning("Database integrity issue detected: Status={Status}, Message={Message}", integrity.Status, integrity.Message);
@@ -244,9 +247,11 @@ public partial class App : Application
         services.AddSingleton<ISettingsStore, SqliteSettingsStore>();
         services.AddSingleton<IWorkspaceRepository, SqliteWorkspaceRepository>();
         services.AddSingleton<IResourceRepository, SqliteResourceRepository>();
+        services.AddSingleton<IMediaLinkRepository, SqliteMediaLinkRepository>();
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<IWorkspaceService, WorkspaceService>();
         services.AddSingleton<IResourceService, ResourceService>();
+        services.AddSingleton<IMediaLinkService, MediaLinkService>();
         services.AddSingleton<IResourceAvailabilityChecker, ResourceAvailabilityChecker>();
         services.AddSingleton<IIconProvider, IconProvider>();
         services.AddSingleton<IFilePickerService, WpfFilePickerService>();
@@ -256,6 +261,7 @@ public partial class App : Application
         services.AddSingleton<IMultiLaunchService, MultiLaunchService>();
         services.AddSingleton<IAutoStartService, RegistryAutoStartService>();
         services.AddSingleton<IGlobalHotkeyService, Win32GlobalHotkeyService>();
+        services.AddSingleton<ISystemStatsProvider, SystemStatsProvider>();
 
         // Top Bar Visibility with initial mode loaded from ISettingsStore
         services.AddSingleton<ITopBarVisibilityService>(sp =>

@@ -31,11 +31,11 @@ public class ModuleTests
         Assert.Equal(ModuleStatus.Available, ordered[0].Status);
         Assert.Null(ordered[0].StatusMessage);
 
-        Assert.Equal(ModuleStatus.InDevelopment, ordered[1].Status);
-        Assert.Equal("Masih dalam pengembangan", ordered[1].StatusMessage);
+        Assert.Equal(ModuleStatus.Available, ordered[1].Status);
+        Assert.Null(ordered[1].StatusMessage);
 
-        Assert.Equal(ModuleStatus.InDevelopment, ordered[2].Status);
-        Assert.Equal("Masih dalam pengembangan", ordered[2].StatusMessage);
+        Assert.Equal(ModuleStatus.Available, ordered[2].Status);
+        Assert.Null(ordered[2].StatusMessage);
 
         Assert.Equal(ModuleStatus.Available, ordered[3].Status);
         Assert.Null(ordered[3].StatusMessage);

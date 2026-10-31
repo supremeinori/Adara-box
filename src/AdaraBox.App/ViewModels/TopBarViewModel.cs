@@ -45,6 +45,14 @@ public sealed partial class TopBarViewModel : ObservableObject
         _mediaVm = mediaVm;
         _statsVm = statsVm;
         _settingsVm = settingsVm;
+
+        _visibilityService.DisplayStateChanged += (s, state) =>
+        {
+            if (state == TopBarDisplayState.Hidden)
+            {
+                _statsVm.StopPolling();
+            }
+        };
     }
 
     [RelayCommand]
@@ -54,6 +62,11 @@ public sealed partial class TopBarViewModel : ObservableObject
         {
             ClosePanel();
             return;
+        }
+
+        if (SelectedModule?.Id == "stats" && module.Id != "stats")
+        {
+            _statsVm.StopPolling();
         }
 
         SelectedModule = module;
@@ -66,6 +79,11 @@ public sealed partial class TopBarViewModel : ObservableObject
             _ => null
         };
 
+        if (module.Id == "stats")
+        {
+            _statsVm.StartPolling();
+        }
+
         OnPropertyChanged(nameof(IsPanelOpen));
         _visibilityService.SetPanelOpen(true);
     }
@@ -73,6 +91,11 @@ public sealed partial class TopBarViewModel : ObservableObject
     [RelayCommand]
     public void ClosePanel()
     {
+        if (SelectedModule?.Id == "stats")
+        {
+            _statsVm.StopPolling();
+        }
+
         SelectedModule = null;
         ActivePanelViewModel = null;
         OnPropertyChanged(nameof(IsPanelOpen));

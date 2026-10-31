@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.0] - 2026-10-31
+
+### Added
+- **M07: System Stats (Hardware Metrics)**
+  - Real-time hardware metric panel displaying CPU utilization, RAM usage (used/total + percentage), storage volumes, and GPU 3D utilization.
+  - Zero-polling background optimization (NFR-PF-04): hardware metrics are only polled while the Stats panel is active and visible; zero overhead when closed or hidden.
+  - Accurate kernel/user times calculations via Win32 `GetSystemTimes` (avoiding fragile performance counter localization issues).
+  - Physical memory measurement via `GlobalMemoryStatusEx`.
+  - Automatic fixed drive enumeration via `DriveInfo` with safe fault isolation per volume.
+  - Transparent error handling (FR-ST-06): unsupported or inaccessible metrics display a distinct "Tidak tersedia" status without fabricated or estimated dummy data.
+- **M08: Media Module (Media Quick Links & Exploration)**
+  - **Tahap A (Production):** Media Quick Links allowing users to curate shortcuts to favorite streaming services, web radio, or playlists (Spotify Web, YouTube Music, SoundCloud, podcasts).
+  - Launch quick links directly in the user's default browser via `IResourceLauncher`.
+  - Schema migration #002 adding indexed `media_link` local table.
+  - Complete CRUD support for media links with strict URL scheme validation (rejects dangerous schemes `javascript:`, `file:`, etc.).
+  - Clear UI notice stating links are opened in the default browser and playback controls are handled by the browser.
+  - **Tahap B (Technical Evaluation Reports):**
+    - `docs/webview-evaluation.md`: Detailed evaluation on Microsoft WebView2 embedding covering authentication boundaries, cookie storage, ToS risks, memory/CPU overhead (200-500MB RAM), and official recommendation to postpone/reject in favor of lightweight browser links.
+    - `docs/media-controls-evaluation.md`: Technical feasibility study on Windows `GlobalSystemMediaTransportControlsSessionManager` (GSMTC) WinRT APIs.
+
+---
+
 ## [1.0.0] - 2026-10-31
 
 ### Added

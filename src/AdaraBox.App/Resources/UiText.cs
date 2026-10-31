@@ -113,4 +113,16 @@ public static class UiText
     // Error Dialogs
     public const string UnhandledExceptionTitle = "Kesalahan Tak Terduga";
     public const string UnhandledExceptionMessage = "Terjadi kesalahan pada aplikasi Adara Box. Rincian telah dicatat di file log.";
+
+    // Media Module Texts (M08)
+    public const string MediaModuleDisplayName = "Media";
+    public const string MediaPanelTitle = "Tautan Cepat Media";
+    public const string MediaBrowserNotice = "Tautan dibuka di browser default; Adara Box tidak mengontrol pemutaran langsung.";
+    public const string MediaControlsNotice = "Kontrol pemutaran: masih dalam pengembangan";
+    public const string MediaEmpty = "Belum ada tautan media.";
+    public const string MediaEmptyDescription = "Simpan playlist, stasiun radio, atau layanan media web favorit Anda (Spotify, YouTube Music, dll).";
+    public const string AddMediaLink = "+ Tautan Media";
+    public const string AddMediaLinkTitle = "Tambah Tautan Media";
+    public const string DeleteMediaLinkTitle = "Hapus Tautan Media";
+    public const string DeleteMediaLinkConfirm = "Hapus tautan media \"{0}\"?";
 }

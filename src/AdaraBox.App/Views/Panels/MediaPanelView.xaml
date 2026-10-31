@@ -3,12 +3,225 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:components="clr-namespace:AdaraBox.App.Views.Components"
+             xmlns:conv="clr-namespace:AdaraBox.App.Converters"
              xmlns:vm="clr-namespace:AdaraBox.App.ViewModels"
              d:DataContext="{d:DesignInstance vm:MediaPanelViewModel}"
              mc:Ignorable="d" 
-             d:DesignHeight="180" d:DesignWidth="400">
-    <Grid Margin="16">
-        <components:ModuleStatusView Status="{Binding Status}" StatusMessage="{Binding StatusMessage}" />
+             d:DesignHeight="380" d:DesignWidth="460">
+
+    <UserControl.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVis" />
+        <conv:BoolToVisibilityConverter x:Key="InverseBoolToVis" Invert="True" />
+
+        <!-- Primary Button Style -->
+        <Style x:Key="PrimaryActionBtnStyle" TargetType="Button">
+            <Setter Property="Background" Value="#2563EB" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="#3B82F6" />
+            <Setter Property="Padding" Value="10,4" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="5"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#1D4ED8" />
+                                <Setter Property="BorderBrush" Value="#60A5FA" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Secondary Button Style -->
+        <Style x:Key="SecondaryActionBtnStyle" TargetType="Button">
+            <Setter Property="Background" Value="#27272A" />
+            <Setter Property="Foreground" Value="#D4D4D8" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="#3F3F46" />
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#3F3F46" />
+                                <Setter Property="Foreground" Value="#FFFFFF" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Launch Button Style -->
+        <Style x:Key="LaunchBtnStyle" TargetType="Button">
+            <Setter Property="Background" Value="#064E3B" />
+            <Setter Property="Foreground" Value="#A7F3D0" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="#059669" />
+            <Setter Property="Padding" Value="8,3" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#047857" />
+                                <Setter Property="Foreground" Value="#FFFFFF" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="14" MinWidth="430">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- 1. Header Row -->
+        <Grid Grid.Row="0" Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="🎵" FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center" />
+                <TextBlock Text="Media Quick Links" FontSize="14" FontWeight="SemiBold" Foreground="#F4F4F5" VerticalAlignment="Center" />
+            </StackPanel>
+
+            <Button Grid.Column="1"
+                    Content="+ Tautan Media"
+                    Command="{Binding BeginAddCommand}"
+                    Style="{StaticResource PrimaryActionBtnStyle}"
+                    Visibility="{Binding IsFormOpen, Converter={StaticResource InverseBoolToVis}}" />
+        </Grid>
+
+        <!-- 2. Notice Banners (FR-MD-04 & SRS §9.3) -->
+        <Border Grid.Row="1" Background="#182320" BorderBrush="#0D4B39" BorderThickness="1" CornerRadius="6" Padding="10,7" Margin="0,0,0,12">
+            <StackPanel>
+                <TextBlock Text="{Binding BrowserNoticeText}" FontSize="11" Foreground="#A7F3D0" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding ControlsNoticeText}" FontSize="10" Foreground="#6EE7B7" Margin="0,2,0,0" FontStyle="Italic" />
+            </StackPanel>
+        </Border>
+
+        <!-- 3. Content Area -->
+        <Grid Grid.Row="2">
+
+            <!-- A. INLINE FORM (Add Media Link) -->
+            <Border Background="#202025"
+                    BorderBrush="#3B82F6"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="16"
+                    VerticalAlignment="Top"
+                    Panel.ZIndex="100"
+                    Visibility="{Binding IsFormOpen, Converter={StaticResource BoolToVis}}">
+                <StackPanel>
+                    <TextBlock Text="{Binding FormTitle}" FontSize="13" FontWeight="SemiBold" Foreground="#F4F4F5" Margin="0,0,0,10" />
+
+                    <TextBlock Text="Nama Tampilan (mis. Playlist Spotify / Lofi Radio):" FontSize="11" Foreground="#A1A1AA" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding FormName, UpdateSourceTrigger=PropertyChanged}"
+                             Background="#18181B" Foreground="#F4F4F5" BorderBrush="#3F3F46" BorderThickness="1"
+                             Padding="8,6" FontSize="12" Margin="0,0,0,10" MaxLength="80" />
+
+                    <TextBlock Text="URL Tautan Web (harus diawali http:// atau https://):" FontSize="11" Foreground="#A1A1AA" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding FormUrl, UpdateSourceTrigger=PropertyChanged}"
+                             Background="#18181B" Foreground="#F4F4F5" BorderBrush="#3F3F46" BorderThickness="1"
+                             Padding="8,6" FontSize="12" />
+
+                    <TextBlock Text="{Binding FormError}" Foreground="#F87171" FontSize="11" Margin="2,5,0,0" TextWrapping="Wrap"
+                               Visibility="{Binding HasFormError, Converter={StaticResource BoolToVis}}" />
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+                        <Button Content="Batal" Command="{Binding CancelFormCommand}" Style="{StaticResource SecondaryActionBtnStyle}" Margin="0,0,8,0" />
+                        <Button Content="Simpan" Command="{Binding SaveFormCommand}" Style="{StaticResource PrimaryActionBtnStyle}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- B. MEDIA LINKS LIST (When form is closed) -->
+            <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="340"
+                          Visibility="{Binding IsFormOpen, Converter={StaticResource InverseBoolToVis}}">
+                <Grid>
+                    <!-- Empty State -->
+                    <Border Background="#1C1C21" BorderBrush="#2E2E38" BorderThickness="1" CornerRadius="8" Padding="28"
+                            Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVis}}">
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Text="🎵" FontSize="32" HorizontalAlignment="Center" Margin="0,0,0,10" />
+                            <TextBlock Text="{Binding EmptyTitle}" FontSize="14" FontWeight="SemiBold" Foreground="#E4E4E7" HorizontalAlignment="Center" />
+                            <TextBlock Text="{Binding EmptyDescription}" FontSize="12" Foreground="#71717A" TextWrapping="Wrap" TextAlignment="Center" Margin="0,6,0,16" MaxWidth="320" HorizontalAlignment="Center" />
+                            <Button Content="+ Tautan Media" Command="{Binding BeginAddCommand}" Style="{StaticResource PrimaryActionBtnStyle}" HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Links Cards -->
+                    <ItemsControl ItemsSource="{Binding Links}"
+                                  Visibility="{Binding HasLinks, Converter={StaticResource BoolToVis}}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:MediaLinkItemViewModel}">
+                                <Border Background="#1F1F24" BorderBrush="#2E2E38" BorderThickness="1" CornerRadius="6" Padding="12,9" Margin="0,0,0,8">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Grid.Column="0" Text="🎵" FontSize="15" VerticalAlignment="Center" Margin="0,0,10,0" />
+
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="#F4F4F5" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{Binding Domain}" FontSize="11" Foreground="#71717A" Margin="0,1,0,0" TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Button Content="Buka ↗" Command="{Binding OpenCommand}" Style="{StaticResource LaunchBtnStyle}" Margin="0,0,6,0" ToolTip="Buka di browser default" />
+                                            <Button Content="🗑" Command="{Binding DeleteCommand}" Background="Transparent" Foreground="#F87171" BorderThickness="0" Padding="6,4" Cursor="Hand" ToolTip="Hapus tautan media" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </ScrollViewer>
+        </Grid>
     </Grid>
 </UserControl>

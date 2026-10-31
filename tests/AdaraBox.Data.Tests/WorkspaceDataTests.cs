@@ -48,16 +48,18 @@ public class WorkspaceDataTests : IDisposable
 
         using var connection = _factory.CreateConnection();
         var version = connection.ExecuteScalar<int>("PRAGMA user_version;");
-        Assert.Equal(1, version);
+        Assert.Equal(2, version);
 
         // Verify tables exist
         var workspaceTableCount = connection.ExecuteScalar<int>("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='workspace';");
         var resourceTableCount = connection.ExecuteScalar<int>("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='resource';");
         var settingsTableCount = connection.ExecuteScalar<int>("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='settings';");
+        var mediaLinkTableCount = connection.ExecuteScalar<int>("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='media_link';");
 
         Assert.Equal(1, workspaceTableCount);
         Assert.Equal(1, resourceTableCount);
         Assert.Equal(1, settingsTableCount);
+        Assert.Equal(1, mediaLinkTableCount);
     }
 
     [Fact]
@@ -71,7 +73,7 @@ public class WorkspaceDataTests : IDisposable
 
         using var connection = _factory.CreateConnection();
         var version = connection.ExecuteScalar<int>("PRAGMA user_version;");
-        Assert.Equal(1, version);
+        Assert.Equal(2, version);
     }
 
     [Fact]
@@ -81,20 +83,20 @@ public class WorkspaceDataTests : IDisposable
         migrator.Migrate();
 
         var faultyMigration = new FaultyTestMigration();
-        var migratorWithFault = new DatabaseMigrator(_factory, new IMigration[] { new Migration001_InitialSchema(), faultyMigration });
+        var migratorWithFault = new DatabaseMigrator(_factory, new IMigration[] { new Migration001_InitialSchema(), new Migration002_MediaLinksSchema(), faultyMigration });
 
         var ex = Assert.Throws<InvalidOperationException>(() => migratorWithFault.Migrate());
         Assert.Contains("failed and was rolled back", ex.Message);
 
         using var connection = _factory.CreateConnection();
         var version = connection.ExecuteScalar<int>("PRAGMA user_version;");
-        // user_version must remain at 1 because migration 2 was rolled back
-        Assert.Equal(1, version);
+        // user_version must remain at 2 because migration 3 was rolled back
+        Assert.Equal(2, version);
     }
 
     private sealed class FaultyTestMigration : IMigration
     {
-        public int Version => 2;
+        public int Version => 3;
         public string Description => "Broken migration for rollback test";
         public string Sql => "CREATE TABLE valid_part (id TEXT); SYNTAX ERROR INTENTIONAL;";
     }

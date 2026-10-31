@@ -23,7 +23,11 @@ public sealed class DatabaseMigrator
     {
         _connectionFactory = connectionFactory;
         _migrations = migrations?.OrderBy(m => m.Version).ToList()
-                      ?? (IReadOnlyList<IMigration>)new IMigration[] { new Migration001_InitialSchema() };
+                      ?? (IReadOnlyList<IMigration>)new IMigration[]
+                      {
+                          new Migration001_InitialSchema(),
+                          new Migration002_MediaLinksSchema()
+                      };
         _backupService = backupService;
         _dbPath = dbPath;
         _backupsDir = backupsDir;

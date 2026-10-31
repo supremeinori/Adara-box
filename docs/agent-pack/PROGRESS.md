@@ -15,8 +15,8 @@
 | — | **MVP fungsional** (setelah M04) | ✔ tercapai | ☐ |
 | M05 | Hardening | ✔ selesai | ☐ |
 | M06 | Packaging & Rilis (v1.0.0) | ✔ selesai | ☐ |
-| M07 | Stats (pasca-MVP) | ☐ belum | ☐ |
-| M08 | Media (pasca-MVP) | ☐ belum | ☐ |
+| M07 | Stats (pasca-MVP) | ✔ selesai | ☐ |
+| M08 | Media (pasca-MVP) | ✔ selesai | ☐ |
 
 Status: ☐ belum · ◐ sedang dikerjakan · ✔ selesai · ⛔ terblokir
 
@@ -31,6 +31,8 @@ Status: ☐ belum · ◐ sedang dikerjakan · ✔ selesai · ⛔ terblokir
 | M04 | Verifikasi visual dan fungsional Open the File (Mode toggle & visual header aksen, checkbox di grid & list, counter realtime & bulk select/clear, peringatan >10 item, pemisahan mutlak mode kelola vs buka FR-OF-05, peluncuran multi-resource native Windows berurutan 150ms tanpa freeze, penanganan kegagalan per item tanpa memutus item lain FR-OF-06, ringkasan hasil dengan coba lagi yang gagal, pembersihan seleksi sementara FR-OF-08, serta shortcut keyboard Ctrl+A, Enter, Esc, Space) | Jalankan `src/AdaraBox.App/bin/Release/net8.0-windows/AdaraBox.App.exe`, ikuti 11 skenario di `docs/manual-tests/M04.md`. |
 | M05 | Verifikasi visual & ketahanan MVP Hardening (Deteksi DB korup/0 byte & dialog pemulihan, shortcut global `Ctrl+Alt+Space`, auto-start toggle di registry `HKCU\...\Run`, navigasi keyboard penuh F2/Delete/Enter/Esc, reposisi multi-monitor & DPI scaling PerMonitorV2, dan performa beban 200 resource < 300ms) | Jalankan `src/AdaraBox.App/bin/Release/net8.0-windows/AdaraBox.App.exe`, ikuti 6 skenario di `docs/manual-tests/M05.md`. |
 | M06 | Verifikasi rilis & installer pada lingkungan Windows bersih (Instalasi per-pengguna ke `%LOCALAPPDATA%\Programs\AdaraBox` tanpa hak admin, verifikasi uninstaller dengan perlindungan data pengguna, kompilasi Inno Setup via `build/build-installer.ps1`) | Jalankan `powershell -ExecutionPolicy Bypass -File build/build-installer.ps1` dan ikuti checklist di `docs/release-checklist.md`. |
+| M07 | Verifikasi visual dan performa System Stats (Live update metrik CPU, RAM terpakai/total, daftar fixed drives, dan GPU 3D; penanganan nilai null "Tidak tersedia" tanpa dummy data; verifikasi zero-polling saat panel ditutup/top bar tersembunyi) | Buka panel Stats di Top Bar, perhatikan metrik real-time. Tutup panel dan pastikan aktivitas CPU aplikasi kembali idle < 0.5%. |
+| M08 | Verifikasi fungsional Media Quick Links & Evaluasi WebView2 (Simpan tautan Spotify Web / YouTube Music, buka di browser default lewat launcher, penolakan skema tidak aman, review laporan evaluasi WebView2 di `docs/webview-evaluation.md`) | Buka panel Media di Top Bar, tambah tautan media web, klik Buka dan pastikan link terbuka di browser default. |
 
 ## OPEN QUESTIONS
 

@@ -37,6 +37,9 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host "All tests passed successfully." -ForegroundColor Green
 
 Write-Host "`n[2/3] Publishing AdaraBox.App (Self-Contained, $Runtime)..." -ForegroundColor Yellow
+Stop-Process -Name "AdaraBox.App" -Force -ErrorAction SilentlyContinue
+Start-Sleep -Milliseconds 600
+
 if (Test-Path $OutputDir) {
     Remove-Item -Recurse -Force $OutputDir
 }
