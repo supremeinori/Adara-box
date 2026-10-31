@@ -123,4 +123,31 @@ public class WorkspaceServiceTests
         Assert.True(result.Success);
         await _repository.Received(1).DeleteAsync(existingId, Arg.Any<CancellationToken>());
     }
+
+    [Fact]
+    public async Task CreateAsync_WithCustomIcon_SavesIconInWorkspace()
+    {
+        _repository.GetNextSortOrderAsync(Arg.Any<CancellationToken>()).Returns(0);
+        var service = new WorkspaceService(_repository, _clock);
+
+        var result = await service.CreateAsync("Dev Workspace", "🚀");
+
+        Assert.True(result.Success);
+        Assert.Equal("🚀", result.Value!.Icon);
+        await _repository.Received(1).AddAsync(Arg.Is<Workspace>(w => w.Icon == "🚀" && w.Name == "Dev Workspace"), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task UpdateAsync_UpdatesNameAndIcon()
+    {
+        var existingId = Guid.NewGuid();
+        var existing = new Workspace(existingId, "Old", _fixedTime, _fixedTime, 0, "📁");
+        _repository.GetAsync(existingId, Arg.Any<CancellationToken>()).Returns(existing);
+
+        var service = new WorkspaceService(_repository, _clock);
+        var result = await service.UpdateAsync(existingId, "New Name", "💻");
+
+        Assert.True(result.Success);
+        await _repository.Received(1).UpdateWorkspaceAsync(existingId, "New Name", "💻", _fixedTime, Arg.Any<CancellationToken>());
+    }
 }

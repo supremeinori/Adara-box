@@ -7,4 +7,5 @@ public interface IFilePickerService
     Task<string[]?> PickFilesAsync();
     Task<string?> PickFolderAsync();
     Task<string?> PickApplicationAsync();
+    Task<string?> PickImageAsync();
 }

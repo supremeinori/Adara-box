@@ -15,13 +15,13 @@ public static class UiConstants
     /// <summary>
     /// Default width for the compact Top Bar in device-independent pixels (DIP).
     /// </summary>
-    public const double TopBarCompactWidthDip = 540.0;
-    public const double TopBarDefaultWidthDip = 540.0;
+    public const double TopBarCompactWidthDip = 640.0;
+    public const double TopBarDefaultWidthDip = 640.0;
 
     /// <summary>
     /// Default expanded width for module panels in DIP.
     /// </summary>
-    public const double PanelDefaultWidthDip = 540.0;
+    public const double PanelDefaultWidthDip = 640.0;
 
     /// <summary>
     /// Maximum panel width ratio relative to the monitor work area width.

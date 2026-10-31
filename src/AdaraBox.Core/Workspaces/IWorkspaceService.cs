@@ -10,7 +10,9 @@ public interface IWorkspaceService
 {
     Task<IReadOnlyList<Workspace>> ListAsync(CancellationToken ct = default);
     Task<OperationResult<Workspace>> CreateAsync(string name, CancellationToken ct = default);
+    Task<OperationResult<Workspace>> CreateAsync(string name, string? icon, CancellationToken ct = default);
     Task<OperationResult> RenameAsync(Guid id, string newName, CancellationToken ct = default);
+    Task<OperationResult> UpdateAsync(Guid id, string newName, string? newIcon, CancellationToken ct = default);
     Task<OperationResult> DeleteAsync(Guid id, CancellationToken ct = default);
     Task<int> GetResourceCountAsync(Guid id, CancellationToken ct = default);
 }

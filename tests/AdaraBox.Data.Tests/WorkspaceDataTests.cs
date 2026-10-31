@@ -48,7 +48,7 @@ public class WorkspaceDataTests : IDisposable
 
         using var connection = _factory.CreateConnection();
         var version = connection.ExecuteScalar<int>("PRAGMA user_version;");
-        Assert.Equal(2, version);
+        Assert.Equal(3, version);
 
         // Verify tables exist
         var workspaceTableCount = connection.ExecuteScalar<int>("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='workspace';");
@@ -73,7 +73,7 @@ public class WorkspaceDataTests : IDisposable
 
         using var connection = _factory.CreateConnection();
         var version = connection.ExecuteScalar<int>("PRAGMA user_version;");
-        Assert.Equal(2, version);
+        Assert.Equal(3, version);
     }
 
     [Fact]
@@ -83,20 +83,26 @@ public class WorkspaceDataTests : IDisposable
         migrator.Migrate();
 
         var faultyMigration = new FaultyTestMigration();
-        var migratorWithFault = new DatabaseMigrator(_factory, new IMigration[] { new Migration001_InitialSchema(), new Migration002_MediaLinksSchema(), faultyMigration });
+        var migratorWithFault = new DatabaseMigrator(_factory, new IMigration[]
+        {
+            new Migration001_InitialSchema(),
+            new Migration002_MediaLinksSchema(),
+            new Migration003_WorkspaceIconSchema(),
+            faultyMigration
+        });
 
         var ex = Assert.Throws<InvalidOperationException>(() => migratorWithFault.Migrate());
         Assert.Contains("failed and was rolled back", ex.Message);
 
         using var connection = _factory.CreateConnection();
         var version = connection.ExecuteScalar<int>("PRAGMA user_version;");
-        // user_version must remain at 2 because migration 3 was rolled back
-        Assert.Equal(2, version);
+        // user_version must remain at 3 because migration 4 was rolled back
+        Assert.Equal(3, version);
     }
 
     private sealed class FaultyTestMigration : IMigration
     {
-        public int Version => 3;
+        public int Version => 4;
         public string Description => "Broken migration for rollback test";
         public string Sql => "CREATE TABLE valid_part (id TEXT); SYNTAX ERROR INTENTIONAL;";
     }

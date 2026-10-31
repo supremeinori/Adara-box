@@ -267,10 +267,22 @@
                         Style="{StaticResource SecondaryActionBtnStyle}"
                         Margin="0,0,10,0" />
 
-                <!-- Detail Title & Resource count -->
-                <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding DetailTitle}" FontSize="14" FontWeight="Bold" Foreground="#F4F4F5" TextTrimming="CharacterEllipsis" />
-                    <TextBlock Text="{Binding DetailResourceCountText}" FontSize="11" Foreground="#71717A" Margin="0,1,0,0" />
+                <!-- Detail Title, Icon & Resource count -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Width="26" Height="26" CornerRadius="6" Background="#181820" BorderBrush="#2C2C38" BorderThickness="1" Margin="0,0,8,0" VerticalAlignment="Center">
+                        <Grid>
+                            <Image Source="{Binding DetailImageSource}" Width="20" Height="20" Stretch="UniformToFill"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Visibility="{Binding DetailHasCustomImage, Converter={StaticResource BoolToVis}}" />
+                            <TextBlock Text="{Binding DetailIcon}" FontSize="13"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Visibility="{Binding DetailHasCustomImage, Converter={StaticResource InverseBoolToVis}}" />
+                        </Grid>
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{Binding DetailTitle}" FontSize="14" FontWeight="Bold" Foreground="#F4F4F5" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding DetailResourceCountText}" FontSize="11" Foreground="#71717A" Margin="0,1,0,0" />
+                    </StackPanel>
                 </StackPanel>
 
                 <!-- Header Actions: Open the File Toggle, View Mode Toggle, Rename & Delete Workspace -->
@@ -323,23 +335,28 @@
         <!-- ========================================== -->
         <Grid Grid.Row="1">
 
-            <!-- A. WORKSPACE INLINE FORM (Create / Rename Workspace) -->
-            <Border Background="#202025"
-                    BorderBrush="#3B82F6"
+            <!-- A. WORKSPACE INLINE FORM (Create / Rename Workspace & Logo) -->
+            <Border Background="#1A1A22"
+                    BorderBrush="#2AFFFFFF"
                     BorderThickness="1"
-                    CornerRadius="8"
+                    CornerRadius="10"
                     Padding="16"
                     VerticalAlignment="Top"
                     Panel.ZIndex="100"
                     Visibility="{Binding IsFormOpen, Converter={StaticResource BoolToVis}}">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="20" ShadowDepth="6" Opacity="0.5" Direction="270" Color="#000000" />
+                </Border.Effect>
                 <StackPanel>
                     <TextBlock Text="{Binding FormTitle}" FontSize="13" FontWeight="SemiBold" Foreground="#F4F4F5" Margin="0,0,0,10" />
 
+                    <!-- Workspace Name -->
+                    <TextBlock Text="Nama Workspace" FontSize="11" Foreground="#A1A1AA" Margin="0,0,0,4" />
                     <TextBox x:Name="FormNameTextBox"
                              Text="{Binding FormName, UpdateSourceTrigger=PropertyChanged}"
-                             Background="#18181B"
+                             Background="#141418"
                              Foreground="#F4F4F5"
-                             BorderBrush="#3F3F46"
+                             BorderBrush="#33333E"
                              BorderThickness="1"
                              Padding="8,6"
                              FontSize="13"
@@ -354,16 +371,79 @@
                                TextWrapping="Wrap"
                                Visibility="{Binding HasFormError, Converter={StaticResource BoolToVis}}" />
 
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+                    <!-- Logo / Icon Workspace -->
+                    <TextBlock Text="Logo / Icon Workspace" FontSize="11" Foreground="#A1A1AA" Margin="0,12,0,6" />
+
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Preview Box -->
+                        <Border Grid.Column="0" Width="48" Height="48" CornerRadius="8" Background="#121216" BorderBrush="#25FFFFFF" BorderThickness="1" Margin="0,0,12,0">
+                            <Grid>
+                                <Image Source="{Binding FormImageSource}" Width="40" Height="40" Stretch="UniformToFill"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Visibility="{Binding FormHasCustomImage, Converter={StaticResource BoolToVis}}" />
+                                <TextBlock Text="{Binding FormDisplayEmoji}" FontSize="24"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Visibility="{Binding FormHasCustomImage, Converter={StaticResource InverseBoolToVis}}" />
+                            </Grid>
+                        </Border>
+
+                        <!-- Upload & Remove Image Buttons -->
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="🖼️ Pilih Gambar dari PC..."
+                                        Command="{Binding PickImageIconCommand}"
+                                        Style="{StaticResource SecondaryActionBtnStyle}"
+                                        Margin="0,0,6,0" />
+                                <Button Content="✕ Hapus Gambar"
+                                        Command="{Binding RemoveImageIconCommand}"
+                                        Style="{StaticResource DestructiveActionBtnStyle}"
+                                        Visibility="{Binding FormHasCustomImage, Converter={StaticResource BoolToVis}}" />
+                            </StackPanel>
+                            <TextBlock Text="Mendukung file PNG, JPG, ICO, WebP (disimpan aman di AppData)"
+                                       FontSize="10" Foreground="#71717A" Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Preset Emoji Picker -->
+                    <TextBlock Text="Atau pilih Emoji preset:" FontSize="10" Foreground="#71717A" Margin="0,4,0,4" />
+                    <ItemsControl ItemsSource="{Binding PresetEmojis}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Content="{Binding}"
+                                        Command="{Binding DataContext.SelectPresetEmojiCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                        CommandParameter="{Binding}"
+                                        Background="#16161C"
+                                        Foreground="#F4F4F5"
+                                        BorderBrush="#2E2E3A"
+                                        BorderThickness="1"
+                                        Width="30" Height="30"
+                                        Margin="2"
+                                        FontSize="14"
+                                        Cursor="Hand" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
                         <Button Content="Batal (Esc)" Command="{Binding CancelFormCommand}" Style="{StaticResource SecondaryActionBtnStyle}" Margin="0,0,8,0" />
                         <Button Content="Simpan (Enter)" Command="{Binding SaveFormCommand}" Style="{StaticResource PrimaryActionBtnStyle}" />
                     </StackPanel>
                 </StackPanel>
             </Border>
 
-            <!-- B. WORKSPACES LIST (When not in detail view) -->
+            <!-- B. WORKSPACES GRID LIST (When not in detail view) -->
             <ScrollViewer VerticalScrollBarVisibility="Auto"
-                          MaxHeight="380"
+                          MaxHeight="420"
                           Visibility="{Binding IsWorkspaceListVisible, Converter={StaticResource BoolToVis}}">
                 <Grid>
                     <!-- Empty State for Workspaces -->
@@ -381,31 +461,47 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Workspaces Cards -->
+                    <!-- Workspaces Cards (Apple Dark Neomorphism GRID VIEW) -->
                     <ItemsControl ItemsSource="{Binding Workspaces}"
                                   Visibility="{Binding HasWorkspaces, Converter={StaticResource BoolToVis}}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type vm:WorkspaceItemViewModel}">
-                                <Border Background="#1F1F24"
-                                        BorderBrush="#2E2E38"
+                                <Border Width="144"
+                                        Height="130"
+                                        Background="#18181E"
+                                        BorderBrush="#25FFFFFF"
                                         BorderThickness="1"
-                                        CornerRadius="6"
-                                        Padding="12,10"
-                                        Margin="0,0,0,8"
+                                        CornerRadius="10"
+                                        Padding="10,8"
+                                        Margin="5"
                                         Focusable="True"
                                         Cursor="Hand"
                                         MouseLeftButtonUp="WorkspaceCard_MouseLeftButtonUp"
                                         KeyDown="WorkspaceCard_KeyDown">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="12" ShadowDepth="3" Opacity="0.45" Direction="270" Color="#000000" />
+                                    </Border.Effect>
                                     <Border.Style>
                                         <Style TargetType="Border">
+                                            <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+                                            <Setter Property="RenderTransform">
+                                                <Setter.Value>
+                                                    <ScaleTransform ScaleX="1.0" ScaleY="1.0" />
+                                                </Setter.Value>
+                                            </Setter>
                                             <Style.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="#27272F" />
-                                                    <Setter Property="BorderBrush" Value="#4B5563" />
+                                                    <Setter Property="Background" Value="#22222B" />
+                                                    <Setter Property="BorderBrush" Value="#44FFFFFF" />
                                                 </Trigger>
                                                 <Trigger Property="IsKeyboardFocused" Value="True">
-                                                    <Setter Property="Background" Value="#27272F" />
-                                                    <Setter Property="BorderBrush" Value="#3B82F6" />
+                                                    <Setter Property="Background" Value="#22222B" />
+                                                    <Setter Property="BorderBrush" Value="#FFFFFF" />
                                                 </Trigger>
                                             </Style.Triggers>
                                         </Style>
@@ -413,29 +509,48 @@
                                     <Border.ContextMenu>
                                         <ContextMenu Background="#18181B" BorderBrush="#3F3F46" Foreground="#F4F4F5">
                                             <MenuItem Header="Buka" Command="{Binding OpenCommand}" />
-                                            <MenuItem Header="Ganti Nama" Command="{Binding RenameCommand}" />
+                                            <MenuItem Header="Ganti Nama / Logo" Command="{Binding RenameCommand}" />
                                             <Separator Background="#27272A" />
                                             <MenuItem Header="Hapus" Command="{Binding DeleteCommand}" Foreground="#F87171" />
                                         </ContextMenu>
                                     </Border.ContextMenu>
 
                                     <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="*" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
 
-                                        <TextBlock Grid.Column="0" Text="📁" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0" />
-
-                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Foreground="#F4F4F5" TextTrimming="CharacterEllipsis" />
-                                            <TextBlock Text="{Binding ResourceCountText}" FontSize="11" Foreground="#71717A" Margin="0,2,0,0" />
+                                        <!-- Top row: Subtle edit & delete buttons -->
+                                        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,-2,-2,0">
+                                            <Button Content="✏" ToolTip="Ganti Nama &amp; Logo" AutomationProperties.Name="Ganti Nama Workspace"
+                                                    Command="{Binding RenameCommand}" Background="Transparent" Foreground="#71717A" BorderThickness="0"
+                                                    Padding="3,1" FontSize="11" Cursor="Hand" />
+                                            <Button Content="🗑" ToolTip="Hapus Workspace" AutomationProperties.Name="Hapus Workspace"
+                                                    Command="{Binding DeleteCommand}" Background="Transparent" Foreground="#EF4444" BorderThickness="0"
+                                                    Padding="3,1" FontSize="11" Cursor="Hand" />
                                         </StackPanel>
 
-                                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                            <Button Content="✏" ToolTip="Ganti Nama" AutomationProperties.Name="Ganti Nama Workspace" Command="{Binding RenameCommand}" Background="Transparent" Foreground="#A1A1AA" BorderThickness="0" Padding="6,4" Cursor="Hand" Margin="0,0,2,0" />
-                                            <Button Content="🗑" ToolTip="Hapus Workspace" AutomationProperties.Name="Hapus Workspace" Command="{Binding DeleteCommand}" Background="Transparent" Foreground="#F87171" BorderThickness="0" Padding="6,4" Cursor="Hand" />
+                                        <!-- Center: Prominent Workspace Logo / Image -->
+                                        <Border Grid.Row="1" Width="44" Height="44" CornerRadius="8" Background="#111116" BorderBrush="#1FFFFFFF" BorderThickness="1"
+                                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <Grid>
+                                                <Image Source="{Binding ImageSource}" Width="36" Height="36" Stretch="UniformToFill"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       Visibility="{Binding HasCustomImage, Converter={StaticResource BoolToVis}}" />
+                                                <TextBlock Text="{Binding DisplayEmoji}" FontSize="24"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                           Visibility="{Binding HasCustomImage, Converter={StaticResource InverseBoolToVis}}" />
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- Bottom: Workspace Name & Resource Count -->
+                                        <StackPanel Grid.Row="2" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,4,0,0">
+                                            <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold" Foreground="#F4F4F5"
+                                                       MaxWidth="124" TextTrimming="CharacterEllipsis" TextAlignment="Center" HorizontalAlignment="Center" />
+                                            <TextBlock Text="{Binding ResourceCountText}" FontSize="10" Foreground="#71717A"
+                                                       TextAlignment="Center" HorizontalAlignment="Center" Margin="0,1,0,0" />
                                         </StackPanel>
                                     </Grid>
                                 </Border>

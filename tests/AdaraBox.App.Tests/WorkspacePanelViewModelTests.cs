@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media;
@@ -328,5 +329,62 @@ public class WorkspacePanelViewModelTests
         visibilityService.SetMode(TopBarVisibilityMode.Hidden);
 
         await settingsStore.Received(1).SetAsync(SettingKeys.TopBarVisibility, "Hidden", Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public void WorkspaceItemViewModel_EmojiIcon_SetsDisplayEmojiCorrectly()
+    {
+        var vm = CreateVm();
+        var ws = new Workspace(Guid.NewGuid(), "Rocket Workspace", _fixedTime, _fixedTime, 0, "🚀");
+        var item = new WorkspaceItemViewModel(ws, vm);
+
+        Assert.Equal("🚀", item.Icon);
+        Assert.False(item.HasCustomImage);
+        Assert.Equal("🚀", item.DisplayEmoji);
+        Assert.Null(item.ImageSource);
+    }
+
+    [Fact]
+    public void FormIcon_SelectPresetEmoji_UpdatesFormIconAndDisplay()
+    {
+        var vm = CreateVm();
+        vm.BeginCreate();
+
+        Assert.Equal("📁", vm.FormIcon);
+        Assert.False(vm.FormHasCustomImage);
+        Assert.Equal("📁", vm.FormDisplayEmoji);
+
+        vm.SelectPresetEmojiCommand.Execute("💻");
+        Assert.Equal("💻", vm.FormIcon);
+        Assert.False(vm.FormHasCustomImage);
+        Assert.Equal("💻", vm.FormDisplayEmoji);
+
+        vm.RemoveImageIconCommand.Execute(null);
+        Assert.Equal("📁", vm.FormIcon);
+    }
+
+    [Fact]
+    public async Task PickImageIcon_FileSelected_SetsFormIcon()
+    {
+        // Create a temporary file to simulate user-selected image
+        var tempFile = Path.Combine(Path.GetTempPath(), $"test_icon_{Guid.NewGuid():N}.png");
+        File.WriteAllBytes(tempFile, new byte[] { 1, 2, 3 });
+
+        try
+        {
+            _filePickerService.PickImageAsync().Returns(Task.FromResult<string?>(tempFile));
+
+            var vm = CreateVm();
+            vm.BeginCreate();
+
+            await vm.PickImageIconCommand.ExecuteAsync(null);
+
+            Assert.True(vm.FormHasCustomImage);
+            Assert.Contains(".png", vm.FormIcon, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            if (File.Exists(tempFile)) File.Delete(tempFile);
+        }
     }
 }

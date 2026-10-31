@@ -17,7 +17,8 @@
         ShowActivated="False"
         Background="Transparent"
         SizeToContent="Height"
-        Width="540">
+        Width="640"
+        MinWidth="600">
 
     <Window.Resources>
         <conv:BoolToVisibilityConverter x:Key="BoolToVis" />
@@ -183,7 +184,7 @@
 
         <StackPanel>
             <!-- Top Bar Header Row (Apple Menu Bar 30 DIP) -->
-            <Grid Height="30" Margin="8,0">
+            <Grid Height="30" Margin="10,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
@@ -191,37 +192,41 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- Brand / Logo -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
                     <TextBlock Text="✦" Foreground="#FFFFFF" FontWeight="Bold" FontSize="11" Margin="0,0,5,0" VerticalAlignment="Center" />
-                    <TextBlock Text="Adara" Foreground="#F4F4F5" FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center" />
+                    <TextBlock Text="Adara Box" Foreground="#F4F4F5" FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center" />
                 </StackPanel>
 
-                <!-- Center Area: Modules Buttons + macOS Now Playing Widget -->
-                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <!-- Data-driven Module Buttons -->
-                    <ItemsControl x:Name="ModulesItemsControl" ItemsSource="{Binding Modules}" VerticalAlignment="Center">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Orientation="Horizontal" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Button Content="{Binding DisplayName}"
-                                        Style="{StaticResource ModuleButtonStyle}"
-                                        Click="ModuleButton_Click"
-                                        Tag="{Binding}" />
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                <!-- Center Area: Modules Buttons -->
+                <ItemsControl x:Name="ModulesItemsControl"
+                              ItemsSource="{Binding Modules}"
+                              Grid.Column="1"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Content="{Binding DisplayName}"
+                                    Style="{StaticResource ModuleButtonStyle}"
+                                    Click="ModuleButton_Click"
+                                    Tag="{Binding}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
 
+                <!-- Top Bar Right: macOS Now Playing Widget + Close Button (No Redundant Action Buttons) -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                     <!-- macOS Menu Bar "Now Playing" Widget (GSMTC) -->
                     <Border Background="#1C1C22"
                             BorderBrush="#2C2C36"
                             BorderThickness="1"
                             CornerRadius="4"
                             Padding="5,1"
-                            Margin="8,0,0,0"
+                            Margin="0,0,6,0"
                             VerticalAlignment="Center"
                             Visibility="{Binding HasActiveMedia, Converter={StaticResource BoolToVis}}">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -256,33 +261,13 @@
                                                FontSize="10"
                                                FontWeight="Medium"
                                                Foreground="#E4E4E7"
-                                               MaxWidth="130"
+                                               MaxWidth="115"
                                                TextTrimming="CharacterEllipsis"
                                                VerticalAlignment="Center" />
                                 </StackPanel>
                             </Button>
                         </StackPanel>
                     </Border>
-                </StackPanel>
-
-                <!-- Top Bar Right Action Area -->
-                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                    <!-- Data-driven Quick Actions -->
-                    <ItemsControl ItemsSource="{Binding Actions}" VerticalAlignment="Center" Margin="0,0,4,0">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Orientation="Horizontal" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Button Content="{Binding DisplayName}"
-                                        Command="{Binding Command}"
-                                        ToolTip="{Binding Tooltip}"
-                                        Style="{StaticResource ModuleActionButtonStyle}" />
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
 
                     <!-- Close Panel Button (✕) -->
                     <Button x:Name="ClosePanelButton"
@@ -300,13 +285,17 @@
                 </StackPanel>
             </Grid>
 
-            <!-- Panel Content Area (Apple Control Center Floating Sheet) -->
+            <!-- Panel Content Area (Apple Control Center Floating Sheet with Pop-Down / Pop-Up Animation) -->
             <Border x:Name="PanelContainer"
-                    Background="#F8121215"
-                    BorderBrush="#14FFFFFF"
+                    Background="#F5101014"
+                    BorderBrush="#1AFFFFFF"
                     BorderThickness="0,1,0,0"
                     Visibility="Collapsed"
-                    MaxHeight="600">
+                    MaxHeight="600"
+                    Opacity="0">
+                <Border.RenderTransform>
+                    <TranslateTransform x:Name="PanelTranslate" Y="-14" />
+                </Border.RenderTransform>
                 <ContentControl Content="{Binding ActivePanelViewModel}" />
             </Border>
         </StackPanel>

@@ -86,8 +86,56 @@ public partial class TopBarWindow : Window
             targetWidth = maxAllowedWidth;
         }
 
-        PanelContainer.Visibility = isOpen ? Visibility.Visible : Visibility.Collapsed;
-        ClosePanelButton.Visibility = isOpen ? Visibility.Visible : Visibility.Collapsed;
+        if (isOpen)
+        {
+            PanelContainer.Visibility = Visibility.Visible;
+            ClosePanelButton.Visibility = Visibility.Visible;
+
+            if (animate && IsLoaded)
+            {
+                var duration = TimeSpan.FromMilliseconds(160);
+                var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
+                var opacityAnim = new DoubleAnimation(0.0, 1.0, duration) { EasingFunction = ease };
+                var translateAnim = new DoubleAnimation(-14.0, 0.0, duration) { EasingFunction = ease };
+
+                PanelContainer.BeginAnimation(UIElement.OpacityProperty, opacityAnim);
+                PanelTranslate.BeginAnimation(TranslateTransform.YProperty, translateAnim);
+            }
+            else
+            {
+                PanelContainer.Opacity = 1.0;
+                PanelTranslate.Y = 0.0;
+            }
+        }
+        else
+        {
+            ClosePanelButton.Visibility = Visibility.Collapsed;
+
+            if (animate && IsLoaded && PanelContainer.Visibility == Visibility.Visible)
+            {
+                var duration = TimeSpan.FromMilliseconds(120);
+                var ease = new CubicEase { EasingMode = EasingMode.EaseIn };
+                var opacityAnim = new DoubleAnimation(PanelContainer.Opacity, 0.0, duration) { EasingFunction = ease };
+                var translateAnim = new DoubleAnimation(PanelTranslate.Y, -14.0, duration) { EasingFunction = ease };
+
+                opacityAnim.Completed += (s, e) =>
+                {
+                    if (ViewModel != null && !ViewModel.IsPanelOpen)
+                    {
+                        PanelContainer.Visibility = Visibility.Collapsed;
+                    }
+                };
+
+                PanelContainer.BeginAnimation(UIElement.OpacityProperty, opacityAnim);
+                PanelTranslate.BeginAnimation(TranslateTransform.YProperty, translateAnim);
+            }
+            else
+            {
+                PanelContainer.Visibility = Visibility.Collapsed;
+                PanelContainer.Opacity = 0.0;
+                PanelTranslate.Y = -14.0;
+            }
+        }
 
         HighlightSelectedButton();
 
@@ -138,9 +186,9 @@ public partial class TopBarWindow : Window
                 if (btn != null && item is IAppModule module)
                 {
                     bool isSelected = module.Id == selectedId;
-                    btn.Background = isSelected ? new SolidColorBrush(Color.FromRgb(0x25, 0x63, 0xEB)) : Brushes.Transparent;
+                    btn.Background = isSelected ? new SolidColorBrush(Color.FromRgb(0x2A, 0x2A, 0x34)) : Brushes.Transparent;
                     btn.Foreground = isSelected ? Brushes.White : new SolidColorBrush(Color.FromRgb(0xD4, 0xD4, 0xD8));
-                    btn.BorderBrush = isSelected ? new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6)) : Brushes.Transparent;
+                    btn.BorderBrush = isSelected ? new SolidColorBrush(Color.FromRgb(0x44, 0x44, 0x58)) : Brushes.Transparent;
                 }
             }
         }

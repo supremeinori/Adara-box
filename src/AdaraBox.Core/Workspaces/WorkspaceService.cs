@@ -28,7 +28,12 @@ public sealed class WorkspaceService : IWorkspaceService
         return await _repository.GetAllAsync(ct);
     }
 
-    public async Task<OperationResult<Workspace>> CreateAsync(string name, CancellationToken ct = default)
+    public Task<OperationResult<Workspace>> CreateAsync(string name, CancellationToken ct = default)
+    {
+        return CreateAsync(name, null, ct);
+    }
+
+    public async Task<OperationResult<Workspace>> CreateAsync(string name, string? icon, CancellationToken ct = default)
     {
         var validation = WorkspaceNameValidator.Validate(name);
         if (!validation.Success || validation.Value == null)
@@ -45,7 +50,8 @@ public sealed class WorkspaceService : IWorkspaceService
             name: validName,
             createdAt: now,
             updatedAt: now,
-            sortOrder: sortOrder);
+            sortOrder: sortOrder,
+            icon: string.IsNullOrWhiteSpace(icon) ? "📁" : icon);
 
         await _repository.AddAsync(workspace, ct);
         return OperationResult<Workspace>.Ok(workspace);
@@ -66,6 +72,25 @@ public sealed class WorkspaceService : IWorkspaceService
         }
 
         await _repository.UpdateNameAsync(id, validation.Value, _clock.UtcNow, ct);
+        return OperationResult.Ok();
+    }
+
+    public async Task<OperationResult> UpdateAsync(Guid id, string newName, string? newIcon, CancellationToken ct = default)
+    {
+        var validation = WorkspaceNameValidator.Validate(newName);
+        if (!validation.Success || validation.Value == null)
+        {
+            return OperationResult.Fail(validation.Error!.Code, validation.Error.Message);
+        }
+
+        var existing = await _repository.GetAsync(id, ct);
+        if (existing == null)
+        {
+            return OperationResult.Fail("workspace.not_found", "Workspace tidak ditemukan.");
+        }
+
+        var iconToUse = newIcon ?? existing.Icon;
+        await _repository.UpdateWorkspaceAsync(id, validation.Value, iconToUse, _clock.UtcNow, ct);
         return OperationResult.Ok();
     }
 

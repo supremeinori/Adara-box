@@ -26,7 +26,8 @@ public sealed class DatabaseMigrator
                       ?? (IReadOnlyList<IMigration>)new IMigration[]
                       {
                           new Migration001_InitialSchema(),
-                          new Migration002_MediaLinksSchema()
+                          new Migration002_MediaLinksSchema(),
+                          new Migration003_WorkspaceIconSchema()
                       };
         _backupService = backupService;
         _dbPath = dbPath;

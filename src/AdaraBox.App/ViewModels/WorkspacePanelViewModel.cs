@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using AdaraBox.App.Resources;
@@ -53,10 +56,98 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
     [ObservableProperty]
     private string? _formError;
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(FormHasCustomImage))]
+    [NotifyPropertyChangedFor(nameof(FormDisplayEmoji))]
+    [NotifyPropertyChangedFor(nameof(FormImageSource))]
+    private string _formIcon = "📁";
+
+    public bool FormHasCustomImage => !string.IsNullOrWhiteSpace(FormIcon) &&
+        (FormIcon.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
+         FormIcon.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
+         FormIcon.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase) ||
+         FormIcon.EndsWith(".ico", StringComparison.OrdinalIgnoreCase) ||
+         FormIcon.EndsWith(".bmp", StringComparison.OrdinalIgnoreCase) ||
+         FormIcon.EndsWith(".webp", StringComparison.OrdinalIgnoreCase)) &&
+        File.Exists(FormIcon);
+
+    public string FormDisplayEmoji => FormHasCustomImage ? string.Empty : (string.IsNullOrWhiteSpace(FormIcon) ? "📁" : FormIcon);
+
+    public ImageSource? FormImageSource
+    {
+        get
+        {
+            if (!FormHasCustomImage) return null;
+            try
+            {
+                var bitmap = new BitmapImage();
+                bitmap.BeginInit();
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.UriSource = new Uri(FormIcon, UriKind.Absolute);
+                bitmap.EndInit();
+                bitmap.Freeze();
+                return bitmap;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+    }
+
+    public IReadOnlyList<string> PresetEmojis { get; } = new[]
+    {
+        "📁", "💼", "🚀", "💻", "🎨", "📚", "🎮", "🎧",
+        "⚡", "🌐", "☕", "🛠️", "📊", "🎯", "🎬", "💡"
+    };
+
+    [RelayCommand]
+    public async Task PickImageIconAsync()
+    {
+        var filePath = await _filePickerService.PickImageAsync();
+        if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath)) return;
+
+        try
+        {
+            var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            var iconsDir = Path.Combine(localAppData, "AdaraBox", "workspace-icons");
+            Directory.CreateDirectory(iconsDir);
+
+            var ext = Path.GetExtension(filePath);
+            var targetFileName = $"ws_{Guid.NewGuid():N}{ext}";
+            var destination = Path.Combine(iconsDir, targetFileName);
+            File.Copy(filePath, destination, overwrite: true);
+
+            FormIcon = destination;
+        }
+        catch
+        {
+            FormIcon = filePath;
+        }
+    }
+
+    [RelayCommand]
+    public void RemoveImageIcon()
+    {
+        FormIcon = "📁";
+    }
+
+    [RelayCommand]
+    public void SelectPresetEmoji(string emoji)
+    {
+        if (!string.IsNullOrWhiteSpace(emoji))
+        {
+            FormIcon = emoji;
+        }
+    }
+
     // Workspace Detail State
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsDetailViewActive))]
     [NotifyPropertyChangedFor(nameof(DetailTitle))]
+    [NotifyPropertyChangedFor(nameof(DetailIcon))]
+    [NotifyPropertyChangedFor(nameof(DetailHasCustomImage))]
+    [NotifyPropertyChangedFor(nameof(DetailImageSource))]
     [NotifyPropertyChangedFor(nameof(DetailResourceCountText))]
     [NotifyPropertyChangedFor(nameof(IsWorkspaceListVisible))]
     [NotifyPropertyChangedFor(nameof(IsWorkspaceDetailVisible))]
@@ -151,6 +242,9 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
     public bool IsWorkspaceListVisible => !IsDetailViewActive && !IsFormOpen;
     public bool IsWorkspaceDetailVisible => IsDetailViewActive && !IsFormOpen;
     public string DetailTitle => SelectedWorkspace?.Name ?? string.Empty;
+    public string DetailIcon => SelectedWorkspace?.Icon ?? "📁";
+    public bool DetailHasCustomImage => SelectedWorkspace?.HasCustomImage ?? false;
+    public ImageSource? DetailImageSource => SelectedWorkspace?.ImageSource;
     public string DetailResourceCountText => SelectedWorkspace != null ? $"{SelectedWorkspace.ResourceCount} resource" : string.Empty;
 
     public bool HasResources => Resources.Count > 0;
@@ -236,6 +330,7 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
         EditingWorkspaceId = null;
         FormTitle = UiText.CreateWorkspaceTitle;
         FormName = string.Empty;
+        FormIcon = "📁";
         FormError = null;
         IsFormOpen = true;
     }
@@ -246,6 +341,7 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
         EditingWorkspaceId = item.Id;
         FormTitle = UiText.RenameWorkspaceTitle;
         FormName = item.Name;
+        FormIcon = item.Icon;
         FormError = null;
         IsFormOpen = true;
     }
@@ -257,7 +353,10 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
 
         if (EditingWorkspaceId == null)
         {
-            var result = await _workspaceService.CreateAsync(FormName);
+            var result = (string.IsNullOrWhiteSpace(FormIcon) || FormIcon == "📁")
+                ? await _workspaceService.CreateAsync(FormName)
+                : await _workspaceService.CreateAsync(FormName, FormIcon);
+
             if (!result.Success)
             {
                 FormError = MapWorkspaceError(result.Error?.Code);
@@ -268,13 +367,17 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
             Workspaces.Add(item);
             IsFormOpen = false;
             FormName = string.Empty;
+            FormIcon = "📁";
             NotifyListStateChanged();
             OpenWorkspace(item);
         }
         else
         {
             var id = EditingWorkspaceId.Value;
-            var result = await _workspaceService.RenameAsync(id, FormName);
+            var result = (string.IsNullOrWhiteSpace(FormIcon) || FormIcon == "📁")
+                ? await _workspaceService.RenameAsync(id, FormName)
+                : await _workspaceService.UpdateAsync(id, FormName, FormIcon);
+
             if (!result.Success)
             {
                 FormError = MapWorkspaceError(result.Error?.Code);
@@ -282,16 +385,20 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
             }
 
             var item = Workspaces.FirstOrDefault(w => w.Id == id);
-            item?.UpdateName(FormName.Trim());
+            item?.UpdateWorkspace(FormName.Trim(), FormIcon);
 
             if (SelectedWorkspace?.Id == id)
             {
                 OnPropertyChanged(nameof(DetailTitle));
+                OnPropertyChanged(nameof(DetailIcon));
+                OnPropertyChanged(nameof(DetailHasCustomImage));
+                OnPropertyChanged(nameof(DetailImageSource));
             }
 
             IsFormOpen = false;
             EditingWorkspaceId = null;
             FormName = string.Empty;
+            FormIcon = "📁";
             NotifyListStateChanged();
         }
     }
@@ -302,6 +409,7 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
         IsFormOpen = false;
         EditingWorkspaceId = null;
         FormName = string.Empty;
+        FormIcon = "📁";
         FormError = null;
     }
 

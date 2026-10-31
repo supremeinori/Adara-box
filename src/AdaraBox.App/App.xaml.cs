@@ -82,7 +82,7 @@ public partial class App : Application
         var backupsDir = Path.Combine(appDataDir, "backups");
         IDatabaseBackupService backupService = new DatabaseBackupService();
 
-        var integrity = DatabaseIntegrityChecker.Check(dbPath, maxKnownVersion: 2);
+        var integrity = DatabaseIntegrityChecker.Check(dbPath, maxKnownVersion: 3);
         if (integrity.Status != DatabaseIntegrityStatus.Ok)
         {
             Log.Warning("Database integrity issue detected: Status={Status}, Message={Message}", integrity.Status, integrity.Message);

@@ -10,6 +10,7 @@ public sealed record Workspace
 {
     public Guid Id { get; init; }
     public string Name { get; init; } = string.Empty;
+    public string Icon { get; init; } = "📁";
     public DateTimeOffset CreatedAt { get; init; }
     public DateTimeOffset UpdatedAt { get; init; }
     public int SortOrder { get; init; }
@@ -18,12 +19,13 @@ public sealed record Workspace
     {
     }
 
-    public Workspace(Guid id, string name, DateTimeOffset createdAt, DateTimeOffset updatedAt, int sortOrder)
+    public Workspace(Guid id, string name, DateTimeOffset createdAt, DateTimeOffset updatedAt, int sortOrder, string icon = "📁")
     {
         Id = id;
         Name = name;
         CreatedAt = createdAt;
         UpdatedAt = updatedAt;
         SortOrder = sortOrder;
+        Icon = string.IsNullOrWhiteSpace(icon) ? "📁" : icon;
     }
 }

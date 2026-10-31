@@ -41,4 +41,17 @@ public sealed class WpfFilePickerService : IFilePickerService
         var result = dlg.ShowDialog();
         return Task.FromResult(result == true ? dlg.FileName : null);
     }
+
+    public Task<string?> PickImageAsync()
+    {
+        var dlg = new OpenFileDialog
+        {
+            Multiselect = false,
+            Title = "Pilih Logo / Gambar Workspace",
+            Filter = "File Gambar (*.png;*.jpg;*.jpeg;*.ico;*.bmp;*.webp)|*.png;*.jpg;*.jpeg;*.ico;*.bmp;*.webp|Semua File (*.*)|*.*"
+        };
+
+        var result = dlg.ShowDialog();
+        return Task.FromResult(result == true ? dlg.FileName : null);
+    }
 }

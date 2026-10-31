@@ -22,7 +22,7 @@ public sealed class SqliteWorkspaceRepository : IWorkspaceRepository
     {
         using var connection = _connectionFactory.CreateConnection();
         const string sql = @"
-            SELECT id AS Id, name AS Name, created_at AS CreatedAt, updated_at AS UpdatedAt, sort_order AS SortOrder
+            SELECT id AS Id, name AS Name, icon AS Icon, created_at AS CreatedAt, updated_at AS UpdatedAt, sort_order AS SortOrder
             FROM workspace
             ORDER BY sort_order ASC, created_at ASC;
         ";
@@ -34,7 +34,7 @@ public sealed class SqliteWorkspaceRepository : IWorkspaceRepository
     {
         using var connection = _connectionFactory.CreateConnection();
         const string sql = @"
-            SELECT id AS Id, name AS Name, created_at AS CreatedAt, updated_at AS UpdatedAt, sort_order AS SortOrder
+            SELECT id AS Id, name AS Name, icon AS Icon, created_at AS CreatedAt, updated_at AS UpdatedAt, sort_order AS SortOrder
             FROM workspace
             WHERE id = @Id;
         ";
@@ -45,8 +45,8 @@ public sealed class SqliteWorkspaceRepository : IWorkspaceRepository
     {
         using var connection = _connectionFactory.CreateConnection();
         const string sql = @"
-            INSERT INTO workspace (id, name, created_at, updated_at, sort_order)
-            VALUES (@Id, @Name, @CreatedAt, @UpdatedAt, @SortOrder);
+            INSERT INTO workspace (id, name, icon, created_at, updated_at, sort_order)
+            VALUES (@Id, @Name, @Icon, @CreatedAt, @UpdatedAt, @SortOrder);
         ";
         await connection.ExecuteAsync(sql, workspace);
     }
@@ -60,6 +60,17 @@ public sealed class SqliteWorkspaceRepository : IWorkspaceRepository
             WHERE id = @Id;
         ";
         await connection.ExecuteAsync(sql, new { Id = id, Name = name, UpdatedAt = updatedAt });
+    }
+
+    public async Task UpdateWorkspaceAsync(Guid id, string name, string icon, DateTimeOffset updatedAt, CancellationToken ct = default)
+    {
+        using var connection = _connectionFactory.CreateConnection();
+        const string sql = @"
+            UPDATE workspace
+            SET name = @Name, icon = @Icon, updated_at = @UpdatedAt
+            WHERE id = @Id;
+        ";
+        await connection.ExecuteAsync(sql, new { Id = id, Name = name, Icon = icon, UpdatedAt = updatedAt });
     }
 
     public async Task<bool> DeleteAsync(Guid id, CancellationToken ct = default)

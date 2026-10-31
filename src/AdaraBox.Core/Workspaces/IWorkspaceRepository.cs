@@ -11,6 +11,7 @@ public interface IWorkspaceRepository
     Task<Workspace?> GetAsync(Guid id, CancellationToken ct = default);
     Task AddAsync(Workspace workspace, CancellationToken ct = default);
     Task UpdateNameAsync(Guid id, string name, DateTimeOffset updatedAt, CancellationToken ct = default);
+    Task UpdateWorkspaceAsync(Guid id, string name, string icon, DateTimeOffset updatedAt, CancellationToken ct = default);
     Task<bool> DeleteAsync(Guid id, CancellationToken ct = default);
     Task<int> GetNextSortOrderAsync(CancellationToken ct = default);
 }
