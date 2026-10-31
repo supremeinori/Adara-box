@@ -11,7 +11,12 @@ public sealed partial class MediaSessionItemViewModel : ObservableObject
     private readonly MediaPanelViewModel _parent;
 
     public string SessionId { get; }
-    public MediaPlatform Platform { get; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PlatformDisplayName))]
+    [NotifyPropertyChangedFor(nameof(PlatformBadgeColor))]
+    [NotifyPropertyChangedFor(nameof(PlatformIcon))]
+    private MediaPlatform _platform;
 
     [ObservableProperty]
     private string _title;
@@ -66,6 +71,7 @@ public sealed partial class MediaSessionItemViewModel : ObservableObject
 
     public void Update(MediaSessionInfo info, bool isPrimary)
     {
+        Platform = info.Platform;
         Title = info.Title;
         Artist = !string.IsNullOrWhiteSpace(info.Artist) ? info.Artist : "Artis tidak diketahui";
         IsPlaying = info.IsPlaying;
@@ -82,5 +88,17 @@ public sealed partial class MediaSessionItemViewModel : ObservableObject
     public void MakeTop()
     {
         _parent.MakeTopSession(this);
+    }
+
+    [RelayCommand]
+    public void Dismiss()
+    {
+        _parent.DismissSession(this);
+    }
+
+    [RelayCommand]
+    public void CyclePlatform()
+    {
+        _parent.CyclePlatform(this);
     }
 }

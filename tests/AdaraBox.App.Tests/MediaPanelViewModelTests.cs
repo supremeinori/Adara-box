@@ -323,4 +323,46 @@ public class MediaPanelViewModelTests
         Assert.Equal("Tidak ada media aktif", vm.TrackTitle);
         Assert.Equal("Buka Spotify, YouTube, atau YouTube Music", vm.TrackArtist);
     }
+
+    [Fact]
+    public void MultiSession_DismissSession_RemovesAndInvokesController()
+    {
+        var controller = Substitute.For<IMediaPlaybackController>();
+        var s1 = new MediaSessionInfo("s1", MediaPlatform.Spotify, "Song A", "Artist A", "", "spotify", MediaPlaybackState.Playing, true);
+        var s2 = new MediaSessionInfo("s2", MediaPlatform.YouTube, "Video B", "Channel B", "", "chrome", MediaPlaybackState.Paused, false);
+        controller.PrimarySession.Returns(s1);
+        controller.ActiveSessions.Returns(new[] { s1, s2 });
+
+        var vm = new MediaPanelViewModel(_mediaService, _launcher, _dialogService, controller);
+        Assert.Single(vm.SecondarySessions);
+
+        var sec = vm.SecondarySessions[0];
+        sec.DismissCommand.Execute(null);
+
+        controller.Received(1).DismissSession("s2");
+        Assert.Empty(vm.SecondarySessions);
+        Assert.False(vm.HasMultipleSessions);
+    }
+
+    [Fact]
+    public void MultiSession_CyclePlatform_SwitchesPlatformAndInvokesController()
+    {
+        var controller = Substitute.For<IMediaPlaybackController>();
+        var s1 = new MediaSessionInfo("s1", MediaPlatform.YouTube, "Song A", "Artist A", "", "opera", MediaPlaybackState.Playing, true);
+        controller.PrimarySession.Returns(s1);
+        controller.ActiveSessions.Returns(new[] { s1 });
+
+        var vm = new MediaPanelViewModel(_mediaService, _launcher, _dialogService, controller);
+        Assert.Equal(MediaPlatform.YouTube, vm.PrimarySession!.Platform);
+
+        // YouTube -> YouTubeMusic
+        vm.CyclePrimaryPlatformCommand.Execute(null);
+        controller.Received(1).SetSessionPlatform("s1", MediaPlatform.YouTubeMusic);
+        Assert.Equal(MediaPlatform.YouTubeMusic, vm.PrimarySession.Platform);
+
+        // YouTubeMusic -> Spotify
+        vm.CyclePrimaryPlatformCommand.Execute(null);
+        controller.Received(1).SetSessionPlatform("s1", MediaPlatform.Spotify);
+        Assert.Equal(MediaPlatform.Spotify, vm.PrimarySession.Platform);
+    }
 }

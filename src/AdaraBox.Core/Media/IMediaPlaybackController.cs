@@ -29,4 +29,6 @@ public interface IMediaPlaybackController : IDisposable
     Task<bool> NextSessionAsync(string sessionId);
     Task<bool> PreviousSessionAsync(string sessionId);
     void SetPrimarySession(string sessionId);
+    void DismissSession(string sessionId);
+    void SetSessionPlatform(string sessionId, MediaPlatform platform);
 }

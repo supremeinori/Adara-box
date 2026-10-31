@@ -18,6 +18,7 @@ public class MediaPlatformDetectorTests
     [InlineData("music.youtube.pwa", "Song", "Album", "Artist", MediaPlatform.YouTubeMusic)]
     [InlineData("opera.exe", "Song Name - Spotify", "", "", MediaPlatform.Spotify)]
     [InlineData("chrome.exe", "Song Name - Spotify", "", "", MediaPlatform.Spotify)]
+    [InlineData("opera.exe", "33x", "", "Perunggu", MediaPlatform.Spotify)] // Spotify Web track with artist
     [InlineData("vlc.exe", "MyMovie.mkv", "", "", MediaPlatform.Unknown)]
     [InlineData("potplayer.exe", "Local Video", "", "", MediaPlatform.Unknown)]
     [InlineData("discord.exe", "Voice Call", "", "", MediaPlatform.Unknown)]
@@ -25,6 +26,13 @@ public class MediaPlatformDetectorTests
     {
         var platform = MediaPlatformDetector.Detect(app, title, album, artist);
         Assert.Equal(expected, platform);
+    }
+
+    [Fact]
+    public void Detect_BrowserVideo_ReturnsYouTube()
+    {
+        var platform = MediaPlatformDetector.Detect("opera.exe", "HEAD TO HEAD GURU GEMBUL", "", "GEMBULIKUM", isVideo: true);
+        Assert.Equal(MediaPlatform.YouTube, platform);
     }
 
     [Theory]

@@ -228,13 +228,31 @@
                     <!-- Track Info -->
                     <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0">
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
-                            <!-- Platform Badge -->
-                            <TextBlock Text="{Binding PrimarySession.PlatformIcon}" FontSize="10" Margin="0,0,3,0" VerticalAlignment="Center"
-                                       Visibility="{Binding HasActiveSessions, Converter={StaticResource BoolToVis}}" />
-                            <TextBlock Text="{Binding PrimarySession.PlatformDisplayName}"
-                                       Foreground="{Binding PrimarySession.PlatformBadgeColor}"
-                                       FontSize="10" FontWeight="Bold" Margin="0,0,6,0" VerticalAlignment="Center"
-                                       Visibility="{Binding HasActiveSessions, Converter={StaticResource BoolToVis}}" />
+                            <!-- Platform Badge (Clickable to switch Spotify/YouTube/YT Music) -->
+                            <Button Command="{Binding CyclePrimaryPlatformCommand}"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Padding="0"
+                                    Cursor="Hand"
+                                    ToolTip="Klik untuk beralih platform (Spotify / YouTube / YT Music)"
+                                    Visibility="{Binding HasActiveSessions, Converter={StaticResource BoolToVis}}">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="Button">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="{Binding DataContext.PrimarySession.PlatformIcon, RelativeSource={RelativeSource AncestorType=Border}}" FontSize="10" Margin="0,0,3,0" VerticalAlignment="Center" />
+                                                        <TextBlock Text="{Binding DataContext.PrimarySession.PlatformDisplayName, RelativeSource={RelativeSource AncestorType=Border}}"
+                                                                   Foreground="{Binding DataContext.PrimarySession.PlatformBadgeColor, RelativeSource={RelativeSource AncestorType=Border}}"
+                                                                   FontSize="10" FontWeight="Bold" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                                    </StackPanel>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
                             <TextBlock Text="● Utama (On-Top)" FontSize="9" FontWeight="SemiBold" Foreground="#8E8E93" VerticalAlignment="Center"
                                        Visibility="{Binding HasActiveSessions, Converter={StaticResource BoolToVis}}" />
                             <TextBlock Text="● Tidak Ada Media" FontSize="10" FontWeight="SemiBold" Foreground="#71717A" VerticalAlignment="Center"
@@ -313,12 +331,32 @@
 
                                 <!-- Session Title & Platform -->
                                 <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,0">
-                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,1">
-                                        <TextBlock Text="{Binding PlatformIcon}" FontSize="9" Margin="0,0,3,0" VerticalAlignment="Center" />
-                                        <TextBlock Text="{Binding PlatformDisplayName}"
-                                                   Foreground="{Binding PlatformBadgeColor}"
-                                                   FontSize="9" FontWeight="Bold" Margin="0,0,6,0" VerticalAlignment="Center" />
-                                    </StackPanel>
+                                    <!-- Platform Badge (Clickable to switch Spotify/YouTube/YT Music) -->
+                                    <Button Command="{Binding CyclePlatformCommand}"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            Padding="0"
+                                            Cursor="Hand"
+                                            ToolTip="Klik untuk beralih platform (Spotify / YouTube / YT Music)"
+                                            HorizontalAlignment="Left"
+                                            Margin="0,0,0,2">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="Button">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <TextBlock Text="{Binding PlatformIcon}" FontSize="9" Margin="0,0,3,0" VerticalAlignment="Center" />
+                                                                <TextBlock Text="{Binding PlatformDisplayName}"
+                                                                           Foreground="{Binding PlatformBadgeColor}"
+                                                                           FontSize="9" FontWeight="Bold" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                                            </StackPanel>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
                                     <TextBlock Text="{Binding Title}"
                                                FontSize="11"
                                                FontWeight="SemiBold"
@@ -344,6 +382,14 @@
                                             Command="{Binding TogglePlayPauseCommand}"
                                             Style="{StaticResource CompactMediaBtnStyle}"
                                             ToolTip="Putar atau jeda sesi ini" />
+
+                                    <!-- Dismiss Session Button -->
+                                    <Button Content="✕"
+                                            Command="{Binding DismissCommand}"
+                                            Style="{StaticResource DestructiveActionBtnStyle}"
+                                            ToolTip="Tutup / hapus sesi ini dari daftar"
+                                            Padding="6,2"
+                                            Margin="4,0,0,0" />
                                 </StackPanel>
                             </Grid>
                         </Border>

@@ -21,6 +21,8 @@ public sealed class WindowsMediaPlaybackController : IMediaPlaybackController
     private readonly List<TrackedSession> _trackedSessions = new();
     private readonly object _stateLock = new();
     private readonly SemaphoreSlim _refreshLock = new(1, 1);
+    private readonly List<MediaSessionInfo> _retainedSessions = new();
+    private readonly Dictionary<string, MediaPlatform> _platformOverrides = new(StringComparer.OrdinalIgnoreCase);
     private System.Threading.Timer? _syncTimer;
     private string? _primarySessionId;
 
@@ -150,7 +152,19 @@ public sealed class WindowsMediaPlaybackController : IMediaPlaybackController
                     }
 
                     var sourceAppId = tracker.Session.SourceAppUserModelId ?? string.Empty;
-                    var platform = MediaPlatformDetector.Detect(sourceAppId, mediaProps.Title, mediaProps.AlbumTitle, mediaProps.Artist);
+                    var isVideo = mediaProps.PlaybackType == Windows.Media.MediaPlaybackType.Video;
+                    var platform = MediaPlatformDetector.Detect(sourceAppId, mediaProps.Title, mediaProps.AlbumTitle, mediaProps.Artist, isVideo);
+
+                    // Check if manual override exists for this title/artist or sessionId
+                    var overrideKey = $"{mediaProps.Title}::{mediaProps.Artist}";
+                    lock (_stateLock)
+                    {
+                        if (_platformOverrides.TryGetValue(overrideKey, out var userPlatform) ||
+                            _platformOverrides.TryGetValue(tracker.Id, out userPlatform))
+                        {
+                            platform = userPlatform;
+                        }
+                    }
 
                     // Strictly filter out non-supported platforms
                     if (platform == MediaPlatform.Unknown)
@@ -177,12 +191,54 @@ public sealed class WindowsMediaPlaybackController : IMediaPlaybackController
                         state,
                         state == MediaPlaybackState.Playing);
 
+                    // Multi-Session Retention: If this tracker previously held a different track (e.g. switched tabs in Opera),
+                    // retain the previous track in the multi-session list so both appear in Adara Box!
+                    if (tracker.CurrentInfo != null &&
+                        (!string.Equals(tracker.CurrentInfo.Title, cleanTitle, StringComparison.OrdinalIgnoreCase) ||
+                         !string.Equals(tracker.CurrentInfo.Artist, info.Artist, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        var prev = tracker.CurrentInfo with { State = MediaPlaybackState.Paused, IsPlaying = false };
+                        lock (_stateLock)
+                        {
+                            if (!_retainedSessions.Any(r => string.Equals(r.Title, prev.Title, StringComparison.OrdinalIgnoreCase) &&
+                                                            string.Equals(r.Artist, prev.Artist, StringComparison.OrdinalIgnoreCase)))
+                            {
+                                _retainedSessions.Insert(0, prev);
+                                if (_retainedSessions.Count > 6)
+                                {
+                                    _retainedSessions.RemoveAt(_retainedSessions.Count - 1);
+                                }
+                            }
+                        }
+                    }
+
                     tracker.CurrentInfo = info;
                     updatedList.Add(info);
                 }
                 catch (Exception ex)
                 {
                     _logger.Debug(ex, "Failed to read properties for session {SessionId}.", tracker.Id);
+                }
+            }
+
+            // Append retained sessions from other tabs/browser windows not already in updatedList
+            lock (_stateLock)
+            {
+                foreach (var retained in _retainedSessions)
+                {
+                    if (!updatedList.Any(u => string.Equals(u.Title, retained.Title, StringComparison.OrdinalIgnoreCase) &&
+                                              string.Equals(u.Artist, retained.Artist, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        var retPlatform = retained.Platform;
+                        var retKey = $"{retained.Title}::{retained.Artist}";
+                        if (_platformOverrides.TryGetValue(retKey, out var overPlatform) ||
+                            _platformOverrides.TryGetValue(retained.SessionId, out overPlatform))
+                        {
+                            retPlatform = overPlatform;
+                        }
+
+                        updatedList.Add(retained with { Platform = retPlatform });
+                    }
                 }
             }
 
@@ -299,6 +355,34 @@ public sealed class WindowsMediaPlaybackController : IMediaPlaybackController
         _ = RefreshAllSessionsAsync();
     }
 
+    public void DismissSession(string sessionId)
+    {
+        lock (_stateLock)
+        {
+            _retainedSessions.RemoveAll(s => s.SessionId == sessionId);
+            if (_primarySessionId == sessionId)
+            {
+                _primarySessionId = null;
+            }
+        }
+        _ = RefreshAllSessionsAsync();
+    }
+
+    public void SetSessionPlatform(string sessionId, MediaPlatform platform)
+    {
+        lock (_stateLock)
+        {
+            var session = ActiveSessions.FirstOrDefault(s => s.SessionId == sessionId);
+            if (session != null)
+            {
+                var key = $"{session.Title}::{session.Artist}";
+                _platformOverrides[key] = platform;
+            }
+            _platformOverrides[sessionId] = platform;
+        }
+        _ = RefreshAllSessionsAsync();
+    }
+
     public async Task<bool> PlayPauseSessionAsync(string sessionId)
     {
         TrackedSession? tracker;
@@ -318,6 +402,25 @@ public sealed class WindowsMediaPlaybackController : IMediaPlaybackController
             catch (Exception ex)
             {
                 _logger.Warning(ex, "Failed to toggle play/pause for session {SessionId}.", sessionId);
+            }
+        }
+        else
+        {
+            // Retained session: set it as primary and toggle active playback
+            SetPrimarySession(sessionId);
+            lock (_stateLock)
+            {
+                tracker = _trackedSessions.FirstOrDefault();
+            }
+            if (tracker != null)
+            {
+                try
+                {
+                    var result = await tracker.Session.TryTogglePlayPauseAsync();
+                    _ = RefreshAllSessionsAsync();
+                    return result;
+                }
+                catch { }
             }
         }
 

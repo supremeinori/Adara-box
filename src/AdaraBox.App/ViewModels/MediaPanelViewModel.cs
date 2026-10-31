@@ -251,6 +251,39 @@ public sealed partial class MediaPanelViewModel : ObservableObject
         }
     }
 
+    public void DismissSession(MediaSessionItemViewModel session)
+    {
+        if (session == null) return;
+        _mediaController?.DismissSession(session.SessionId);
+        SecondarySessions.Remove(session);
+        OnPropertyChanged(nameof(HasMultipleSessions));
+        OnPropertyChanged(nameof(CollapseButtonText));
+        OnPropertyChanged(nameof(IsSecondarySessionsVisible));
+    }
+
+    public void CyclePlatform(MediaSessionItemViewModel session)
+    {
+        if (session == null || _mediaController == null) return;
+        var nextPlatform = session.Platform switch
+        {
+            MediaPlatform.Spotify => MediaPlatform.YouTube,
+            MediaPlatform.YouTube => MediaPlatform.YouTubeMusic,
+            MediaPlatform.YouTubeMusic => MediaPlatform.Spotify,
+            _ => MediaPlatform.Spotify
+        };
+        session.Platform = nextPlatform;
+        _mediaController.SetSessionPlatform(session.SessionId, nextPlatform);
+    }
+
+    [RelayCommand]
+    public void CyclePrimaryPlatform()
+    {
+        if (PrimarySession != null)
+        {
+            CyclePlatform(PrimarySession);
+        }
+    }
+
     [RelayCommand]
     public async Task PlayPauseAsync()
     {

@@ -21,14 +21,14 @@ public static class MediaPlatformDetector
         return BrowserKeywords.Any(k => app.Contains(k));
     }
 
-    public static MediaPlatform Detect(string? sourceAppId, string? title, string? albumTitle, string? artist)
+    public static MediaPlatform Detect(string? sourceAppId, string? title, string? albumTitle, string? artist, bool isVideo = false)
     {
         var app = sourceAppId ?? string.Empty;
         var t = title ?? string.Empty;
         var a = albumTitle ?? string.Empty;
         var art = artist ?? string.Empty;
 
-        // 1. Check Spotify (Desktop App or Web Player)
+        // 1. Check Spotify (Desktop App, Web Player with explicit tag, or URL/AppId)
         if (app.IndexOf("spotify", StringComparison.OrdinalIgnoreCase) >= 0 ||
             t.IndexOf("spotify", StringComparison.OrdinalIgnoreCase) >= 0 ||
             a.IndexOf("spotify", StringComparison.OrdinalIgnoreCase) >= 0)
@@ -36,7 +36,7 @@ public static class MediaPlatformDetector
             return MediaPlatform.Spotify;
         }
 
-        // 2. Check YouTube Music (PWA, Web App, or Browser metadata)
+        // 2. Check YouTube Music (PWA, Web App, or explicit metadata)
         if (t.IndexOf("youtube music", StringComparison.OrdinalIgnoreCase) >= 0 ||
             a.IndexOf("youtube music", StringComparison.OrdinalIgnoreCase) >= 0 ||
             app.IndexOf("youtubemusic", StringComparison.OrdinalIgnoreCase) >= 0 ||
@@ -53,10 +53,27 @@ public static class MediaPlatformDetector
             return MediaPlatform.YouTube;
         }
 
-        // 4. Browser Fallback: Any active media playing in Opera, Chrome, Edge, Brave, Firefox, etc.
-        // is YouTube / Web playback and should ALWAYS be detected!
+        // 4. Browser Playback Detection:
+        // Distinguish Spotify Web vs YouTube vs YouTube Music
         if (IsBrowser(app))
         {
+            // If explicit video playback or ends with YouTube suffix -> YouTube
+            if (isVideo ||
+                t.EndsWith(" - YouTube", StringComparison.OrdinalIgnoreCase) ||
+                t.EndsWith("— YouTube", StringComparison.OrdinalIgnoreCase) ||
+                t.EndsWith("- YouTube", StringComparison.OrdinalIgnoreCase))
+            {
+                return MediaPlatform.YouTube;
+            }
+
+            // If non-video audio playback has a distinct artist or album (e.g. Spotify Web player: "33x" by "Perunggu")
+            // it is Spotify Web streaming
+            if (!string.IsNullOrWhiteSpace(art) || !string.IsNullOrWhiteSpace(a))
+            {
+                return MediaPlatform.Spotify;
+            }
+
+            // General web media fallback
             return MediaPlatform.YouTube;
         }
 
