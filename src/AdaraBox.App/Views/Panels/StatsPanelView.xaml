@@ -80,7 +80,7 @@
                             <TextBlock Text="{Binding CpuText}" FontSize="18" FontWeight="Bold" Foreground="#60A5FA" Margin="0,0,0,8" />
                             <ProgressBar Style="{StaticResource MetricProgressBarStyle}"
                                          Foreground="#3B82F6"
-                                         Value="{Binding CpuValue}"
+                                         Value="{Binding CpuValue, Mode=OneWay}"
                                          Minimum="0" Maximum="100" />
                         </StackPanel>
                     </Border>
@@ -93,7 +93,7 @@
                             <TextBlock Text="{Binding MemoryDetailText}" FontSize="10" Foreground="#71717A" Margin="0,0,0,6" TextTrimming="CharacterEllipsis" />
                             <ProgressBar Style="{StaticResource MetricProgressBarStyle}"
                                          Foreground="#8B5CF6"
-                                         Value="{Binding MemoryValue}"
+                                         Value="{Binding MemoryValue, Mode=OneWay}"
                                          Minimum="0" Maximum="100" />
                         </StackPanel>
                     </Border>
@@ -106,7 +106,7 @@
                             <TextBlock Text="{Binding GpuText}" FontSize="18" FontWeight="Bold" Foreground="#34D399" Margin="0,0,0,8" />
                             <ProgressBar Style="{StaticResource MetricProgressBarStyle}"
                                          Foreground="#10B981"
-                                         Value="{Binding GpuValue}"
+                                         Value="{Binding GpuValue, Mode=OneWay}"
                                          Minimum="0" Maximum="100"
                                          Visibility="{Binding IsGpuAvailable, Converter={StaticResource BoolToVis}}" />
                             <TextBlock Text="Driver / HW" FontSize="10" Foreground="#71717A"
@@ -146,7 +146,7 @@
                                             <ProgressBar Grid.Row="1"
                                                          Style="{StaticResource MetricProgressBarStyle}"
                                                          Foreground="#0284C7"
-                                                         Value="{Binding PercentValue}"
+                                                         Value="{Binding PercentValue, Mode=OneWay}"
                                                          Minimum="0" Maximum="100" />
                                         </Grid>
                                     </Border>

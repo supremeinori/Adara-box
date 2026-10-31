@@ -306,16 +306,48 @@ public partial class App : Application
         });
     }
 
+    private int _consecutiveDispatcherExceptions;
+    private DateTime _lastDispatcherExceptionUtc = DateTime.MinValue;
+
     private void SetupExceptionHandling()
     {
         DispatcherUnhandledException += (s, e) =>
         {
-            Log.Error(e.Exception, "Unhandled dispatcher exception encountered.");
-            MessageBox.Show(
-                UiText.UnhandledExceptionMessage,
-                UiText.UnhandledExceptionTitle,
-                MessageBoxButton.OK,
-                MessageBoxImage.Error);
+            var now = DateTime.UtcNow;
+            if ((now - _lastDispatcherExceptionUtc).TotalSeconds < 2)
+            {
+                _consecutiveDispatcherExceptions++;
+            }
+            else
+            {
+                _consecutiveDispatcherExceptions = 1;
+            }
+            _lastDispatcherExceptionUtc = now;
+
+            Log.Error(e.Exception, "Unhandled dispatcher exception encountered (Consecutive={Count}).", _consecutiveDispatcherExceptions);
+
+            // Circuit breaker: prevent infinite modal dialog loops if layout/render keeps failing
+            if (_consecutiveDispatcherExceptions >= 3)
+            {
+                Log.Fatal("Dispatcher exception threshold exceeded. Terminating application to prevent UI freeze loop.");
+                e.Handled = false;
+                Shutdown(-1);
+                return;
+            }
+
+            try
+            {
+                MessageBox.Show(
+                    UiText.UnhandledExceptionMessage,
+                    UiText.UnhandledExceptionTitle,
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+            catch
+            {
+                // Ignore dialog display error during crash
+            }
+
             e.Handled = true;
         };
 

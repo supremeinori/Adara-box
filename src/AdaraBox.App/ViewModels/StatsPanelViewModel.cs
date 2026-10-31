@@ -8,10 +8,12 @@ namespace AdaraBox.App.ViewModels;
 
 public sealed class DriveItemViewModel : ObservableObject
 {
-    public string Name { get; }
-    public string UsageText { get; }
-    public string PercentText { get; }
-    public double PercentValue { get; }
+    public string Name { get; set; } = string.Empty;
+    public string UsageText { get; set; } = string.Empty;
+    public string PercentText { get; set; } = string.Empty;
+    public double PercentValue { get; set; }
+
+    public DriveItemViewModel() { }
 
     public DriveItemViewModel(DriveUsage drive)
     {
