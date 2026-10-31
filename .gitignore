@@ -1,0 +1,17 @@
+## Visual Studio / .NET / C# gitignore
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+.vs/
+*.user
+*.userosscache
+*.suo
+*.userprefs
+*.db-shm
+*.db-wal
+*.db
+TestResults/
+.idea/
+.vscode/
+*.DotSettings.user
