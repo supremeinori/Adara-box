@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using AdaraBox.Core.Common;
+using AdaraBox.Core.Resources;
 
 namespace AdaraBox.Core.Workspaces;
 
@@ -10,11 +11,16 @@ public sealed class WorkspaceService : IWorkspaceService
 {
     private readonly IWorkspaceRepository _repository;
     private readonly IClock _clock;
+    private readonly IResourceRepository? _resourceRepository;
 
-    public WorkspaceService(IWorkspaceRepository repository, IClock clock)
+    public WorkspaceService(
+        IWorkspaceRepository repository,
+        IClock clock,
+        IResourceRepository? resourceRepository = null)
     {
         _repository = repository;
         _clock = clock;
+        _resourceRepository = resourceRepository;
     }
 
     public async Task<IReadOnlyList<Workspace>> ListAsync(CancellationToken ct = default)
@@ -74,5 +80,11 @@ public sealed class WorkspaceService : IWorkspaceService
         // Golden Rule #1: Delete database reference only, never touch user's physical files
         await _repository.DeleteAsync(id, ct);
         return OperationResult.Ok();
+    }
+
+    public async Task<int> GetResourceCountAsync(Guid id, CancellationToken ct = default)
+    {
+        if (_resourceRepository == null) return 0;
+        return await _resourceRepository.GetCountByWorkspaceAsync(id, ct);
     }
 }

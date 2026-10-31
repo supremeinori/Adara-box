@@ -165,11 +165,21 @@ public partial class TopBarWindow : Window
         {
             if (ViewModel != null && ViewModel.IsPanelOpen)
             {
-                if (ViewModel.ActivePanelViewModel is WorkspacePanelViewModel wsVm && wsVm.IsFormOpen)
+                if (ViewModel.ActivePanelViewModel is WorkspacePanelViewModel wsVm)
                 {
-                    wsVm.CancelFormCommand.Execute(null);
-                    e.Handled = true;
-                    return;
+                    if (wsVm.IsFormOpen)
+                    {
+                        wsVm.CancelFormCommand.Execute(null);
+                        e.Handled = true;
+                        return;
+                    }
+
+                    if (wsVm.IsResourceFormOpen)
+                    {
+                        wsVm.CancelResourceFormCommand.Execute(null);
+                        e.Handled = true;
+                        return;
+                    }
                 }
 
                 ViewModel.ClosePanelCommand.Execute(null);

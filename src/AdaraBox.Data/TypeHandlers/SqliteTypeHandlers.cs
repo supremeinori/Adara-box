@@ -1,13 +1,14 @@
 using System;
 using System.Data;
 using System.Globalization;
+using AdaraBox.Core.Resources;
 using Dapper;
 
 namespace AdaraBox.Data.TypeHandlers;
 
 /// <summary>
-/// Custom Dapper TypeHandlers for SQLite to ensure proper mapping of Guid and DateTimeOffset as TEXT.
-/// Confirmed and tested in Spike D (Module M00).
+/// Custom Dapper TypeHandlers for SQLite to ensure proper mapping of Guid, DateTimeOffset, and ResourceType as TEXT.
+/// Confirmed and tested in Spike D (Module M00) and Module M03.
 /// </summary>
 public static class SqliteTypeHandlers
 {
@@ -24,6 +25,7 @@ public static class SqliteTypeHandlers
 
             SqlMapper.AddTypeHandler(new GuidTypeHandler());
             SqlMapper.AddTypeHandler(new DateTimeOffsetTypeHandler());
+            SqlMapper.AddTypeHandler(new ResourceTypeHandler());
             _isRegistered = true;
         }
     }
@@ -69,6 +71,38 @@ public static class SqliteTypeHandlers
             }
 
             return DateTimeOffset.MinValue;
+        }
+    }
+
+    public sealed class ResourceTypeHandler : SqlMapper.TypeHandler<ResourceType>
+    {
+        public override void SetValue(IDbDataParameter parameter, ResourceType value)
+        {
+            parameter.Value = value switch
+            {
+                ResourceType.Application => "application",
+                ResourceType.File => "file",
+                ResourceType.Folder => "folder",
+                ResourceType.Link => "link",
+                _ => "file"
+            };
+            parameter.DbType = DbType.String;
+        }
+
+        public override ResourceType Parse(object value)
+        {
+            if (value is string s)
+            {
+                return s.ToLowerInvariant() switch
+                {
+                    "application" => ResourceType.Application,
+                    "file" => ResourceType.File,
+                    "folder" => ResourceType.Folder,
+                    "link" => ResourceType.Link,
+                    _ => ResourceType.File
+                };
+            }
+            return ResourceType.File;
         }
     }
 }

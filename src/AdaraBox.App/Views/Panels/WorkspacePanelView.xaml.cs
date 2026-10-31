@@ -46,6 +46,37 @@ public partial class WorkspacePanelView : UserControl
         }
     }
 
+    private void ResourceTargetTextBox_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (sender is TextBox textBox && textBox.IsVisible)
+        {
+            Dispatcher.BeginInvoke(() =>
+            {
+                textBox.Focus();
+                textBox.SelectAll();
+            });
+        }
+    }
+
+    private void ResourceForm_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (ViewModel == null) return;
+
+        if (e.Key == Key.Enter)
+        {
+            if (ViewModel.SaveResourceFormCommand.CanExecute(null))
+            {
+                ViewModel.SaveResourceFormCommand.Execute(null);
+            }
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape)
+        {
+            ViewModel.CancelResourceFormCommand.Execute(null);
+            e.Handled = true;
+        }
+    }
+
     private void WorkspaceCard_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
         // Ignore clicks on child buttons (✏, 🗑) so their own commands execute

@@ -47,6 +47,38 @@ public static class UiText
     public const string DeleteWorkspaceTitle = "Hapus Workspace";
     public const string DeleteWorkspaceConfirm = "Apakah Anda yakin ingin menghapus workspace \"{0}\"?\nJumlah resource: {1}.\n\nHanya menghapus workspace dari Adara Box. File, folder, aplikasi, dan tautan aslinya tidak terpengaruh.";
 
+    // Resource Management Texts
+    public const string ResourceEmpty = "Workspace ini masih kosong.";
+    public const string ResourceEmptyDescription = "Tambahkan file, folder, aplikasi, atau tautan pertama Anda ke dalam workspace ini.";
+    public const string AddResourceButton = "+ Tambah Resource";
+    public const string AddFile = "Tambah File...";
+    public const string AddFolder = "Tambah Folder...";
+    public const string AddApplication = "Tambah Aplikasi...";
+    public const string AddLink = "Tambah Tautan...";
+    public const string AddLinkTitle = "Tambah Tautan Baru";
+    public const string EditResourceTitle = "Edit Resource";
+    public const string ResourceNameLabel = "Nama Tampilan";
+    public const string ResourceTargetLabel = "Target";
+    public const string ResourceUrlPlaceholder = "https://example.com";
+    public const string RecheckAvailability = "Cek Ulang Ketersediaan";
+    public const string ViewModeGrid = "Grid";
+    public const string ViewModeList = "List";
+
+    // Resource Types
+    public const string ResourceTypeApplication = "Aplikasi";
+    public const string ResourceTypeFile = "File";
+    public const string ResourceTypeFolder = "Folder";
+    public const string ResourceTypeLink = "Tautan";
+
+    // Availability Warnings
+    public const string AvailabilityMissing = "Target tidak ditemukan di lokasi ini.";
+    public const string AvailabilityAccessDenied = "Akses ke target ini ditolak.";
+    public const string AvailabilityUnknown = "Status ketersediaan tidak diketahui.";
+
+    // Delete Resource Confirm
+    public const string DeleteResourceTitle = "Hapus Resource";
+    public const string DeleteResourceConfirm = "Hapus \"{0}\" dari workspace?\n\nFile, folder, atau aplikasi aslinya tidak akan dihapus.";
+
     // Settings Panel Texts
     public const string SettingsTitle = "Pengaturan";
     public const string SettingsHideTopBar = "Sembunyikan top bar otomatis";

@@ -21,6 +21,18 @@ public sealed class WpfDialogService : IDialogService
         return Task.FromResult(result == MessageBoxResult.Yes);
     }
 
+    public Task<bool> ConfirmDeleteResourceAsync(string resourceName)
+    {
+        var message = string.Format(UiText.DeleteResourceConfirm, resourceName);
+        var result = MessageBox.Show(
+            message,
+            UiText.DeleteResourceTitle,
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        return Task.FromResult(result == MessageBoxResult.Yes);
+    }
+
     public Task ShowErrorAsync(string title, string message)
     {
         MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Error);

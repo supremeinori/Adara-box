@@ -10,7 +10,7 @@
 | M00 | Setup & Spikes | ✔ selesai | ☐ |
 | M01 | App Shell | ✔ selesai | ☐ |
 | M02 | Workspace Management | ✔ selesai | ☐ |
-| M03 | Resource Management | ☐ belum | ☐ |
+| M03 | Resource Management | ✔ selesai | ☐ |
 | M04 | Open the File | ☐ belum | ☐ |
 | — | **MVP fungsional** (setelah M04) | ☐ | ☐ |
 | M05 | Hardening | ☐ belum | ☐ |
@@ -27,6 +27,7 @@ Status: ☐ belum · ◐ sedang dikerjakan · ✔ selesai · ⛔ terblokir
 | M00 | Verifikasi visual interaktif Top Bar (Overlay Topmost vs AppBar) & Hover Trigger Strip | Jalankan `spikes/WindowSpike/bin/Release/net8.0-windows/WindowSpike.exe`, ikuti 4 skenario di `docs/spike-window.md` (uji pencurian fokus, input textbox, space reservation AppBar, dan dwell timer hover). |
 | M01 | Verifikasi visual Application Shell (Startup tanpa window biasa, Top Bar compact 36 DIP, ekspansi panel horizontal animasi, honest placeholder Media & Stats, Esc & Close button, toggle Hide via Settings & Tray, hover trigger strip, dan single instance) | Jalankan `src/AdaraBox.App/bin/Release/net8.0-windows/AdaraBox.App.exe`, ikuti 8 skenario di `docs/manual-tests/M01.md`. |
 | M02 | Verifikasi visual dan fungsional Workspace Management & Persistensi (Inisialisasi SQLite WAL & migrasi awal, tombol data-driven `+ Workspace`, form inline buat/ganti nama dengan validasi, duplikat nama diizinkan, dialog konfirmasi hapus non-destructive, tampilan detail workspace FR-WS-05, serta persistensi preferensi Hide dan data workspace setelah restart) | Jalankan `src/AdaraBox.App/bin/Release/net8.0-windows/AdaraBox.App.exe`, ikuti 9 skenario di `docs/manual-tests/M02.md`. |
+| M03 | Verifikasi visual dan fungsional Resource Management & Tampilan Grid/List (Penambahan 4 tipe resource: file batch multiselect, folder, aplikasi, tautan; validasi URL dan normalisasi; toggle mode Grid/List tanpa kehilangan data; form edit nama dan target; tombol urut naik/turun; indikator peringatan ketersediaan ⚠️; hapus referensi tanpa menghapus file fisik; serta dialog hapus workspace yang menampilkan jumlah resource sebenarnya) | Jalankan `src/AdaraBox.App/bin/Release/net8.0-windows/AdaraBox.App.exe`, ikuti 11 skenario di `docs/manual-tests/M03.md`. |
 
 ## OPEN QUESTIONS
 
@@ -35,7 +36,7 @@ Status: ☐ belum · ◐ sedang dikerjakan · ✔ selesai · ⛔ terblokir
 | Q1 | Bagaimana perilaku top bar pada setup multi-monitor (apakah muncul di primary monitor saja atau di monitor aktif tempat kursor berada)? | M01 / M05 | (Menunggu jawaban di M05) |
 | Q2 | Apa shortcut keyboard default untuk toggle/fokus top bar (misal `Win+Alt+A` atau `Ctrl+Alt+Space`) agar tidak konflik dengan hotkey Windows? | M01 / M05 | (Menunggu jawaban di M05) |
 | Q3 | Bagaimana preferensi startup awal (Run on Windows Startup, Start minimized to tray, atau langsung Always Visible)? | M01 / M05 | (Menunggu jawaban di M05) |
-| Q4 | Apakah drag-and-drop dari File Explorer langsung ke Workspace didukung pada MVP atau pasca-MVP? | M03 | (Menunggu evaluasi di M03) |
+| Q4 | Apakah drag-and-drop dari File Explorer langsung ke Workspace didukung pada MVP atau pasca-MVP? | M03 | Pasca-MVP (sesuai scope M03 & SRS §5.3) |
 
 ## Acceptance Criteria MVP (SRS §11) — dibuktikan di M04/M05
 
@@ -72,6 +73,49 @@ Status: ☐ belum · ◐ sedang dikerjakan · ✔ selesai · ⛔ terblokir
 | NFR-CP-04 (Windows minimum) | M00 (keputusan), M06 (installer) |
 
 ## Log Laporan Modul
+
+## Laporan M03 — 2026-10-31
+- Status: SELESAI
+- Task selesai:
+  - T1 (Data): Implementasi `SqliteResourceRepository` (CRUD lengkap, transaksi atomik `AddRangeAsync`, transaksi atomik `ReorderAsync`, query terurut `sort_order` lalu `created_at`, query hitung `GetCountByWorkspaceAsync`, dan mapping type enum lowercase via `SqliteTypeHandlers`).
+  - T2 (Service & Validator Core): Model `Resource`, enum `ResourceType` & `ResourceAvailability`, `IResourceRepository`, `IResourceService`, `ResourceService`, `ResourceTargetValidator` (normalisasi skema URL, penolakan skema berbahaya seperti javascript/file/ms-*, validasi path absolut file/folder, validasi aplikasi .exe/.lnk/shell:AppsFolder, batas nama 80 karakter & target 2048 karakter, duplikat target diizinkan sesuai FR-RS-09), update `IWorkspaceService.GetResourceCountAsync`.
+  - T3 (Availability & Ikon Platform):
+    - `ResourceAvailabilityChecker`: pemeriksaan ketersediaan file/folder di background dengan pembatasan paralelisme (maks 8), penanganan `UnauthorizedAccessException` -> `AccessDenied`, timeout 2 detik -> `Unknown`, dan tautan langsung `Unknown` tanpa request jaringan (Aturan Emas #5).
+    - `IconProvider`: ekstraksi ikon aplikasi dan file via Win32 `SHGetFileInfo`, thumbnail frozen bitmap thread-safe, caching in-memory per ekstensi/path, dan fallback icon bitmap tanpa melempar exception.
+  - T4 (Tampilan Detail Workspace & CRUD Resource UI):
+    - Navigasi detail workspace menampilkan judul, hitungan resource, dan state kosong jika belum ada resource.
+    - Abstraksi `IFilePickerService` & `WpfFilePickerService` untuk memilih file (multiselect), folder, dan aplikasi.
+    - Tambah File (batch), Tambah Folder, Tambah Aplikasi, dan Tambah Tautan via form inline dengan validasi instan.
+    - Form edit resource untuk mengubah nama tampilan dan target (tipe terkunci).
+    - Hapus resource meminta konfirmasi non-destructive ("Hapus dari workspace? File aslinya tidak akan dihapus.") dan hanya menghapus referensi di DB.
+    - Pengurutan manual via tombol ▲/▼ dan menu konteks.
+    - Background availability check: item yang hilang (`Missing` / `AccessDenied`) diberi ikon peringatan ⚠️ dan tooltip informatif tanpa menghapus atau menyembunyikan item secara otomatis (FR-RS-07). Tersedia tombol "⟳ Cek Ulang".
+    - Info pembeda ditampilkan pada kartu (host URL untuk link, nama folder induk untuk file/folder) untuk membedakan nama yang mirip (FR-RS-04).
+  - T5 (Tampilan Grid & List):
+    - Toggle mode Grid / List di header detail workspace.
+    - Kedua mode berbagi satu koleksi data dan ViewModel yang sama (FR-VW-03) dengan fungsionalitas yang identik (FR-VW-05).
+    - Preferensi mode tampilan disimpan secara global ke SQLite via `SettingKeys.ViewMode`.
+    - Virtualisasi List via `VirtualizingStackPanel`.
+    - Beralih mode tidak memuat ulang data dari DB dan tidak mereset urutan.
+  - T6 (Automated Tests): 96 unit tests hijau di seluruh test suite (Core, Data, Platform, App).
+    - `AdaraBox.Core.Tests`: 51 tests (validasi target semua tipe, URL berbahaya, panjang string, CRUD resource service, sorting, error codes).
+    - `AdaraBox.Data.Tests`: 18 tests (CRUD resource, foreign key cascade delete dari workspace, atomisitas transaksi `AddRangeAsync`, transaksi `ReorderAsync`, dan penanganan path non-ASCII/kutip tunggal).
+    - `AdaraBox.Platform.Tests`: 15 tests (availability checker dengan file/folder temp, missing path, link tanpa request jaringan, timeout, dan icon provider).
+    - `AdaraBox.App.Tests`: 12 tests (toggle grid/list, file picker add files, hapus resource, create/rename/delete workspace, dan visibility persistence).
+- Acceptance criteria (8/8 terpenuhi):
+  1. Keempat jenis resource (Aplikasi, File, Folder, Tautan) bisa ditambah, dilihat, diedit, dan dihapus di workspace (FR-RS-01…06).
+  2. Yang tersimpan hanya referensi; tidak ada penyalinan file fisik (cek kode: 0 panggilan `File.Copy/Move/Delete`, `Directory.*`).
+  3. Target tidak ditemukan → indikator peringatan ⚠️ + pesan; item tidak hilang diam-diam (FR-RS-07).
+  4. Grid dan list sama-sama lengkap fungsinya; toggle tidak kehilangan data; preferensi bertahan setelah restart (FR-VW-01…05).
+  5. URL berskema berbahaya ditolak; path dengan spasi dan non-ASCII bekerja.
+  6. Menambah banyak file sekaligus bekerja dalam satu transaksi (`AddRangeAsync`).
+  7. UI tetap responsif saat cek ketersediaan berjalan di background (tidak ada blocking di UI thread).
+  8. Semua test hijau (96 tests passed; `dotnet build -c Release` 0 errors, 0 warnings).
+- [HUMAN CHECK] yang menunggu: Uji manual 11 skenario di `docs/manual-tests/M03.md`.
+- Keputusan yang diambil (dan di mana dicatat):
+  - Penanganan drag-and-drop diputuskan untuk pasca-MVP (SRS §5.3, Q4 di `PROGRESS.md`).
+  - Pembuatan fallback bitmap programatis di `IconProvider` menggunakan `BitmapSource.Create` agar aman dieksekusi di thread non-STA (MTA).
+- Masalah/utang teknis yang diketahui: Tidak ada. Semua dependensi mematuhi aturan arsitektur.
 
 ## Laporan M02 — 2026-10-31
 - Status: SELESAI

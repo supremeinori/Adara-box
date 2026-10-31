@@ -12,4 +12,5 @@ public interface IWorkspaceService
     Task<OperationResult<Workspace>> CreateAsync(string name, CancellationToken ct = default);
     Task<OperationResult> RenameAsync(Guid id, string newName, CancellationToken ct = default);
     Task<OperationResult> DeleteAsync(Guid id, CancellationToken ct = default);
+    Task<int> GetResourceCountAsync(Guid id, CancellationToken ct = default);
 }

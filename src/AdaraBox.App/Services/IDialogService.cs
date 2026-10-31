@@ -8,5 +8,6 @@ namespace AdaraBox.App.Services;
 public interface IDialogService
 {
     Task<bool> ConfirmDeleteWorkspaceAsync(string workspaceName, int resourceCount);
+    Task<bool> ConfirmDeleteResourceAsync(string resourceName);
     Task ShowErrorAsync(string title, string message);
 }

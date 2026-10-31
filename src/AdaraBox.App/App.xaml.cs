@@ -11,12 +11,15 @@ using AdaraBox.App.ViewModels;
 using AdaraBox.App.Views;
 using AdaraBox.Core.Common;
 using AdaraBox.Core.Modules;
+using AdaraBox.Core.Resources;
 using AdaraBox.Core.Settings;
 using AdaraBox.Core.Visibility;
 using AdaraBox.Core.Workspaces;
 using AdaraBox.Data.Infrastructure;
 using AdaraBox.Data.Migrations;
 using AdaraBox.Data.Repositories;
+using AdaraBox.Platform.Availability;
+using AdaraBox.Platform.Icons;
 using AdaraBox.Platform.Tray;
 
 namespace AdaraBox.App;
@@ -158,8 +161,13 @@ public partial class App : Application
         services.AddSingleton(dbConnectionFactory);
         services.AddSingleton<ISettingsStore, SqliteSettingsStore>();
         services.AddSingleton<IWorkspaceRepository, SqliteWorkspaceRepository>();
+        services.AddSingleton<IResourceRepository, SqliteResourceRepository>();
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<IWorkspaceService, WorkspaceService>();
+        services.AddSingleton<IResourceService, ResourceService>();
+        services.AddSingleton<IResourceAvailabilityChecker, ResourceAvailabilityChecker>();
+        services.AddSingleton<IIconProvider, IconProvider>();
+        services.AddSingleton<IFilePickerService, WpfFilePickerService>();
         services.AddSingleton<IDialogService, WpfDialogService>();
 
         // Top Bar Visibility with initial mode loaded from ISettingsStore

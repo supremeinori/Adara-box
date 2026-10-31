@@ -12,11 +12,14 @@ public sealed partial class WorkspaceItemViewModel : ObservableObject
     [ObservableProperty]
     private string _name;
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ResourceCountText))]
+    private int _resourceCount;
+
     public Guid Id { get; }
     public DateTimeOffset CreatedAt { get; }
     public DateTimeOffset UpdatedAt { get; }
     public int SortOrder { get; }
-    public int ResourceCount => 0; // M02 scope: always 0
     public string ResourceCountText => $"{ResourceCount} resource";
 
     public WorkspaceItemViewModel(Workspace workspace, WorkspacePanelViewModel parent)
