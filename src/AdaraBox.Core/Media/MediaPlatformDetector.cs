@@ -54,26 +54,11 @@ public static class MediaPlatformDetector
         }
 
         // 4. Browser Playback Detection:
-        // Distinguish Spotify Web vs YouTube vs YouTube Music
+        // By default, general media playing in a browser (Opera, Chrome, Edge, Brave, etc.)
+        // is YouTube / web video. Spotify is detected when using Spotify Desktop, Spotify PWA,
+        // or when Spotify is explicitly present in title/album/app.
         if (IsBrowser(app))
         {
-            // If explicit video playback or ends with YouTube suffix -> YouTube
-            if (isVideo ||
-                t.EndsWith(" - YouTube", StringComparison.OrdinalIgnoreCase) ||
-                t.EndsWith("— YouTube", StringComparison.OrdinalIgnoreCase) ||
-                t.EndsWith("- YouTube", StringComparison.OrdinalIgnoreCase))
-            {
-                return MediaPlatform.YouTube;
-            }
-
-            // If non-video audio playback has a distinct artist or album (e.g. Spotify Web player: "33x" by "Perunggu")
-            // it is Spotify Web streaming
-            if (!string.IsNullOrWhiteSpace(art) || !string.IsNullOrWhiteSpace(a))
-            {
-                return MediaPlatform.Spotify;
-            }
-
-            // General web media fallback
             return MediaPlatform.YouTube;
         }
 
