@@ -7,7 +7,7 @@
 
 | Modul | Nama | Status | Persetujuan manusia |
 |---|---|---|---|
-| M00 | Setup & Spikes | ☐ belum | ☐ |
+| M00 | Setup & Spikes | ✔ selesai | ☐ |
 | M01 | App Shell | ☐ belum | ☐ |
 | M02 | Workspace Management | ☐ belum | ☐ |
 | M03 | Resource Management | ☐ belum | ☐ |
@@ -21,13 +21,19 @@
 Status: ☐ belum · ◐ sedang dikerjakan · ✔ selesai · ⛔ terblokir
 
 ## Menunggu Verifikasi Manusia ([HUMAN CHECK])
-_(agent menambah baris di sini: modul, deskripsi, langkah uji)_
+
+| Modul | Deskripsi | Langkah Uji / Referensi |
+|---|---|---|
+| M00 | Verifikasi visual interaktif Top Bar (Overlay Topmost vs AppBar) & Hover Trigger Strip | Jalankan `spikes/WindowSpike/bin/Release/net8.0-windows/WindowSpike.exe`, ikuti 4 skenario di `docs/spike-window.md` (uji pencurian fokus, input textbox, space reservation AppBar, dan dwell timer hover). |
 
 ## OPEN QUESTIONS
-_(agent menambah; manusia menjawab di kolom kanan)_
 
 | # | Pertanyaan | Modul | Jawaban manusia |
 |---|---|---|---|
+| Q1 | Bagaimana perilaku top bar pada setup multi-monitor (apakah muncul di primary monitor saja atau di monitor aktif tempat kursor berada)? | M01 / M05 | (Menunggu jawaban di M05) |
+| Q2 | Apa shortcut keyboard default untuk toggle/fokus top bar (misal `Win+Alt+A` atau `Ctrl+Alt+Space`) agar tidak konflik dengan hotkey Windows? | M01 / M05 | (Menunggu jawaban di M05) |
+| Q3 | Bagaimana preferensi startup awal (Run on Windows Startup, Start minimized to tray, atau langsung Always Visible)? | M01 / M05 | (Menunggu jawaban di M05) |
+| Q4 | Apakah drag-and-drop dari File Explorer langsung ke Workspace didukung pada MVP atau pasca-MVP? | M03 | (Menunggu evaluasi di M03) |
 
 ## Acceptance Criteria MVP (SRS §11) — dibuktikan di M04/M05
 
@@ -64,4 +70,25 @@ _(agent menambah; manusia menjawab di kolom kanan)_
 | NFR-CP-04 (Windows minimum) | M00 (keputusan), M06 (installer) |
 
 ## Log Laporan Modul
-_(agent menempelkan Laporan Modul di bawah ini, terbaru di atas; format ada di Master Guide §6)_
+
+## Laporan M00 — 2026-10-31
+- Status: SELESAI
+- Task selesai: T1 (Inisialisasi repo), T2 (Solution & Proyek), T3 (CI GitHub Actions), T4 (Spike A: Window Top Bar), T5 (Spike B: Hover Trigger), T6 (Spike C: Launcher Resource), T7 (Spike D: SQLite & Dapper), T8 (ADR & Keputusan Teknis).
+- Acceptance criteria: 5/5 terpenuhi:
+  1. `dotnet build -c Release` dan `dotnet test -c Release` bersih (0 error, 0 warning; 13 unit tests passed).
+  2. Test arsitektur lulus (`AdaraBox.Core` tidak bergantung ke WPF, SQLite, atau Win32).
+  3. Hasil tertulis setiap spike lengkap di `docs/spike-window.md`, `docs/spike-launcher.md`, `docs/spike-sqlite.md`, dan `docs/DECISIONS.md`.
+  4. Semua ADR (ADR-001 hingga ADR-008) tercatat berstatus ACCEPTED.
+  5. Item [HUMAN CHECK] terdaftar di `PROGRESS.md`.
+- [HUMAN CHECK] yang menunggu: Uji interaktif WPF Spike di `spikes/WindowSpike/bin/Release/net8.0-windows/WindowSpike.exe` (fokus, TextBox input, dan hover dwell trigger).
+- Keputusan yang diambil (dan di mana dicatat):
+  - Framework Desktop: C# 12 / .NET 8 WPF (ADR-001 di `docs/DECISIONS.md`).
+  - Top Bar: Overlay Topmost `ShowActivated=False` tanpa menyisihkan ruang layar; dilarang pakai `WS_EX_NOACTIVATE` (ADR-002).
+  - Hover Trigger: Strip 3 DIP, dwell 250 ms, delay sembunyi 600 ms, color `#01000000` (ADR-003, `UiConstants.cs`).
+  - Launcher: `ProcessStartInfo` + `UseShellExecute = true`, auto `WorkingDirectory` untuk `.exe`, pemetaan Win32 Error Codes 2, 5, 1155, 1223 (ADR-004, `LauncherTests.cs`).
+  - Persistensi: SQLite `%LOCALAPPDATA%\AdaraBox\adarabox.db`, WAL mode, `PRAGMA foreign_keys = ON`, `user_version` migration, Dapper TypeHandlers untuk Guid & DateTimeOffset (ADR-005, `SqliteTypeHandlers.cs`).
+  - Versi Minimum Windows: Windows 10 21H2 (Build 19044+) & Windows 11 (ADR-006).
+  - Tampilan Grid/List: Preferensi global `view.mode` (ADR-007).
+  - Placeholder Media & Stats: Honest Placeholders status `InDevelopment` (ADR-008).
+- OPEN QUESTION: Q1 (Multi-monitor), Q2 (Shortcut default), Q3 (Startup behavior), Q4 (Drag-and-drop).
+- Masalah/utang teknis yang diketahui: Tidak ada. Semua dependensi mematuhi aturan arsitektur.

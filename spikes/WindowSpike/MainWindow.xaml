@@ -1,0 +1,73 @@
+<Window x:Class="AdaraBox.WindowSpike.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Adara Box — Window &amp; Hover Spikes (M00 Task T4 &amp; T5)"
+        Height="550" Width="780"
+        WindowStartupLocation="CenterScreen"
+        Background="#1E1E24" Foreground="#E0E0E0">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,12">
+            <TextBlock Text="Adara Box — Technical Spikes A &amp; B" FontSize="18" FontWeight="Bold" Foreground="#60A5FA" />
+            <TextBlock Text="WPF Window Spike (Overlay vs AppBar) &amp; Hover Trigger Strip" FontSize="12" Foreground="#9CA3AF" />
+        </StackPanel>
+
+        <!-- Test actions -->
+        <Border Grid.Row="1" Background="#26262E" CornerRadius="6" Padding="12" Margin="0,0,0,12">
+            <WrapPanel Orientation="Horizontal">
+                <Button Content="1. Test Overlay Topmost (Recommended)" Margin="0,0,8,8" Padding="10,6" Background="#2563EB" Foreground="White" BorderThickness="0" Click="BtnOverlay_Click" />
+                <Button Content="2. Test WS_EX_NOACTIVATE (Input Test)" Margin="0,0,8,8" Padding="10,6" Background="#D97706" Foreground="White" BorderThickness="0" Click="BtnNoActivate_Click" />
+                <Button Content="3. Test AppBar (SHAppBarMessage)" Margin="0,0,8,8" Padding="10,6" Background="#0D9488" Foreground="White" BorderThickness="0" Click="BtnAppBar_Click" />
+                <Button Content="4. Test Hover Trigger Strip (Spike B)" Margin="0,0,8,8" Padding="10,6" Background="#7C3AED" Foreground="White" BorderThickness="0" Click="BtnHover_Click" />
+                <Button Content="Close All Spikes" Margin="0,0,8,8" Padding="10,6" Background="#DC2626" Foreground="White" BorderThickness="0" Click="BtnCloseAll_Click" />
+            </WrapPanel>
+        </Border>
+
+        <!-- Log & Findings -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="320" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Event Log -->
+            <Border Grid.Column="0" Background="#18181B" CornerRadius="6" Padding="8" Margin="0,0,8,0">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Text="Real-time Event &amp; Diagnostic Log:" FontWeight="SemiBold" Foreground="#A1A1AA" Margin="0,0,0,6" />
+                    <TextBox x:Name="LogTextBox" Background="Transparent" Foreground="#34D399" BorderThickness="0" IsReadOnly="True" VerticalScrollBarVisibility="Auto" TextWrapping="Wrap" FontFamily="Consolas" FontSize="11" />
+                </DockPanel>
+            </Border>
+
+            <!-- Test Guide / Human Check Checklist -->
+            <Border Grid.Column="1" Background="#26262E" CornerRadius="6" Padding="10">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="HUMAN CHECK Guide (§T4-T5)" FontWeight="Bold" Foreground="#F59E0B" Margin="0,0,0,6" />
+                        <TextBlock Text="1. Overlay Topmost:" FontWeight="SemiBold" Foreground="#E5E7EB" Margin="0,4,0,2" />
+                        <TextBlock Text="• Appears at center top without stealing active window focus.&#x0a;• Click textbox in top bar: typing works normally.&#x0a;• Screen workspace is preserved." TextWrapping="Wrap" FontSize="11" Foreground="#9CA3AF" />
+
+                        <TextBlock Text="2. WS_EX_NOACTIVATE:" FontWeight="SemiBold" Foreground="#E5E7EB" Margin="0,8,0,2" />
+                        <TextBlock Text="• Never steals focus, BUT typing in TextBox fails completely (Win32 limitation)." TextWrapping="Wrap" FontSize="11" Foreground="#9CA3AF" />
+
+                        <TextBlock Text="3. AppBar (SHAppBarMessage):" FontWeight="SemiBold" Foreground="#E5E7EB" Margin="0,8,0,2" />
+                        <TextBlock Text="• Reserves permanent desktop work area; shifts maximized windows down. Overkill for lightweight toggleable bar." TextWrapping="Wrap" FontSize="11" Foreground="#9CA3AF" />
+
+                        <TextBlock Text="4. Hover Trigger Strip:" FontWeight="SemiBold" Foreground="#E5E7EB" Margin="0,8,0,2" />
+                        <TextBlock Text="• Strip is 3px at top edge.&#x0a;• Rapid cursor swipe does not trigger.&#x0a;• Dwell >= 250ms reveals bar. Leaving > 600ms hides it." TextWrapping="Wrap" FontSize="11" Foreground="#9CA3AF" />
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <!-- Status footer -->
+        <StatusBar Grid.Row="3" Background="#18181B" Margin="0,8,0,0" Padding="4">
+            <TextBlock x:Name="FooterStatus" Text="Ready. Click any spike above to test." Foreground="#9CA3AF" FontSize="11" />
+        </StatusBar>
+    </Grid>
+</Window>

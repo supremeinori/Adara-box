@@ -1,0 +1,15 @@
+<Window x:Class="AdaraBox.WindowSpike.TriggerStripWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Trigger Strip"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize"
+        ShowActivated="False"
+        Background="#01000000"
+        Height="3"
+        Width="640">
+    <Grid />
+</Window>
