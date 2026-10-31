@@ -172,6 +172,7 @@
                             FontSize="11"
                             Cursor="Hand"
                             ToolTip="Tutup panel (Esc)"
+                            AutomationProperties.Name="Tutup Panel"
                             Click="ClosePanelButton_Click"
                             Visibility="Collapsed" />
                 </StackPanel>

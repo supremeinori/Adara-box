@@ -4,16 +4,22 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:AdaraBox.App.ViewModels"
+             xmlns:conv="clr-namespace:AdaraBox.App.Converters"
              d:DataContext="{d:DesignInstance vm:SettingsPanelViewModel}"
              mc:Ignorable="d" 
-             d:DesignHeight="220" d:DesignWidth="440">
+             d:DesignHeight="380" d:DesignWidth="440">
+
+    <UserControl.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVis" />
+    </UserControl.Resources>
+
     <Grid Margin="16">
         <Border Background="#1C1C21" BorderBrush="#2E2E38" BorderThickness="1" CornerRadius="8" Padding="16">
             <StackPanel>
                 <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="Bold" Foreground="#F4F4F5" Margin="0,0,0,12" />
 
-                <!-- Visibility Setting -->
-                <Border Background="#27272A" BorderBrush="#3F3F46" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12">
+                <!-- 1. Visibility Setting -->
+                <Border Background="#27272A" BorderBrush="#3F3F46" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,10">
                     <DockPanel LastChildFill="True">
                         <CheckBox DockPanel.Dock="Right" 
                                   IsChecked="{Binding IsHideTopBarEnabled, Mode=TwoWay}" 
@@ -24,6 +30,64 @@
                             <TextBlock Text="{Binding HideTopBarDescription}" Foreground="#A1A1AA" FontSize="11" Margin="0,2,0,0" TextWrapping="Wrap" />
                         </StackPanel>
                     </DockPanel>
+                </Border>
+
+                <!-- 2. Auto-Start Setting (FR-CF-04) -->
+                <Border Background="#27272A" BorderBrush="#3F3F46" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,10">
+                    <DockPanel LastChildFill="True">
+                        <CheckBox DockPanel.Dock="Right" 
+                                  IsChecked="{Binding IsAutoStartEnabled, Mode=TwoWay}" 
+                                  VerticalAlignment="Center" 
+                                  Cursor="Hand" />
+                        <StackPanel Margin="0,0,12,0">
+                            <TextBlock Text="{Binding AutoStartLabel}" FontWeight="SemiBold" Foreground="#F4F4F5" FontSize="12" />
+                            <TextBlock Text="{Binding AutoStartDescription}" Foreground="#A1A1AA" FontSize="11" Margin="0,2,0,0" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+
+                <!-- 3. Global Hotkey Setting (FR-TB-06) -->
+                <Border Background="#27272A" BorderBrush="#3F3F46" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Text="{Binding GlobalHotkeyLabel}" FontWeight="SemiBold" Foreground="#F4F4F5" FontSize="12" />
+                        <TextBlock Text="{Binding GlobalHotkeyDescription}" Foreground="#A1A1AA" FontSize="11" Margin="0,2,0,8" TextWrapping="Wrap" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding HotkeyText, UpdateSourceTrigger=PropertyChanged}"
+                                     Background="#18181B"
+                                     Foreground="#F4F4F5"
+                                     BorderBrush="#3F3F46"
+                                     BorderThickness="1"
+                                     Padding="8,5"
+                                     FontSize="12"
+                                     Margin="0,0,8,0" />
+
+                            <Button Grid.Column="1"
+                                    Content="{Binding ApplyHotkeyButtonText}"
+                                    Command="{Binding ApplyHotkeyCommand}"
+                                    Background="#2563EB"
+                                    Foreground="#FFFFFF"
+                                    BorderBrush="#3B82F6"
+                                    BorderThickness="1"
+                                    Padding="12,5"
+                                    FontSize="11"
+                                    FontWeight="SemiBold"
+                                    Cursor="Hand" />
+                        </Grid>
+
+                        <TextBlock Text="{Binding HotkeyError}"
+                                   Foreground="#F87171"
+                                   FontSize="11"
+                                   Margin="2,4,0,0"
+                                   TextWrapping="Wrap"
+                                   Visibility="{Binding HasHotkeyError, Converter={StaticResource BoolToVis}}" />
+                    </StackPanel>
                 </Border>
 
                 <!-- App Version -->

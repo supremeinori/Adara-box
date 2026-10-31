@@ -116,13 +116,53 @@ public partial class WorkspacePanelView : UserControl
         }
     }
 
+    private void WorkspaceCard_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (sender is FrameworkElement element && element.DataContext is WorkspaceItemViewModel item)
+        {
+            if (e.Key == Key.Enter)
+            {
+                item.OpenCommand.Execute(null);
+                e.Handled = true;
+            }
+            else if (e.Key == Key.F2)
+            {
+                item.RenameCommand.Execute(null);
+                e.Handled = true;
+            }
+            else if (e.Key == Key.Delete)
+            {
+                item.DeleteCommand.Execute(null);
+                e.Handled = true;
+            }
+        }
+    }
+
     private void ResourceCard_KeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Space && ViewModel != null && ViewModel.IsOpenMode)
+        if (sender is not FrameworkElement element || element.DataContext is not ResourceItemViewModel item)
         {
-            if (sender is FrameworkElement element && element.DataContext is ResourceItemViewModel item)
+            return;
+        }
+
+        if (ViewModel != null && ViewModel.IsOpenMode)
+        {
+            if (e.Key == Key.Space)
             {
                 item.ToggleSelectCommand.Execute(null);
+                e.Handled = true;
+            }
+        }
+        else if (ViewModel != null && !ViewModel.IsOpenMode)
+        {
+            if (e.Key == Key.F2)
+            {
+                item.EditCommand.Execute(null);
+                e.Handled = true;
+            }
+            else if (e.Key == Key.Delete)
+            {
+                item.DeleteCommand.Execute(null);
                 e.Handled = true;
             }
         }

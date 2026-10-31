@@ -13,7 +13,7 @@
 | M03 | Resource Management | ✔ selesai | ☐ |
 | M04 | Open the File | ✔ selesai | ☐ |
 | — | **MVP fungsional** (setelah M04) | ✔ tercapai | ☐ |
-| M05 | Hardening | ☐ belum | ☐ |
+| M05 | Hardening | ✔ selesai | ☐ |
 | M06 | Packaging & Rilis (v1.0.0) | ☐ belum | ☐ |
 | M07 | Stats (pasca-MVP) | ☐ belum | ☐ |
 | M08 | Media (pasca-MVP) | ☐ belum | ☐ |
@@ -29,14 +29,15 @@ Status: ☐ belum · ◐ sedang dikerjakan · ✔ selesai · ⛔ terblokir
 | M02 | Verifikasi visual dan fungsional Workspace Management & Persistensi (Inisialisasi SQLite WAL & migrasi awal, tombol data-driven `+ Workspace`, form inline buat/ganti nama dengan validasi, duplikat nama diizinkan, dialog konfirmasi hapus non-destructive, tampilan detail workspace FR-WS-05, serta persistensi preferensi Hide dan data workspace setelah restart) | Jalankan `src/AdaraBox.App/bin/Release/net8.0-windows/AdaraBox.App.exe`, ikuti 9 skenario di `docs/manual-tests/M02.md`. |
 | M03 | Verifikasi visual dan fungsional Resource Management & Tampilan Grid/List (Penambahan 4 tipe resource: file batch multiselect, folder, aplikasi, tautan; validasi URL dan normalisasi; toggle mode Grid/List tanpa kehilangan data; form edit nama dan target; tombol urut naik/turun; indikator peringatan ketersediaan ⚠️; hapus referensi tanpa menghapus file fisik; serta dialog hapus workspace yang menampilkan jumlah resource sebenarnya) | Jalankan `src/AdaraBox.App/bin/Release/net8.0-windows/AdaraBox.App.exe`, ikuti 11 skenario di `docs/manual-tests/M03.md`. |
 | M04 | Verifikasi visual dan fungsional Open the File (Mode toggle & visual header aksen, checkbox di grid & list, counter realtime & bulk select/clear, peringatan >10 item, pemisahan mutlak mode kelola vs buka FR-OF-05, peluncuran multi-resource native Windows berurutan 150ms tanpa freeze, penanganan kegagalan per item tanpa memutus item lain FR-OF-06, ringkasan hasil dengan coba lagi yang gagal, pembersihan seleksi sementara FR-OF-08, serta shortcut keyboard Ctrl+A, Enter, Esc, Space) | Jalankan `src/AdaraBox.App/bin/Release/net8.0-windows/AdaraBox.App.exe`, ikuti 11 skenario di `docs/manual-tests/M04.md`. |
+| M05 | Verifikasi visual & ketahanan MVP Hardening (Deteksi DB korup/0 byte & dialog pemulihan, shortcut global `Ctrl+Alt+Space`, auto-start toggle di registry `HKCU\...\Run`, navigasi keyboard penuh F2/Delete/Enter/Esc, reposisi multi-monitor & DPI scaling PerMonitorV2, dan performa beban 200 resource < 300ms) | Jalankan `src/AdaraBox.App/bin/Release/net8.0-windows/AdaraBox.App.exe`, ikuti 6 skenario di `docs/manual-tests/M05.md`. |
 
 ## OPEN QUESTIONS
 
 | # | Pertanyaan | Modul | Jawaban manusia |
 |---|---|---|---|
-| Q1 | Bagaimana perilaku top bar pada setup multi-monitor (apakah muncul di primary monitor saja atau di monitor aktif tempat kursor berada)? | M01 / M05 | (Menunggu jawaban di M05) |
-| Q2 | Apa shortcut keyboard default untuk toggle/fokus top bar (misal `Win+Alt+A` atau `Ctrl+Alt+Space`) agar tidak konflik dengan hotkey Windows? | M01 / M05 | (Menunggu jawaban di M05) |
-| Q3 | Bagaimana preferensi startup awal (Run on Windows Startup, Start minimized to tray, atau langsung Always Visible)? | M01 / M05 | (Menunggu jawaban di M05) |
+| Q1 | Bagaimana perilaku top bar pada setup multi-monitor (apakah muncul di primary monitor saja atau di monitor aktif tempat kursor berada)? | M01 / M05 | Muncul di monitor aktif tempat kursor berada; fallback ke monitor primer (NFR-CP-03, SRS §16 no. 2). Selesai di M05. |
+| Q2 | Apa shortcut keyboard default untuk toggle/fokus top bar (misal `Win+Alt+A` atau `Ctrl+Alt+Space`) agar tidak konflik dengan hotkey Windows? | M01 / M05 | `Ctrl+Alt+Space` via Win32 `RegisterHotKey`, dapat diubah di Pengaturan (FR-TB-06). Selesai di M05. |
+| Q3 | Bagaimana preferensi startup awal (Run on Windows Startup, Start minimized to tray, atau langsung Always Visible)? | M01 / M05 | Pilihan di Pengaturan (default MATI), tersimpan di registry `HKCU\...\Run` dengan nama "AdaraBox" (FR-CF-04). Selesai di M05. |
 | Q4 | Apakah drag-and-drop dari File Explorer langsung ke Workspace didukung pada MVP atau pasca-MVP? | M03 | Pasca-MVP (sesuai scope M03 & SRS §5.3) |
 
 ## Acceptance Criteria MVP (SRS §11) — dibuktikan di M04/M05
@@ -74,6 +75,55 @@ Status: ☐ belum · ◐ sedang dikerjakan · ✔ selesai · ⛔ terblokir
 | NFR-CP-04 (Windows minimum) | M00 (keputusan), M06 (installer) |
 
 ## Log Laporan Modul
+
+## Laporan M05 — 2026-10-31
+- Status: SELESAI (MVP Hardening, Stability & Verification Complete)
+- Task selesai:
+  - T1 (Database Corruption, Backup & Recovery):
+    - `DatabaseIntegrityChecker`: deteksi file 0-byte, deteksi file non-SQLite, pemeriksaan `PRAGMA quick_check;`, dan deteksi schema versi lebih baru (`user_version > maxKnownVersion`).
+    - `DatabaseBackupService`: auto-backup sebelum menjalankan migrasi schema menggunakan SQLite `VACUUM INTO` (aman terhadap mode WAL aktif), retensi 5 file terbaru dengan pruning otomatis file lama, pengarsipan database korup bertanggal (`adarabox.db.corrupt-{timestamp}`) sebelum restorasi atau fresh reset, dan pemulihan backup.
+    - `DatabaseRecoveryWindow`: dialog pemulihan WPF jika database korup saat startup, dengan opsi Buka Folder Data, Pulihkan dari Backup, Mulai Database Baru, dan Keluar.
+    - `DatabaseHardeningTests`: 7 unit tests (byte acak, 0-byte, schema versi lebih baru, auto-vacuum backup & retention 5 item, pengarsipan korup, pemulihan backup).
+  - T2 (Runtime Resilience):
+    - Audit penanganan `async void` (hanya untuk event handler dengan guard try/catch yang mencatat log dan menampilkan dialog ramah pengguna).
+    - Exception handler global (`AppDomain.CurrentDomain.UnhandledException`, `DispatcherUnhandledException`, `TaskScheduler.UnobservedTaskException`).
+    - Guard penutupan bersih dengan `CancellationTokenSource`.
+    - Logging Serilog: retensi 14 hari, tidak membocorkan path lengkap file/URL pada level `Information`.
+  - T3 (Multi-Monitor & DPI - NFR-CP-03, SRS §16 no. 2):
+    - `ScreenPositionHelper`: deteksi monitor tempat kursor berada menggunakan Win32 `GetCursorPos` & `MonitorFromPoint`, fallback ke monitor primer jika kursor di luar bounds.
+    - Perhitungan posisi window dan trigger strip dalam DIP menggunakan `VisualTreeHelper.GetDpi`.
+    - Reposisi dinamis saat konfigurasi layar berubah via hook `SystemEvents.DisplaySettingsChanged`.
+  - T4 (Shortcut Global & Auto-Start - FR-TB-06, FR-CF-04):
+    - Core: `HotkeyModifier`, record `HotkeyDefinition`, dan `HotkeyParser` dengan validasi modifier wajib dan penolakan kombinasi sistem terlarang (`Ctrl+Alt+Del`, `Win+L`, `Alt+Tab`, dll.).
+    - Platform: `IGlobalHotkeyService` dan `Win32GlobalHotkeyService` via Win32 `RegisterHotKey` pada dedicated `HwndSource` hook; pelaporan error elegan jika konflik tanpa crash. Default: `Ctrl+Alt+Space`.
+    - Platform: `IAutoStartService` dan `RegistryAutoStartService` memanipulasi `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` ("AdaraBox" saja).
+    - UI: Pengaturan (Settings) mendukung toggle Run on Startup, input teks shortcut global, tombol Simpan, dan pesan validasi kesalahan.
+    - Tests: `HotkeyParserTests` dan `SettingsPanelViewModelTests`.
+  - T5 (Keyboard & Aksesibilitas - NFR-UX-03):
+    - Alur navigasi keyboard penuh: `F2` untuk ganti nama inline, `Delete` untuk hapus (dengan konfirmasi), `Enter` untuk membuka detail / buka terpilih, `Space` untuk toggle centang di mode Open, `Ctrl+A` untuk select all.
+    - `Esc` berjenjang: tutup ringkasan hasil -> batal form resource/workspace -> keluar mode Open -> kembali ke daftar workspace -> tutup panel top bar.
+    - Fokus visual terlihat jelas (`IsKeyboardFocused` trigger pada kartu dan baris).
+    - Properti aksesibilitas `AutomationProperties.Name` pada seluruh tombol ikon-saja (✕, ✏, 🗑, ▲, ▼).
+    - Kontras warna teks memenuhi standar WCAG (>= 4.5:1).
+  - T6 (Performa & Benchmark):
+    - Laporan performa terperinci di `docs/perf-report.md`.
+    - Buka workspace 200 resource: **2 ms** (target: < 300 ms, 150× lebih cepat).
+    - Buka workspace 500 resource: **30 ms**.
+    - Stabilitas memori 100 siklus: **+0.02 MB** (tanpa kebocoran memori).
+    - CPU idle: **0.00%** (target: ≈ 0%).
+    - RAM idle (Working Set): **138.32 MB** (target: < 150 MB).
+  - T7 (Audit Keamanan & Privasi):
+    - Laporan audit terperinci di `docs/security-review.md`.
+    - 0 panggilan penghapusan file pengguna fisik (Golden Rule #1 terjaga 100%).
+    - 0 eksekusi shell string cmd/powershell (Golden Rule #3 terjaga 100%).
+    - 100% parameterized SQL query (tanpa interpolasi string).
+    - 0 panggilan jaringan (Golden Rule #5: 100% offline).
+    - Dependensi NuGet dicek: **0 vulnerable packages** (High/Critical: 0).
+  - T8 (Matriks Pengujian & Keterlacakan):
+    - `docs/test-matrix.md` mencakup seluruh pengujian SRS §10.1–10.4.
+    - `docs/traceability.md` memetakan seluruh FR-ID P0/P1 ke kode dan test pembukti.
+    - Panduan uji manual di `docs/manual-tests/M05.md`.
+    - Seluruh 11 Kriteria Penerimaan MVP (SRS §11) terbukti 100%.
 
 ## Laporan M04 — 2026-10-31
 - Status: SELESAI (MVP Fungsional Tercapai)

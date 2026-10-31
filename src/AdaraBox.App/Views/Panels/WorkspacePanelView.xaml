@@ -354,14 +354,20 @@
                                         CornerRadius="6"
                                         Padding="12,10"
                                         Margin="0,0,0,8"
+                                        Focusable="True"
                                         Cursor="Hand"
-                                        MouseLeftButtonUp="WorkspaceCard_MouseLeftButtonUp">
+                                        MouseLeftButtonUp="WorkspaceCard_MouseLeftButtonUp"
+                                        KeyDown="WorkspaceCard_KeyDown">
                                     <Border.Style>
                                         <Style TargetType="Border">
                                             <Style.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
                                                     <Setter Property="Background" Value="#27272F" />
                                                     <Setter Property="BorderBrush" Value="#4B5563" />
+                                                </Trigger>
+                                                <Trigger Property="IsKeyboardFocused" Value="True">
+                                                    <Setter Property="Background" Value="#27272F" />
+                                                    <Setter Property="BorderBrush" Value="#3B82F6" />
                                                 </Trigger>
                                             </Style.Triggers>
                                         </Style>
@@ -390,8 +396,8 @@
                                         </StackPanel>
 
                                         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                            <Button Content="✏" ToolTip="Ganti Nama" Command="{Binding RenameCommand}" Background="Transparent" Foreground="#A1A1AA" BorderThickness="0" Padding="6,4" Cursor="Hand" Margin="0,0,2,0" />
-                                            <Button Content="🗑" ToolTip="Hapus Workspace" Command="{Binding DeleteCommand}" Background="Transparent" Foreground="#F87171" BorderThickness="0" Padding="6,4" Cursor="Hand" />
+                                            <Button Content="✏" ToolTip="Ganti Nama" AutomationProperties.Name="Ganti Nama Workspace" Command="{Binding RenameCommand}" Background="Transparent" Foreground="#A1A1AA" BorderThickness="0" Padding="6,4" Cursor="Hand" Margin="0,0,2,0" />
+                                            <Button Content="🗑" ToolTip="Hapus Workspace" AutomationProperties.Name="Hapus Workspace" Command="{Binding DeleteCommand}" Background="Transparent" Foreground="#F87171" BorderThickness="0" Padding="6,4" Cursor="Hand" />
                                         </StackPanel>
                                     </Grid>
                                 </Border>
@@ -552,6 +558,7 @@
                                 <TextBlock Text="{Binding LaunchSummaryTitle}" FontSize="13" FontWeight="Bold" Foreground="#F4F4F5" VerticalAlignment="Center" />
                             </StackPanel>
                             <Button Content="✕"
+                                    AutomationProperties.Name="Tutup Ringkasan"
                                     Command="{Binding CloseLaunchSummaryCommand}"
                                     Background="Transparent"
                                     Foreground="#A1A1AA"
@@ -663,6 +670,10 @@
                                                         <Setter Property="Background" Value="#27272F" />
                                                         <Setter Property="BorderBrush" Value="#4B5563" />
                                                     </Trigger>
+                                                    <Trigger Property="IsKeyboardFocused" Value="True">
+                                                        <Setter Property="Background" Value="#27272F" />
+                                                        <Setter Property="BorderBrush" Value="#3B82F6" />
+                                                    </Trigger>
                                                     <DataTrigger Binding="{Binding IsSelected}" Value="True">
                                                         <Setter Property="Background" Value="#132E27" />
                                                         <Setter Property="BorderBrush" Value="#10B981" />
@@ -771,6 +782,10 @@
                                                         <Setter Property="Background" Value="#27272F" />
                                                         <Setter Property="BorderBrush" Value="#4B5563" />
                                                     </Trigger>
+                                                    <Trigger Property="IsKeyboardFocused" Value="True">
+                                                        <Setter Property="Background" Value="#27272F" />
+                                                        <Setter Property="BorderBrush" Value="#3B82F6" />
+                                                    </Trigger>
                                                     <DataTrigger Binding="{Binding IsSelected}" Value="True">
                                                         <Setter Property="Background" Value="#132E27" />
                                                         <Setter Property="BorderBrush" Value="#10B981" />
@@ -836,10 +851,10 @@
                                             <!-- Action Buttons: Move Up/Down, Edit, Delete (FR-OF-05: Hidden in Open Mode) -->
                                             <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center"
                                                         Visibility="{Binding CanManage, Converter={StaticResource BoolToVis}}">
-                                                <Button Content="▲" ToolTip="Pindah ke Atas" Command="{Binding MoveUpCommand}" Background="Transparent" Foreground="#A1A1AA" BorderThickness="0" Padding="4,2" Cursor="Hand" />
-                                                <Button Content="▼" ToolTip="Pindah ke Bawah" Command="{Binding MoveDownCommand}" Background="Transparent" Foreground="#A1A1AA" BorderThickness="0" Padding="4,2" Cursor="Hand" />
-                                                <Button Content="✏" ToolTip="Edit" Command="{Binding EditCommand}" Background="Transparent" Foreground="#A1A1AA" BorderThickness="0" Padding="4,2" Cursor="Hand" Margin="2,0" />
-                                                <Button Content="🗑" ToolTip="Hapus dari Workspace" Command="{Binding DeleteCommand}" Background="Transparent" Foreground="#F87171" BorderThickness="0" Padding="4,2" Cursor="Hand" />
+                                                <Button Content="▲" ToolTip="Pindah ke Atas" AutomationProperties.Name="Pindah ke Atas" Command="{Binding MoveUpCommand}" Background="Transparent" Foreground="#A1A1AA" BorderThickness="0" Padding="4,2" Cursor="Hand" />
+                                                <Button Content="▼" ToolTip="Pindah ke Bawah" AutomationProperties.Name="Pindah ke Bawah" Command="{Binding MoveDownCommand}" Background="Transparent" Foreground="#A1A1AA" BorderThickness="0" Padding="4,2" Cursor="Hand" />
+                                                <Button Content="✏" ToolTip="Edit" AutomationProperties.Name="Edit Resource" Command="{Binding EditCommand}" Background="Transparent" Foreground="#A1A1AA" BorderThickness="0" Padding="4,2" Cursor="Hand" Margin="2,0" />
+                                                <Button Content="🗑" ToolTip="Hapus dari Workspace" AutomationProperties.Name="Hapus Resource" Command="{Binding DeleteCommand}" Background="Transparent" Foreground="#F87171" BorderThickness="0" Padding="4,2" Cursor="Hand" />
                                             </StackPanel>
                                         </Grid>
                                     </Border>

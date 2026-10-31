@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using AdaraBox.App.Services;
 using AdaraBox.App.ViewModels;
 using AdaraBox.Core.Common;
 using AdaraBox.Core.Modules;
@@ -25,6 +26,17 @@ public partial class TopBarWindow : Window
         MouseEnter += TopBarWindow_MouseEnter;
         MouseLeave += TopBarWindow_MouseLeave;
         DataContextChanged += TopBarWindow_DataContextChanged;
+
+        Microsoft.Win32.SystemEvents.DisplaySettingsChanged += OnDisplaySettingsChanged;
+        Closed += (s, e) => Microsoft.Win32.SystemEvents.DisplaySettingsChanged -= OnDisplaySettingsChanged;
+    }
+
+    private void OnDisplaySettingsChanged(object? sender, EventArgs e)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            PositionAtTopCenter(Width);
+        });
     }
 
     private void TopBarWindow_Loaded(object sender, RoutedEventArgs e)
@@ -55,7 +67,7 @@ public partial class TopBarWindow : Window
 
     private void PositionAtTopCenter(double targetWidth)
     {
-        var workArea = SystemParameters.WorkArea;
+        var workArea = ScreenPositionHelper.GetTargetWorkAreaDip(this);
         Left = workArea.Left + ((workArea.Width - targetWidth) / 2.0);
         Top = workArea.Top;
     }
@@ -67,8 +79,8 @@ public partial class TopBarWindow : Window
         bool isOpen = ViewModel.IsPanelOpen;
         double targetWidth = isOpen ? UiConstants.PanelDefaultWidthDip : UiConstants.TopBarCompactWidthDip;
 
-        // Ensure target width does not exceed 90% screen width
-        var maxAllowedWidth = SystemParameters.WorkArea.Width * UiConstants.PanelMaxScreenWidthRatio;
+        var workArea = ScreenPositionHelper.GetTargetWorkAreaDip(this);
+        var maxAllowedWidth = workArea.Width * UiConstants.PanelMaxScreenWidthRatio;
         if (targetWidth > maxAllowedWidth)
         {
             targetWidth = maxAllowedWidth;
@@ -97,7 +109,7 @@ public partial class TopBarWindow : Window
 
         var startWidth = Width;
         var startLeft = Left;
-        var workArea = SystemParameters.WorkArea;
+        var workArea = ScreenPositionHelper.GetTargetWorkAreaDip(this);
         var targetLeft = workArea.Left + ((workArea.Width - targetWidth) / 2.0);
 
         var widthAnim = new DoubleAnimation(startWidth, targetWidth, duration) { EasingFunction = ease };
@@ -174,13 +186,6 @@ public partial class TopBarWindow : Window
                         return;
                     }
 
-                    if (wsVm.IsOpenMode)
-                    {
-                        wsVm.ExitOpenModeCommand.Execute(null);
-                        e.Handled = true;
-                        return;
-                    }
-
                     if (wsVm.IsFormOpen)
                     {
                         wsVm.CancelFormCommand.Execute(null);
@@ -191,6 +196,20 @@ public partial class TopBarWindow : Window
                     if (wsVm.IsResourceFormOpen)
                     {
                         wsVm.CancelResourceFormCommand.Execute(null);
+                        e.Handled = true;
+                        return;
+                    }
+
+                    if (wsVm.IsOpenMode)
+                    {
+                        wsVm.ExitOpenModeCommand.Execute(null);
+                        e.Handled = true;
+                        return;
+                    }
+
+                    if (wsVm.IsDetailViewActive)
+                    {
+                        wsVm.BackToListCommand.Execute(null);
                         e.Handled = true;
                         return;
                     }

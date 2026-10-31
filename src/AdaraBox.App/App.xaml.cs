@@ -9,7 +9,9 @@ using AdaraBox.App.Resources;
 using AdaraBox.App.Services;
 using AdaraBox.App.ViewModels;
 using AdaraBox.App.Views;
+using AdaraBox.App.Views.Dialogs;
 using AdaraBox.Core.Common;
+using AdaraBox.Core.Hotkeys;
 using AdaraBox.Core.Launcher;
 using AdaraBox.Core.Modules;
 using AdaraBox.Core.Resources;
@@ -20,8 +22,10 @@ using AdaraBox.Data.Infrastructure;
 using AdaraBox.Data.Migrations;
 using AdaraBox.Data.Repositories;
 using AdaraBox.Platform.Availability;
+using AdaraBox.Platform.Hotkeys;
 using AdaraBox.Platform.Icons;
 using AdaraBox.Platform.Launcher;
+using AdaraBox.Platform.Startup;
 using AdaraBox.Platform.Tray;
 
 namespace AdaraBox.App;
@@ -69,10 +73,28 @@ public partial class App : Application
         // 3. Register Global Unhandled Exception Handlers
         SetupExceptionHandling();
 
-        // 4. Initialize Database & Run Migrations (Synchronously before UI loads)
+        // 4. Initialize Database, Check Integrity & Run Migrations (T1)
         var dbPath = Path.Combine(appDataDir, "adarabox.db");
+        var backupsDir = Path.Combine(appDataDir, "backups");
+        IDatabaseBackupService backupService = new DatabaseBackupService();
+
+        var integrity = DatabaseIntegrityChecker.Check(dbPath, maxKnownVersion: 1);
+        if (integrity.Status != DatabaseIntegrityStatus.Ok)
+        {
+            Log.Warning("Database integrity issue detected: Status={Status}, Message={Message}", integrity.Status, integrity.Message);
+
+            var recoveryDialog = new DatabaseRecoveryWindow(dbPath, backupsDir, integrity, backupService);
+            var recovered = recoveryDialog.ShowDialog();
+            if (recovered != true || !recoveryDialog.RecoveredSuccessfully)
+            {
+                Log.Information("Database recovery cancelled by user. Terminating application.");
+                Shutdown(0);
+                return;
+            }
+        }
+
         IDbConnectionFactory dbConnectionFactory = new SqliteConnectionFactory(dbPath);
-        var migrator = new DatabaseMigrator(dbConnectionFactory);
+        var migrator = new DatabaseMigrator(dbConnectionFactory, null, backupService, dbPath, backupsDir);
 
         try
         {
@@ -81,14 +103,31 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
-            Log.Fatal(ex, "Failed to execute database migrations on {DbPath}. Application terminating.", dbPath);
-            MessageBox.Show(
-                "Gagal menginisialisasi database Adara Box. Aplikasi akan ditutup.",
-                UiText.UnhandledExceptionTitle,
-                MessageBoxButton.OK,
-                MessageBoxImage.Error);
-            Shutdown(1);
-            return;
+            Log.Fatal(ex, "Failed to execute database migrations on {DbPath}. Showing recovery dialog.", dbPath);
+
+            var recoveryDialog = new DatabaseRecoveryWindow(
+                dbPath,
+                backupsDir,
+                new DatabaseIntegrityResult(DatabaseIntegrityStatus.Corrupt, $"Gagal migrasi: {ex.Message}"),
+                backupService);
+
+            var recovered = recoveryDialog.ShowDialog();
+            if (recovered != true || !recoveryDialog.RecoveredSuccessfully)
+            {
+                Shutdown(1);
+                return;
+            }
+
+            try
+            {
+                migrator.Migrate();
+            }
+            catch (Exception retryEx)
+            {
+                Log.Fatal(retryEx, "Database migration failed again after recovery attempt.");
+                Shutdown(1);
+                return;
+            }
         }
 
         // 5. Configure Application Shell Settings
@@ -154,6 +193,46 @@ public partial class App : Application
             _triggerStripWindow.Show();
         }
 
+        // 8. Register Global Hotkey (FR-TB-06)
+        var hotkeyService = _serviceProvider.GetRequiredService<IGlobalHotkeyService>();
+        var settingsStore = _serviceProvider.GetRequiredService<ISettingsStore>();
+        var savedHotkeyText = Task.Run(() => settingsStore.GetAsync(SettingKeys.GlobalHotkey)).GetAwaiter().GetResult();
+        var hotkeyResult = HotkeyParser.Parse(string.IsNullOrEmpty(savedHotkeyText) ? HotkeyParser.DefaultTopbarHotkey.DisplayText : savedHotkeyText);
+        if (hotkeyResult.Success)
+        {
+            hotkeyService.Register(hotkeyResult.Value!);
+        }
+
+        hotkeyService.HotkeyPressed += (s, ev) =>
+        {
+            Dispatcher.Invoke(() =>
+            {
+                if (_topBarWindow == null) return;
+                if (!_topBarWindow.IsVisible)
+                {
+                    _topBarWindow.Show();
+                }
+                _topBarWindow.Activate();
+                _topBarWindow.Focus();
+
+                if (_topBarWindow.DataContext is TopBarViewModel topBarVm)
+                {
+                    if (topBarVm.IsPanelOpen)
+                    {
+                        topBarVm.ClosePanelCommand.Execute(null);
+                    }
+                    else
+                    {
+                        var wsModule = topBarVm.Modules.FirstOrDefault(m => m.Id == "workspace");
+                        if (wsModule != null)
+                        {
+                            topBarVm.SelectModuleCommand.Execute(wsModule);
+                        }
+                    }
+                }
+            });
+        };
+
         Log.Information("Adara Box application shell successfully initialized.");
     }
 
@@ -161,6 +240,7 @@ public partial class App : Application
     {
         // Core & Data Services
         services.AddSingleton(dbConnectionFactory);
+        services.AddSingleton<IDatabaseBackupService, DatabaseBackupService>();
         services.AddSingleton<ISettingsStore, SqliteSettingsStore>();
         services.AddSingleton<IWorkspaceRepository, SqliteWorkspaceRepository>();
         services.AddSingleton<IResourceRepository, SqliteResourceRepository>();
@@ -174,6 +254,8 @@ public partial class App : Application
         services.AddSingleton<IProcessStarter, ShellProcessStarter>();
         services.AddSingleton<IResourceLauncher, ResourceLauncher>();
         services.AddSingleton<IMultiLaunchService, MultiLaunchService>();
+        services.AddSingleton<IAutoStartService, RegistryAutoStartService>();
+        services.AddSingleton<IGlobalHotkeyService, Win32GlobalHotkeyService>();
 
         // Top Bar Visibility with initial mode loaded from ISettingsStore
         services.AddSingleton<ITopBarVisibilityService>(sp =>

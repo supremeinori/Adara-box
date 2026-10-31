@@ -98,6 +98,11 @@ public static class UiText
     public const string SettingsTitle = "Pengaturan";
     public const string SettingsHideTopBar = "Sembunyikan top bar otomatis";
     public const string SettingsHideTopBarDescription = "Top bar hanya muncul saat kursor diarahkan ke tepi atas layar.";
+    public const string SettingsAutoStart = "Jalankan otomatis saat Windows dimulai";
+    public const string SettingsAutoStartDescription = "Adara Box akan langsung berjalan di latar belakang saat Anda masuk ke Windows.";
+    public const string SettingsGlobalHotkey = "Pintasan Global Top Bar";
+    public const string SettingsGlobalHotkeyDescription = "Kombinasi tombol global untuk memunculkan atau memfokuskan top bar (misal: Ctrl+Alt+Space).";
+    public const string SaveHotkeyButton = "Terapkan";
     public const string AppVersionLabel = "Versi: {0}";
 
     // Tray Menu
