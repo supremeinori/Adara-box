@@ -90,14 +90,60 @@ public class WorkspacePanelViewModelTests
     {
         var vm = CreateVm();
 
+        Assert.True(vm.IsWorkspaceListVisible);
+        Assert.False(vm.IsWorkspaceDetailVisible);
+
         vm.BeginCreate();
 
         Assert.True(vm.IsFormOpen);
+        Assert.False(vm.IsWorkspaceListVisible);
+        Assert.False(vm.IsWorkspaceDetailVisible);
         Assert.Null(vm.EditingWorkspaceId);
         Assert.Equal(UiText.CreateWorkspaceTitle, vm.FormTitle);
         Assert.Empty(vm.FormName);
         Assert.Null(vm.FormError);
         Assert.False(vm.HasFormError);
+    }
+
+    [Fact]
+    public void CancelForm_RestoresWorkspaceListVisibility()
+    {
+        var vm = CreateVm();
+        vm.BeginCreate();
+        Assert.True(vm.IsFormOpen);
+        Assert.False(vm.IsWorkspaceListVisible);
+
+        vm.CancelForm();
+
+        Assert.False(vm.IsFormOpen);
+        Assert.True(vm.IsWorkspaceListVisible);
+        Assert.False(vm.IsWorkspaceDetailVisible);
+    }
+
+    [Fact]
+    public void BeginRename_InDetailView_HidesDetailView_AndRestoresOnCancel()
+    {
+        var id = Guid.NewGuid();
+        var ws = new Workspace(id, "Research", _fixedTime, _fixedTime, 0);
+        var vm = CreateVm();
+        var item = new WorkspaceItemViewModel(ws, vm);
+        vm.OpenWorkspace(item);
+
+        Assert.True(vm.IsDetailViewActive);
+        Assert.True(vm.IsWorkspaceDetailVisible);
+        Assert.False(vm.IsWorkspaceListVisible);
+
+        vm.BeginRename(item);
+
+        Assert.True(vm.IsFormOpen);
+        Assert.False(vm.IsWorkspaceDetailVisible);
+        Assert.False(vm.IsWorkspaceListVisible);
+
+        vm.CancelForm();
+
+        Assert.False(vm.IsFormOpen);
+        Assert.True(vm.IsWorkspaceDetailVisible);
+        Assert.False(vm.IsWorkspaceListVisible);
     }
 
     [Fact]
@@ -135,6 +181,8 @@ public class WorkspacePanelViewModelTests
         Assert.Equal("College", vm.Workspaces[0].Name);
         Assert.True(vm.IsDetailViewActive);
         Assert.Equal("College", vm.DetailTitle);
+        Assert.False(vm.IsWorkspaceListVisible);
+        Assert.True(vm.IsWorkspaceDetailVisible);
     }
 
     [Fact]

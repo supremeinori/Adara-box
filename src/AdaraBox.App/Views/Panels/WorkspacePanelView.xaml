@@ -293,6 +293,7 @@
                     CornerRadius="8"
                     Padding="16"
                     VerticalAlignment="Top"
+                    Panel.ZIndex="100"
                     Visibility="{Binding IsFormOpen, Converter={StaticResource BoolToVis}}">
                 <StackPanel>
                     <TextBlock Text="{Binding FormTitle}" FontSize="13" FontWeight="SemiBold" Foreground="#F4F4F5" Margin="0,0,0,10" />
@@ -326,7 +327,7 @@
             <!-- B. WORKSPACES LIST (When not in detail view) -->
             <ScrollViewer VerticalScrollBarVisibility="Auto"
                           MaxHeight="380"
-                          Visibility="{Binding IsDetailViewActive, Converter={StaticResource InverseBoolToVis}}">
+                          Visibility="{Binding IsWorkspaceListVisible, Converter={StaticResource BoolToVis}}">
                 <Grid>
                     <!-- Empty State for Workspaces -->
                     <Border Background="#1C1C21"
@@ -408,7 +409,7 @@
             </ScrollViewer>
 
             <!-- C. WORKSPACE DETAIL VIEW (Resources Grid & List - M03) -->
-            <Grid Visibility="{Binding IsDetailViewActive, Converter={StaticResource BoolToVis}}">
+            <Grid Visibility="{Binding IsWorkspaceDetailVisible, Converter={StaticResource BoolToVis}}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />

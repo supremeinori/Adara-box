@@ -36,6 +36,8 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
 
     // Workspace Form State (Create / Rename Workspace)
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsWorkspaceListVisible))]
+    [NotifyPropertyChangedFor(nameof(IsWorkspaceDetailVisible))]
     private bool _isFormOpen;
 
     [ObservableProperty]
@@ -52,6 +54,11 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
 
     // Workspace Detail State
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsDetailViewActive))]
+    [NotifyPropertyChangedFor(nameof(DetailTitle))]
+    [NotifyPropertyChangedFor(nameof(DetailResourceCountText))]
+    [NotifyPropertyChangedFor(nameof(IsWorkspaceListVisible))]
+    [NotifyPropertyChangedFor(nameof(IsWorkspaceDetailVisible))]
     private WorkspaceItemViewModel? _selectedWorkspace;
 
     // ViewMode: "Grid" | "List" (FR-VW-01..05)
@@ -140,6 +147,8 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
     public bool HasResourceFormError => !string.IsNullOrEmpty(ResourceFormError);
 
     public bool IsDetailViewActive => SelectedWorkspace != null;
+    public bool IsWorkspaceListVisible => !IsDetailViewActive && !IsFormOpen;
+    public bool IsWorkspaceDetailVisible => IsDetailViewActive && !IsFormOpen;
     public string DetailTitle => SelectedWorkspace?.Name ?? string.Empty;
     public string DetailResourceCountText => SelectedWorkspace != null ? $"{SelectedWorkspace.ResourceCount} resource" : string.Empty;
 
@@ -777,6 +786,8 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(HasWorkspaces));
         OnPropertyChanged(nameof(IsEmpty));
+        OnPropertyChanged(nameof(IsWorkspaceListVisible));
+        OnPropertyChanged(nameof(IsWorkspaceDetailVisible));
     }
 
     private void NotifyResourcesStateChanged()

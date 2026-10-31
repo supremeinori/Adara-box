@@ -22,6 +22,7 @@ public partial class WorkspacePanelView : UserControl
             Dispatcher.BeginInvoke(() =>
             {
                 textBox.Focus();
+                Keyboard.Focus(textBox);
                 textBox.SelectAll();
             });
         }
