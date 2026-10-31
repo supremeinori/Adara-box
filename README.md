@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-0078D6.svg)](https://microsoft.com/windows)
 [![.NET 8.0](https://img.shields.io/badge/.NET-8.0-512BD4.svg)](https://dotnet.microsoft.com/)
-[![Tests: 229 Passed](https://img.shields.io/badge/Tests-229%20Passed-success.svg)](tests/)
+[![Tests: 251 Passed](https://img.shields.io/badge/Tests-251%20Passed-success.svg)](tests/)
 
 ---
 
@@ -31,10 +31,14 @@ Untuk pengguna umum yang ingin langsung memakai Adara Box, Anda hanya perlu meng
 - **Dark Neomorphism Fisik:** Sentuhan tekstur matte charcoal (`#16161B`), hairline top highlight halus (`#25FFFFFF`), soft ambient drop shadow, dan efek kompresi taktil instan (`scale 0.97`) saat tombol atau kartu ditekan.
 - **Animasi Pop-Down & Pop-Up:** Panel modul meluncur turun dengan halus (*critically damped spring ease*) saat dibuka, dan meluncur kembali ke atas saat ditutup.
 
-### 2. 🎵 Native Windows GSMTC Media Controller
-- **Kontrol Musik Langsung:** Terintegrasi langsung dengan Windows WinRT Native Media API (*GlobalSystemMediaTransportControls*).
-- **Mendukung Segala Player Musik:** Mengontrol lagu yang diputar di Spotify Desktop, Apple Music, VLC, maupun tab browser (YouTube, SoundCloud di Chrome, Edge, Firefox).
-- **Fitur Lengkap:** Play/Pause, Next Track, Previous Track, dan tampilan judul lagu + artis aktif langsung di Top Bar dan panel Media dengan memori hemat (<0.5% CPU, tanpa Chromium/WebView2).
+### 2. 🎵 Multi-Session Media Controller (Spotify, YouTube & YouTube Music)
+- **Deteksi Multi-Sesi GSMTC:** Terintegrasi langsung dengan Windows WinRT GSMTC untuk mendeteksi semua sesi media yang sedang berjalan di sistem secara bersamaan.
+- **Filter Ketat (Strict Whitelist):** Hanya menyaring dan menampilkan sesi dari **Spotify** (Aplikasi & Web), **YouTube** (Tab Browser Chrome, Edge, Firefox, Brave), dan **YouTube Music**. Suara/video dari sumber lain otomatis diabaikan.
+- **List Sesi & Kontrol Play/Pause Independen:** Setiap sesi memiliki tombol putar/jeda masing-masing yang dapat dikendalikan secara independen tanpa memengaruhi pemutaran sesi lainnya.
+- **On-Top & Pinning:** Pengguna dapat menentukan sesi mana yang ingin diposisikan di paling atas sebagai sesi utama (*Primary/On-Top Card*) dan langsung terhubung ke pill Top Bar.
+- **Collapsible (Show More / Show Less):** Sesi utama selalu tampil; sesi-sesi lainnya dapat diciutkan (*collapse*) atau dibentangkan (*expand*) secara visual tanpa menutup tab atau aplikasi asli.
+- **Auto-Cleanup Tab Tertutup:** Begitu tab YouTube atau aplikasi Spotify ditutup, sesi tersebut secara otomatis dan instan hilang dari daftar Adara Box.
+- **Efisiensi Tinggi:** Bekerja dengan konsumsi CPU <0.5% tanpa memerlukan runtime Chromium/WebView2.
 
 ### 3. 📁 Workspace Grid View & Kustomisasi Logo (Gambar & Emoji)
 - **Tampilan Grid Responsif:** Kartu workspace tertata rapi dalam format grid yang modern dan intuitif.
@@ -83,7 +87,7 @@ Untuk pengguna umum yang ingin langsung memakai Adara Box, Anda hanya perlu meng
 git clone https://github.com/supremeinori/Adara-box.git
 cd Adara-box
 
-# 2. Jalankan seluruh automated test suite (229 tests)
+# 2. Jalankan seluruh automated test suite (251 tests)
 dotnet test AdaraBox.sln -c Release
 
 # 3. Publish rilis mandiri (Self-Contained win-x64)

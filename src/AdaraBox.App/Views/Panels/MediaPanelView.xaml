@@ -7,7 +7,7 @@
              xmlns:vm="clr-namespace:AdaraBox.App.ViewModels"
              d:DataContext="{d:DesignInstance vm:MediaPanelViewModel}"
              mc:Ignorable="d" 
-             d:DesignHeight="420" d:DesignWidth="460">
+             d:DesignHeight="480" d:DesignWidth="460">
 
     <UserControl.Resources>
         <conv:BoolToVisibilityConverter x:Key="BoolToVis" />
@@ -65,7 +65,7 @@
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="BorderBrush" Value="#33333E" />
             <Setter Property="Padding" Value="8,3" />
-            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontSize" Value="10" />
             <Setter Property="FontWeight" Value="Medium" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
@@ -137,6 +137,12 @@
             </Setter>
         </Style>
 
+        <!-- Compact Secondary Playback Button -->
+        <Style x:Key="CompactMediaBtnStyle" TargetType="Button" BasedOn="{StaticResource MediaControlBtnStyle}">
+            <Setter Property="Padding" Value="8,3" />
+            <Setter Property="FontSize" Value="10" />
+        </Style>
+
         <!-- Launch Button Style -->
         <Style x:Key="LaunchBtnStyle" TargetType="Button">
             <Setter Property="Background" Value="#202026" />
@@ -204,59 +210,162 @@
                     Visibility="{Binding IsFormOpen, Converter={StaticResource InverseBoolToVis}}" />
         </Grid>
 
-        <!-- 2. Apple Music Style "Now Playing" Card (GSMTC) -->
-        <Border Grid.Row="1"
-                Background="#18181D"
-                BorderBrush="#2A2A34"
-                BorderThickness="1"
-                CornerRadius="6"
-                Padding="12,10"
-                Margin="0,0,0,10">
-            <Grid>
+        <!-- 2. Multi-Session Media Section (Apple Neomorphism) -->
+        <StackPanel Grid.Row="1" Margin="0,0,0,10">
+
+            <!-- Primary / Top Session Card -->
+            <Border Background="#18181D"
+                    BorderBrush="#2A2A34"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="12,10">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Track Info -->
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                            <!-- Platform Badge -->
+                            <TextBlock Text="{Binding PrimarySession.PlatformIcon}" FontSize="10" Margin="0,0,3,0" VerticalAlignment="Center"
+                                       Visibility="{Binding HasActiveSessions, Converter={StaticResource BoolToVis}}" />
+                            <TextBlock Text="{Binding PrimarySession.PlatformDisplayName}"
+                                       Foreground="{Binding PrimarySession.PlatformBadgeColor}"
+                                       FontSize="10" FontWeight="Bold" Margin="0,0,6,0" VerticalAlignment="Center"
+                                       Visibility="{Binding HasActiveSessions, Converter={StaticResource BoolToVis}}" />
+                            <TextBlock Text="● Utama (On-Top)" FontSize="9" FontWeight="SemiBold" Foreground="#8E8E93" VerticalAlignment="Center"
+                                       Visibility="{Binding HasActiveSessions, Converter={StaticResource BoolToVis}}" />
+                            <TextBlock Text="● Tidak Ada Media" FontSize="10" FontWeight="SemiBold" Foreground="#71717A" VerticalAlignment="Center"
+                                       Visibility="{Binding HasActiveSessions, Converter={StaticResource InverseBoolToVis}}" />
+                        </StackPanel>
+
+                        <TextBlock Text="{Binding TrackTitle}"
+                                   FontSize="13"
+                                   FontWeight="Bold"
+                                   Foreground="#FFFFFF"
+                                   TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding TrackArtist}"
+                                   FontSize="11"
+                                   Foreground="#A1A1AA"
+                                   TextTrimming="CharacterEllipsis"
+                                   Margin="0,1,0,0" />
+                    </StackPanel>
+
+                    <!-- Primary Transport Controls -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Content="⏮"
+                                Command="{Binding PreviousTrackCommand}"
+                                Style="{StaticResource MediaControlBtnStyle}"
+                                ToolTip="Lagu Sebelumnya"
+                                Margin="0,0,4,0" />
+                        <Button Content="{Binding PlayPauseButtonText}"
+                                Command="{Binding PlayPauseCommand}"
+                                Style="{StaticResource MediaControlBtnStyle}"
+                                ToolTip="Putar / Jeda"
+                                Margin="0,0,4,0" />
+                        <Button Content="⏭"
+                                Command="{Binding NextTrackCommand}"
+                                Style="{StaticResource MediaControlBtnStyle}"
+                                ToolTip="Lagu Berikutnya" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Collapsible Multi-Session Header & Toggle Bar (Visible if >1 active session) -->
+            <Grid Margin="0,6,0,4"
+                  Visibility="{Binding HasMultipleSessions, Converter={StaticResource BoolToVis}}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Track Info -->
-                <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0">
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
-                        <TextBlock Text="● Now Playing" FontSize="10" FontWeight="SemiBold" Foreground="#8E8E93" Margin="0,0,6,0" />
-                        <TextBlock Text="(System Media)" FontSize="10" Foreground="#555562" />
-                    </StackPanel>
-                    <TextBlock Text="{Binding TrackTitle}"
-                               FontSize="13"
-                               FontWeight="Bold"
-                               Foreground="#FFFFFF"
-                               TextTrimming="CharacterEllipsis" />
-                    <TextBlock Text="{Binding TrackArtist}"
-                               FontSize="11"
-                               Foreground="#A1A1AA"
-                               TextTrimming="CharacterEllipsis"
-                               Margin="0,1,0,0" />
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Sesi Aktif Lainnya" FontSize="10" FontWeight="SemiBold" Foreground="#8E8E93" VerticalAlignment="Center" />
                 </StackPanel>
 
-                <!-- Transport Controls -->
-                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Content="⏮"
-                            Command="{Binding PreviousTrackCommand}"
-                            Style="{StaticResource MediaControlBtnStyle}"
-                            ToolTip="Lagu Sebelumnya"
-                            Margin="0,0,4,0" />
-                    <Button Content="{Binding PlayPauseButtonText}"
-                            Command="{Binding PlayPauseCommand}"
-                            Style="{StaticResource MediaControlBtnStyle}"
-                            ToolTip="Putar / Jeda"
-                            Margin="0,0,4,0" />
-                    <Button Content="⏭"
-                            Command="{Binding NextTrackCommand}"
-                            Style="{StaticResource MediaControlBtnStyle}"
-                            ToolTip="Lagu Berikutnya" />
-                </StackPanel>
+                <!-- Show More / Show Less Toggle Button -->
+                <Button Grid.Column="1"
+                        Content="{Binding CollapseButtonText}"
+                        Command="{Binding ToggleCollapseCommand}"
+                        Style="{StaticResource SecondaryActionBtnStyle}"
+                        ToolTip="Tampilkan atau ciutkan sesi media lainnya" />
             </Grid>
-        </Border>
 
-        <!-- 3. Content Area (Form / Links List) -->
+            <!-- Collapsible Secondary Sessions List -->
+            <ItemsControl ItemsSource="{Binding SecondarySessions}"
+                          Margin="0,2,0,0">
+                <ItemsControl.Style>
+                    <Style TargetType="ItemsControl">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding HasMultipleSessions}" Value="True" />
+                                    <Condition Binding="{Binding IsCollapsed}" Value="False" />
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="Visibility" Value="Visible" />
+                            </MultiDataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ItemsControl.Style>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type vm:MediaSessionItemViewModel}">
+                        <Border Background="#141418"
+                                BorderBrush="#252530"
+                                BorderThickness="1"
+                                CornerRadius="5"
+                                Padding="10,6"
+                                Margin="0,0,0,4">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Session Title & Platform -->
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,8,0">
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,1">
+                                        <TextBlock Text="{Binding PlatformIcon}" FontSize="9" Margin="0,0,3,0" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding PlatformDisplayName}"
+                                                   Foreground="{Binding PlatformBadgeColor}"
+                                                   FontSize="9" FontWeight="Bold" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding Title}"
+                                               FontSize="11"
+                                               FontWeight="SemiBold"
+                                               Foreground="#E4E4E7"
+                                               TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Text="{Binding Artist}"
+                                               FontSize="10"
+                                               Foreground="#8E8E93"
+                                               TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+
+                                <!-- Per-Session Independent Controls -->
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <!-- Set as Top/Primary Button -->
+                                    <Button Content="⬆ Jadikan Utama"
+                                            Command="{Binding MakeTopCommand}"
+                                            Style="{StaticResource SecondaryActionBtnStyle}"
+                                            ToolTip="Jadikan sesi ini di posisi paling atas"
+                                            Margin="0,0,4,0" />
+
+                                    <!-- Independent Play/Pause Button -->
+                                    <Button Content="{Binding PlayPauseButtonText}"
+                                            Command="{Binding TogglePlayPauseCommand}"
+                                            Style="{StaticResource CompactMediaBtnStyle}"
+                                            ToolTip="Putar atau jeda sesi ini" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+
+        <!-- 3. Content Area (Web Links / Form) -->
         <Grid Grid.Row="2">
 
             <!-- A. INLINE FORM (Add Media Link) -->
@@ -297,7 +406,7 @@
             </Border>
 
             <!-- B. MEDIA QUICK LINKS LIST -->
-            <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="300"
+            <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="250"
                           Visibility="{Binding IsFormOpen, Converter={StaticResource InverseBoolToVis}}">
                 <Grid>
                     <!-- Empty State -->

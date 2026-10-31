@@ -194,4 +194,133 @@ public class MediaPanelViewModelTests
         await vm.PreviousTrackCommand.ExecuteAsync(null);
         await controller.Received(1).PreviousAsync();
     }
+
+    [Fact]
+    public void MultiSession_UpdatesSessions_PopulatesPrimaryAndSecondary()
+    {
+        var controller = Substitute.For<IMediaPlaybackController>();
+        var s1 = new MediaSessionInfo("s1", MediaPlatform.Spotify, "Song A", "Artist A", "Album A", "spotify.exe", MediaPlaybackState.Playing, true);
+        var s2 = new MediaSessionInfo("s2", MediaPlatform.YouTube, "Video B", "Channel B", "", "chrome.exe", MediaPlaybackState.Paused, false);
+        var s3 = new MediaSessionInfo("s3", MediaPlatform.YouTubeMusic, "Song C", "Artist C", "YT Music", "edge.exe", MediaPlaybackState.Paused, false);
+
+        controller.PrimarySession.Returns(s1);
+        controller.ActiveSessions.Returns(new[] { s1, s2, s3 });
+
+        var vm = new MediaPanelViewModel(_mediaService, _launcher, _dialogService, controller);
+
+        Assert.NotNull(vm.PrimarySession);
+        Assert.Equal("s1", vm.PrimarySession.SessionId);
+        Assert.Equal("Song A", vm.PrimarySession.Title);
+        Assert.Equal("Artist A", vm.PrimarySession.Artist);
+        Assert.Equal(MediaPlatform.Spotify, vm.PrimarySession.Platform);
+        Assert.True(vm.PrimarySession.IsPlaying);
+        Assert.True(vm.HasActiveSessions);
+
+        Assert.Equal(2, vm.SecondarySessions.Count);
+        Assert.Equal("s2", vm.SecondarySessions[0].SessionId);
+        Assert.Equal("s3", vm.SecondarySessions[1].SessionId);
+        Assert.True(vm.HasMultipleSessions);
+        Assert.True(vm.IsCollapsed);
+        Assert.Equal("Sesi Lainnya (2) ▼", vm.CollapseButtonText);
+    }
+
+    [Fact]
+    public void MultiSession_ToggleCollapse_TogglesStateAndText()
+    {
+        var controller = Substitute.For<IMediaPlaybackController>();
+        var s1 = new MediaSessionInfo("s1", MediaPlatform.Spotify, "Song A", "Artist A", "", "spotify", MediaPlaybackState.Playing, true);
+        var s2 = new MediaSessionInfo("s2", MediaPlatform.YouTube, "Video B", "Channel B", "", "chrome", MediaPlaybackState.Paused, false);
+        controller.PrimarySession.Returns(s1);
+        controller.ActiveSessions.Returns(new[] { s1, s2 });
+
+        var vm = new MediaPanelViewModel(_mediaService, _launcher, _dialogService, controller);
+        Assert.True(vm.IsCollapsed);
+        Assert.Equal("Sesi Lainnya (1) ▼", vm.CollapseButtonText);
+
+        vm.ToggleCollapse();
+        Assert.False(vm.IsCollapsed);
+        Assert.Equal("Tampilkan Lebih Sedikit ▲", vm.CollapseButtonText);
+
+        vm.ToggleCollapse();
+        Assert.True(vm.IsCollapsed);
+        Assert.Equal("Sesi Lainnya (1) ▼", vm.CollapseButtonText);
+    }
+
+    [Fact]
+    public void MultiSession_MakeTopSession_InvokesControllerSetPrimarySession()
+    {
+        var controller = Substitute.For<IMediaPlaybackController>();
+        var s1 = new MediaSessionInfo("s1", MediaPlatform.Spotify, "Song A", "Artist A", "", "spotify", MediaPlaybackState.Playing, true);
+        var s2 = new MediaSessionInfo("s2", MediaPlatform.YouTube, "Video B", "Channel B", "", "chrome", MediaPlaybackState.Paused, false);
+        controller.PrimarySession.Returns(s1);
+        controller.ActiveSessions.Returns(new[] { s1, s2 });
+
+        var vm = new MediaPanelViewModel(_mediaService, _launcher, _dialogService, controller);
+        var secondaryItem = vm.SecondarySessions[0];
+
+        secondaryItem.MakeTopCommand.Execute(null);
+
+        controller.Received(1).SetPrimarySession("s2");
+    }
+
+    [Fact]
+    public async Task MultiSession_TogglePlayPauseSession_InvokesController()
+    {
+        var controller = Substitute.For<IMediaPlaybackController>();
+        var s1 = new MediaSessionInfo("s1", MediaPlatform.Spotify, "Song A", "Artist A", "", "spotify", MediaPlaybackState.Playing, true);
+        var s2 = new MediaSessionInfo("s2", MediaPlatform.YouTube, "Video B", "Channel B", "", "chrome", MediaPlaybackState.Paused, false);
+        controller.PrimarySession.Returns(s1);
+        controller.ActiveSessions.Returns(new[] { s1, s2 });
+
+        var vm = new MediaPanelViewModel(_mediaService, _launcher, _dialogService, controller);
+        var secondaryItem = vm.SecondarySessions[0];
+
+        await secondaryItem.TogglePlayPauseCommand.ExecuteAsync(null);
+
+        await controller.Received(1).PlayPauseSessionAsync("s2");
+    }
+
+    [Fact]
+    public void MultiSession_TabClosed_RemovesFromListAutomatically()
+    {
+        var controller = Substitute.For<IMediaPlaybackController>();
+        var s1 = new MediaSessionInfo("s1", MediaPlatform.Spotify, "Song A", "Artist A", "", "spotify", MediaPlaybackState.Playing, true);
+        var s2 = new MediaSessionInfo("s2", MediaPlatform.YouTube, "Video B", "Channel B", "", "chrome", MediaPlaybackState.Paused, false);
+        controller.PrimarySession.Returns(s1);
+        controller.ActiveSessions.Returns(new[] { s1, s2 });
+
+        var vm = new MediaPanelViewModel(_mediaService, _launcher, _dialogService, controller);
+        Assert.Single(vm.SecondarySessions);
+
+        // Simulate browser tab s2 closed
+        controller.ActiveSessions.Returns(new[] { s1 });
+        vm.UpdateSessions(new[] { s1 });
+
+        Assert.Empty(vm.SecondarySessions);
+        Assert.False(vm.HasMultipleSessions);
+        Assert.NotNull(vm.PrimarySession);
+        Assert.Equal("s1", vm.PrimarySession.SessionId);
+    }
+
+    [Fact]
+    public void MultiSession_AllClosed_ClearsSessionsAndResetsTrackDisplay()
+    {
+        var controller = Substitute.For<IMediaPlaybackController>();
+        var s1 = new MediaSessionInfo("s1", MediaPlatform.Spotify, "Song A", "Artist A", "", "spotify", MediaPlaybackState.Playing, true);
+        controller.PrimarySession.Returns(s1);
+        controller.ActiveSessions.Returns(new[] { s1 });
+
+        var vm = new MediaPanelViewModel(_mediaService, _launcher, _dialogService, controller);
+        Assert.NotNull(vm.PrimarySession);
+
+        // All tabs / apps closed
+        vm.UpdateSessions(Array.Empty<MediaSessionInfo>());
+
+        Assert.Null(vm.PrimarySession);
+        Assert.Empty(vm.SecondarySessions);
+        Assert.False(vm.HasActiveSessions);
+        Assert.False(vm.HasMultipleSessions);
+        Assert.Equal("Tidak ada media aktif", vm.TrackTitle);
+        Assert.Equal("Buka Spotify, YouTube, atau YouTube Music", vm.TrackArtist);
+    }
 }
