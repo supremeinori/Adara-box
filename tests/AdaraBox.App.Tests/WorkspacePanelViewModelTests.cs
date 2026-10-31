@@ -406,8 +406,8 @@ public class WorkspacePanelViewModelTests
         Assert.Equal(2, vm.Workspaces.Count);
         Assert.False(vm.HasSearchQuery);
 
-        // Filter for "Music"
-        vm.SearchQuery = "Music";
+        // Filter for "Music" with leading/trailing spaces
+        vm.SearchQuery = "  music  ";
         Assert.True(vm.HasSearchQuery);
 
         var filtered = vm.FilteredWorkspaces.Cast<WorkspaceItemViewModel>().ToList();
@@ -421,5 +421,14 @@ public class WorkspacePanelViewModelTests
 
         filtered = vm.FilteredWorkspaces.Cast<WorkspaceItemViewModel>().ToList();
         Assert.Equal(2, filtered.Count);
+    }
+
+    [Fact]
+    public void PresetEmojis_ContainsExpectedDefaultIcons()
+    {
+        var vm = CreateVm();
+        Assert.NotEmpty(vm.PresetEmojis);
+        Assert.Contains("📁", vm.PresetEmojis);
+        Assert.Contains("🎨", vm.PresetEmojis);
     }
 }

@@ -165,4 +165,28 @@ public partial class WorkspacePanelView : UserControl
         }
         return parent as T;
     }
+
+    private void SearchBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        SearchTextBox.Focus();
+        Keyboard.Focus(SearchTextBox);
+    }
+
+    private void SearchIconButton_Click(object sender, RoutedEventArgs e)
+    {
+        SearchTextBox.Focus();
+        Keyboard.Focus(SearchTextBox);
+        SearchTextBox.SelectAll();
+    }
+
+    private void SearchTextBox_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape)
+        {
+            ViewModel?.ClearSearch();
+            SearchTextBox.Text = string.Empty;
+            Keyboard.ClearFocus();
+            e.Handled = true;
+        }
+    }
 }

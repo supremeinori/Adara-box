@@ -246,28 +246,121 @@
                     <TextBlock Text="Workspace" FontSize="14" FontWeight="SemiBold" Foreground="#F4F4F5" VerticalAlignment="Center" />
                 </StackPanel>
 
-                <!-- Search Bar -->
-                <Border Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,8,0"
-                        Background="#16161C" BorderBrush="#2C2C36" BorderThickness="1" CornerRadius="4"
-                        Padding="7,2" Width="160" Height="26"
+                <!-- Search Bar Container -->
+                <Border x:Name="SearchBarContainer"
+                        Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,8,0"
+                        Background="#16161C" BorderBrush="#2E2E3A" BorderThickness="1" CornerRadius="4"
+                        Padding="6,2" Width="175" Height="28"
+                        Cursor="IBeam"
+                        MouseLeftButtonDown="SearchBar_MouseLeftButtonDown"
                         Visibility="{Binding IsFormOpen, Converter={StaticResource InverseBoolToVis}}">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="BorderBrush" Value="#2E2E3A" />
+                            <Setter Property="Background" Value="#16161C" />
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="BorderBrush" Value="#4B4B5C" />
+                                    <Setter Property="Background" Value="#1C1C24" />
+                                </Trigger>
+                                <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                    <Setter Property="BorderBrush" Value="#6366F1" />
+                                    <Setter Property="Background" Value="#1C1C26" />
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="🔍" FontSize="10" Foreground="#71717A" VerticalAlignment="Center" Margin="0,0,5,0" />
-                        <TextBox Grid.Column="1" Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}"
-                                 Background="Transparent" BorderThickness="0" Foreground="#F4F4F5" FontSize="11"
-                                 VerticalAlignment="Center" />
-                        <TextBlock Grid.Column="1" Text="Cari workspace..." FontSize="11" Foreground="#52525B" VerticalAlignment="Center"
+
+                        <!-- Search Icon Button (Clickable!) -->
+                        <Button Grid.Column="0"
+                                Content="🔍"
+                                FontSize="11"
+                                Foreground="#A1A1AA"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Padding="0,0,5,0"
+                                Cursor="Hand"
+                                ToolTip="Cari workspace (atau klik di sini untuk mulai mengetik)"
+                                Click="SearchIconButton_Click">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Foreground" Value="#FFFFFF" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+
+                        <!-- Search Input Box -->
+                        <TextBox x:Name="SearchTextBox"
+                                 Grid.Column="1"
+                                 Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 Foreground="#FFFFFF"
+                                 CaretBrush="#FFFFFF"
+                                 SelectionBrush="#6366F1"
+                                 FontSize="11"
+                                 VerticalAlignment="Center"
+                                 KeyDown="SearchTextBox_KeyDown" />
+
+                        <!-- Placeholder text -->
+                        <TextBlock Grid.Column="1"
+                                   Text="Cari workspace..."
+                                   FontSize="11"
+                                   Foreground="#71717A"
+                                   VerticalAlignment="Center"
                                    IsHitTestVisible="False"
                                    Visibility="{Binding HasSearchQuery, Converter={StaticResource InverseBoolToVis}}" />
-                        <Button Grid.Column="2" Content="✕" Command="{Binding ClearSearchCommand}"
-                                Background="Transparent" BorderThickness="0" Foreground="#A1A1AA" FontSize="9"
-                                Cursor="Hand" VerticalAlignment="Center" Padding="2"
-                                Visibility="{Binding HasSearchQuery, Converter={StaticResource BoolToVis}}" />
+
+                        <!-- Clear Search Button (✕) -->
+                        <Button Grid.Column="2"
+                                Content="✕"
+                                Command="{Binding ClearSearchCommand}"
+                                Foreground="#A1A1AA"
+                                FontSize="10"
+                                Cursor="Hand"
+                                VerticalAlignment="Center"
+                                Padding="4,1"
+                                ToolTip="Hapus pencarian (Esc)"
+                                Visibility="{Binding HasSearchQuery, Converter={StaticResource BoolToVis}}">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Background" Value="Transparent" />
+                                    <Setter Property="BorderThickness" Value="0" />
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}" CornerRadius="3" Padding="{TemplateBinding Padding}">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#2E2E3A" />
+                                                        <Setter Property="Foreground" Value="#FFFFFF" />
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </Button.Style>
+                        </Button>
                     </Grid>
                 </Border>
 
@@ -301,6 +394,8 @@
                                    HorizontalAlignment="Center" VerticalAlignment="Center"
                                    Visibility="{Binding DetailHasCustomImage, Converter={StaticResource BoolToVis}}" />
                             <TextBlock Text="{Binding DetailIcon}" FontSize="13"
+                                       Foreground="#FFFFFF"
+                                       FontFamily="Segoe UI Emoji, Segoe UI Symbol, sans-serif"
                                        HorizontalAlignment="Center" VerticalAlignment="Center"
                                        Visibility="{Binding DetailHasCustomImage, Converter={StaticResource InverseBoolToVis}}" />
                         </Grid>
@@ -413,6 +508,8 @@
                                        HorizontalAlignment="Center" VerticalAlignment="Center"
                                        Visibility="{Binding FormHasCustomImage, Converter={StaticResource BoolToVis}}" />
                                 <TextBlock Text="{Binding FormDisplayEmoji}" FontSize="24"
+                                           Foreground="#FFFFFF"
+                                           FontFamily="Segoe UI Emoji, Segoe UI Symbol, sans-serif"
                                            HorizontalAlignment="Center" VerticalAlignment="Center"
                                            Visibility="{Binding FormHasCustomImage, Converter={StaticResource InverseBoolToVis}}" />
                             </Grid>
@@ -436,7 +533,7 @@
                     </Grid>
 
                     <!-- Preset Emoji Picker -->
-                    <TextBlock Text="Atau pilih Emoji preset:" FontSize="10" Foreground="#71717A" Margin="0,4,0,4" />
+                    <TextBlock Text="Atau pilih Emoji preset:" FontSize="10" Foreground="#A1A1AA" Margin="0,4,0,4" />
                     <ItemsControl ItemsSource="{Binding PresetEmojis}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
@@ -448,14 +545,42 @@
                                 <Button Content="{Binding}"
                                         Command="{Binding DataContext.SelectPresetEmojiCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                         CommandParameter="{Binding}"
-                                        Background="#16161C"
-                                        Foreground="#F4F4F5"
-                                        BorderBrush="#2E2E3A"
+                                        Background="#22222B"
+                                        Foreground="#FFFFFF"
+                                        FontFamily="Segoe UI Emoji, Segoe UI Symbol, sans-serif"
+                                        BorderBrush="#3D3D4E"
                                         BorderThickness="1"
-                                        Width="30" Height="30"
+                                        Width="34" Height="34"
                                         Margin="2"
-                                        FontSize="14"
-                                        Cursor="Hand" />
+                                        FontSize="16"
+                                        Cursor="Hand">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border x:Name="emojiBorder"
+                                                                Background="{TemplateBinding Background}"
+                                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                                CornerRadius="6">
+                                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                        </Border>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter Property="Background" Value="#323242" />
+                                                                <Setter Property="BorderBrush" Value="#6366F1" />
+                                                            </Trigger>
+                                                            <Trigger Property="IsPressed" Value="True">
+                                                                <Setter Property="Background" Value="#404055" />
+                                                            </Trigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
@@ -480,7 +605,7 @@
                             Padding="28"
                             Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVis}}">
                         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="📁" FontSize="32" HorizontalAlignment="Center" Margin="0,0,0,10" />
+                            <TextBlock Text="📁" FontSize="32" Foreground="#FFFFFF" FontFamily="Segoe UI Emoji, Segoe UI Symbol, sans-serif" HorizontalAlignment="Center" Margin="0,0,0,10" />
                             <TextBlock Text="{Binding CurrentEmptyTitle}" FontSize="14" FontWeight="SemiBold" Foreground="#E4E4E7" HorizontalAlignment="Center" />
                             <TextBlock Text="{Binding CurrentEmptyDescription}" FontSize="12" Foreground="#71717A" TextWrapping="Wrap" TextAlignment="Center" Margin="0,6,0,16" MaxWidth="320" HorizontalAlignment="Center" />
                             <Button Content="{Binding CreateFirstButtonText}" Command="{Binding BeginCreateCommand}" Style="{StaticResource PrimaryActionBtnStyle}" HorizontalAlignment="Center"
@@ -571,6 +696,8 @@
                                                        Visibility="{Binding HasCustomImage, Converter={StaticResource BoolToVis}}" />
                                                 <TextBlock Text="{Binding DisplayEmoji}"
                                                            FontSize="44"
+                                                           Foreground="#FFFFFF"
+                                                           FontFamily="Segoe UI Emoji, Segoe UI Symbol, sans-serif"
                                                            HorizontalAlignment="Center"
                                                            VerticalAlignment="Center"
                                                            Visibility="{Binding HasCustomImage, Converter={StaticResource InverseBoolToVis}}" />

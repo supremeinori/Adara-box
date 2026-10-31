@@ -303,10 +303,11 @@ public sealed partial class WorkspacePanelViewModel : ObservableObject
 
     private bool FilterWorkspaceItem(object obj)
     {
-        if (string.IsNullOrWhiteSpace(SearchQuery)) return true;
+        var query = SearchQuery?.Trim();
+        if (string.IsNullOrWhiteSpace(query)) return true;
         if (obj is WorkspaceItemViewModel ws)
         {
-            return ws.Name.IndexOf(SearchQuery, StringComparison.OrdinalIgnoreCase) >= 0;
+            return ws.Name.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0;
         }
         return true;
     }
