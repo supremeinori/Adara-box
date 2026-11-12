@@ -1,0 +1,8 @@
+[target.x86_64-pc-windows-gnu]
+linker = "clang"
+rustflags = [
+  "-C", "link-self-contained=yes",
+  "-C", "link-arg=-target",
+  "-C", "link-arg=x86_64-w64-mingw32",
+  "-C", "link-arg=-fuse-ld=lld",
+]
