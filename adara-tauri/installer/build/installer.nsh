@@ -107,6 +107,13 @@ FunctionEnd
 !macroend
 
 !macro NSIS_HOOK_POSTINSTALL
+  ; Bundle WebView2Loader.dll beside adara-box.exe when built with the GNU toolchain
+  !searchreplace WEBVIEW2_LOADER_PATH "${MAINBINARYSRCPATH}" "${MAINBINARYNAME}.exe" "WebView2Loader.dll"
+  !if /FileExists "${WEBVIEW2_LOADER_PATH}"
+    SetOutPath "$INSTDIR"
+    File "${WEBVIEW2_LOADER_PATH}"
+  !endif
+
   ${If} ${FileExists} "$TEMP\nectar-uninstall.keep"
     CopyFiles /SILENT "$TEMP\nectar-uninstall.keep" "$INSTDIR\uninstall.exe"
     Delete "$TEMP\nectar-uninstall.keep"
@@ -122,6 +129,11 @@ FunctionEnd
     FileWrite $0 "user"
   ${EndIf}
   FileClose $0
+!macroend
+
+!macro NSIS_HOOK_PREUNINSTALL
+  Delete "$INSTDIR\WebView2Loader.dll"
+  Delete "$INSTDIR\.install-scope"
 !macroend
 
 ;
