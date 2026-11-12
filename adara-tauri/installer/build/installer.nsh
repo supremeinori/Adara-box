@@ -107,12 +107,18 @@ FunctionEnd
 !macroend
 
 !macro NSIS_HOOK_POSTINSTALL
-  ; Bundle WebView2Loader.dll beside adara-box.exe when built with the GNU toolchain
+  ; Bundle WebView2Loader.dll beside adara-box.exe
   !searchreplace WEBVIEW2_LOADER_PATH "${MAINBINARYSRCPATH}" "${MAINBINARYNAME}.exe" "WebView2Loader.dll"
   !if /FileExists "${WEBVIEW2_LOADER_PATH}"
     SetOutPath "$INSTDIR"
     File "${WEBVIEW2_LOADER_PATH}"
   !endif
+
+  ; Register App Paths so Windows Search / Run dialog launches with the correct
+  ; working directory (the install folder), which is required for WebView2Loader.dll
+  ; to be found via relative-path DLL loading.
+  WriteRegStr HKCU "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\adara-box.exe" "" "$INSTDIR\${MAINBINARYNAME}.exe"
+  WriteRegStr HKCU "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\adara-box.exe" "Path" "$INSTDIR"
 
   ${If} ${FileExists} "$TEMP\nectar-uninstall.keep"
     CopyFiles /SILENT "$TEMP\nectar-uninstall.keep" "$INSTDIR\uninstall.exe"
@@ -134,6 +140,8 @@ FunctionEnd
 !macro NSIS_HOOK_PREUNINSTALL
   Delete "$INSTDIR\WebView2Loader.dll"
   Delete "$INSTDIR\.install-scope"
+  ; Remove App Paths registry entry
+  DeleteRegKey HKCU "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\adara-box.exe"
 !macroend
 
 ;
