@@ -301,7 +301,8 @@ fn main() {
             library::lib_pick_book_file,
             library::lib_pick_cover_image,
             library::lib_ai_sync,
-            library::lib_ai_reload
+            library::lib_ai_reload,
+            library::lib_ai_open_external
         ])
         .setup(|app| {
             startup::mark("setup started");

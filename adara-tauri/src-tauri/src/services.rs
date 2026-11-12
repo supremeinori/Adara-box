@@ -2140,6 +2140,48 @@ fn in_show_desktop_corner(x: i32, y: i32) -> bool {
     x >= right - CORNER && x < right && y >= bottom - CORNER && y < bottom
 }
 
+/// True when the foreground window is an active Adara Box secondary window (Library, Workspace, etc.)
+/// and the cursor is inside its top header band so top-edge Notch reveal does not cover its buttons.
+fn cursor_over_own_window_topbar(app_handle: &AppHandle, cursor: windows::Win32::Foundation::POINT) -> bool {
+    use windows::Win32::Foundation::RECT;
+    use windows::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, GetWindowRect};
+    let fg = unsafe { GetForegroundWindow() };
+    if fg.0.is_null() {
+        return false;
+    }
+    for label in [
+        crate::on_demand_windows::LIBRARY,
+        crate::on_demand_windows::WORKSPACE,
+        crate::on_demand_windows::SETTINGS,
+        crate::on_demand_windows::CALENDAR,
+    ] {
+        if let Some(win) = app_handle.get_webview_window(label) {
+            if win.is_visible().unwrap_or(false) {
+                if let Ok(hwnd) = win.hwnd() {
+                    if hwnd == fg {
+                        let mut wr = RECT::default();
+                        if unsafe { GetWindowRect(hwnd, &mut wr) }.is_ok() {
+                            let scale = win.scale_factor().unwrap_or(1.0);
+                            let top_band = (64.0 * scale) as i32;
+                            if cursor.x >= wr.left
+                                && cursor.x <= wr.right
+                                && cursor.y >= wr.top
+                                && cursor.y <= wr.top + top_band
+                            {
+                                return true;
+                            }
+                        }
+                        if win.is_fullscreen().unwrap_or(false) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    false
+}
+
 /// Smart and Peek notches stay hidden while a fullscreen window covers their monitor.
 fn notch_suppressed(app_handle: &AppHandle, label: &str) -> bool {
     crate::state::get_flag(crate::state::notch_fullscreen(), label)
@@ -2351,7 +2393,7 @@ unsafe fn process_mouse_move(app_handle: &AppHandle, cursor: windows::Win32::Fou
             {
                 if let Some(main_win) = app_handle.get_webview_window("main") {
                     if main_win.is_visible().unwrap_or(false) {
-                        let notch_fs = notch_suppressed(app_handle, "main");
+                        let notch_fs = notch_suppressed(app_handle, "main") || cursor_over_own_window_topbar(app_handle, cursor);
                         let in_notch_hover = !notch_fs && crate::state::get_flag(crate::state::notch_hovered(), "main");
                         let mut is_notch_hovered = false;
                         let scale = crate::state::effective_css_scale_for(main_win.label(), main_win.scale_factor().unwrap_or(1.0));
@@ -2804,7 +2846,7 @@ fn hit_test_extra_notch_windows(app_handle: &AppHandle, cursor: windows::Win32::
         let Some((mon_x, mon_y, mon_w, _mon_h)) = monitor_rect_for_hwnd(hwnd) else { continue };
 
         let scale = crate::state::effective_css_scale_for(main_win.label(), main_win.scale_factor().unwrap_or(1.0));
-        let notch_fs = notch_suppressed(app_handle, &label);
+        let notch_fs = notch_suppressed(app_handle, &label) || cursor_over_own_window_topbar(app_handle, cursor);
         let in_notch_hover = !notch_fs && crate::state::get_flag(crate::state::notch_hovered(), &label);
         let in_top_band = cursor.y <= (mon_y + (8.0 * scale) as i32) &&
                           cursor.x >= mon_x && cursor.x <= (mon_x + mon_w);

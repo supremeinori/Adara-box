@@ -39,20 +39,21 @@ interface PageFlipLike {
   getUI?: () => PageFlipUiLike;
 }
 
+interface EpubRenditionLike {
+  display: (target?: string) => Promise<void>;
+  prev: () => void;
+  next: () => void;
+  resize?: (width?: number, height?: number) => void;
+  on: (event: string, cb: (loc: EpubLocationEvent) => void) => void;
+  currentLocation: () => EpubLocationEvent | null;
+  destroy: () => void;
+}
+
 interface EpubLocationEvent {
   start?: {
     cfi?: string;
     percentage?: number;
   };
-}
-
-interface EpubRenditionLike {
-  display: (target?: string) => Promise<void>;
-  prev: () => void;
-  next: () => void;
-  on: (event: string, cb: (loc: EpubLocationEvent) => void) => void;
-  currentLocation: () => EpubLocationEvent | null;
-  destroy: () => void;
 }
 
 interface EpubBookLike {
@@ -110,10 +111,12 @@ export function LibraryReader({
   const [counterLabel, setCounterLabel] = useState("...");
   const [zoom, setZoom] = useState(1.0);
   const [ctrlHeld, setCtrlHeld] = useState(false);
+  const [stageSize, setStageSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
 
   const stageHostRef = useRef<HTMLDivElement>(null);
   const flipWrapperRef = useRef<HTMLDivElement>(null);
-  const flipContainerRef = useRef<HTMLDivElement>(null);
+  const flipSlotRef = useRef<HTMLDivElement>(null);
+  const flipContainerRef = useRef<HTMLDivElement | null>(null);
   const scrollStageRef = useRef<HTMLDivElement>(null);
   const epubHostRef = useRef<HTMLDivElement>(null);
 
@@ -121,6 +124,8 @@ export function LibraryReader({
   const epubBookRef = useRef<EpubBookLike | null>(null);
   const epubRenditionRef = useRef<EpubRenditionLike | null>(null);
   const pdfDocRef = useRef<PdfDocumentLike | null>(null);
+  const bytesCacheRef = useRef<{ id: string; bytes: ArrayBuffer } | null>(null);
+  const currentPageRef = useRef<number>(book.currentPage > 0 ? book.currentPage : 0);
   const zoomRef = useRef(1.0);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingProgressRef = useRef<{
@@ -131,6 +136,42 @@ export function LibraryReader({
   } | null>(null);
   const onBookUpdatedRef = useRef(onBookUpdated);
   onBookUpdatedRef.current = onBookUpdated;
+
+  useEffect(() => {
+    currentPageRef.current = book.currentPage > 0 ? book.currentPage : 0;
+  }, [book.id]);
+
+  // Measure reader stage dynamically whenever window size (Fullscreen / Maximize / Restore / AI split) changes
+  useEffect(() => {
+    const el = stageHostRef.current ?? epubHostRef.current?.parentElement ?? scrollStageRef.current?.parentElement;
+    if (!el) return;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const commitSize = () => {
+      const w = Math.round(el.clientWidth);
+      const h = Math.round(el.clientHeight);
+      if (w < 100 || h < 100) return;
+      if (book.fileType === "epub") {
+        epubRenditionRef.current?.resize?.(w, h);
+        return;
+      }
+      setStageSize((prev) => {
+        if (Math.abs(prev.width - w) < 12 && Math.abs(prev.height - h) < 12) {
+          return prev;
+        }
+        return { width: w, height: h };
+      });
+    };
+    commitSize();
+    const ro = new ResizeObserver(() => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(commitSize, 110);
+    });
+    ro.observe(el);
+    return () => {
+      if (timer) clearTimeout(timer);
+      ro.disconnect();
+    };
+  }, [book.id, book.fileType, pdfMode]);
 
   const flushProgress = useCallback(
     async (
@@ -178,7 +219,11 @@ export function LibraryReader({
     zoomRef.current = clamped;
     setZoom(clamped);
     if (flipContainerRef.current) {
-      flipContainerRef.current.style.transform = `scale(${clamped})`;
+      flipContainerRef.current.style.transform = clamped === 1 ? "none" : `scale(${clamped})`;
+    }
+    if (clamped <= 1.01 && flipWrapperRef.current) {
+      flipWrapperRef.current.scrollLeft = 0;
+      flipWrapperRef.current.scrollTop = 0;
     }
   }, []);
 
@@ -207,6 +252,10 @@ export function LibraryReader({
         }
         flipInstanceRef.current = null;
       }
+      if (flipSlotRef.current) {
+        flipSlotRef.current.innerHTML = "";
+      }
+      flipContainerRef.current = null;
       if (epubRenditionRef.current) {
         try {
           epubRenditionRef.current.destroy();
@@ -231,9 +280,6 @@ export function LibraryReader({
         }
         pdfDocRef.current = null;
       }
-      if (flipContainerRef.current) {
-        flipContainerRef.current.innerHTML = "";
-      }
       if (scrollStageRef.current) {
         scrollStageRef.current.innerHTML = "";
       }
@@ -244,15 +290,21 @@ export function LibraryReader({
 
     const loadBook = async () => {
       try {
-        const buf = await libGetBookBytes(book.id);
-        if (cancelled) return;
+        let buf: ArrayBuffer;
+        if (bytesCacheRef.current?.id === book.id) {
+          buf = bytesCacheRef.current.bytes;
+        } else {
+          buf = await libGetBookBytes(book.id);
+          if (cancelled) return;
+          bytesCacheRef.current = { id: book.id, bytes: buf };
+        }
 
         if (book.fileType === "pdf") {
           if (!window.pdfjsLib) {
             throw new Error("Offline PDF engine (pdf.min.js) failed to load.");
           }
           window.pdfjsLib.GlobalWorkerOptions.workerSrc = "/library/vendor/pdf.worker.min.js";
-          const pdfDoc = await window.pdfjsLib.getDocument({ data: new Uint8Array(buf) }).promise;
+          const pdfDoc = await window.pdfjsLib.getDocument({ data: new Uint8Array(buf.slice(0)) }).promise;
           if (cancelled) {
             void pdfDoc.destroy?.();
             return;
@@ -261,13 +313,13 @@ export function LibraryReader({
           const totalPages = pdfDoc.numPages;
           const targetPage = Math.max(
             0,
-            Math.min(totalPages, book.currentPage > 0 ? book.currentPage : 0)
+            Math.min(totalPages, currentPageRef.current > 0 ? currentPageRef.current : 0)
           );
 
           if (pdfMode === "flip") {
-            const container = flipContainerRef.current;
+            const slot = flipSlotRef.current;
             const stage = stageHostRef.current;
-            if (!container || !stage) return;
+            if (!slot || !stage) return;
 
             if (!window.St?.PageFlip) {
               throw new Error("Offline 3D Flipbook engine (page-flip.browser.js) failed to load.");
@@ -277,15 +329,21 @@ export function LibraryReader({
             const vp1 = firstPage.getViewport({ scale: 1.0 });
             const aspect = vp1.height / vp1.width;
 
-            const availW = Math.max(360, (stage.clientWidth || window.innerWidth) - 72);
-            const availH = Math.max(320, (stage.clientHeight || window.innerHeight) - 104);
-            let singleWidth = Math.floor(Math.min(availW / 2, availH / aspect));
-            singleWidth = Math.max(200, Math.min(540, singleWidth));
-            const singleHeight = Math.max(260, Math.floor(singleWidth * aspect));
+            const hostW = stageSize.width || stage.clientWidth || window.innerWidth;
+            const hostH = stageSize.height || stage.clientHeight || window.innerHeight;
+            const availW = Math.max(280, hostW - 48);
+            const availH = Math.max(240, hostH - 88);
+            const singleWidth = Math.max(130, Math.floor(Math.min(availW / 2, availH / aspect)));
+            const singleHeight = Math.max(180, Math.floor(singleWidth * aspect));
 
+            slot.innerHTML = "";
+            const container = document.createElement("div");
+            container.className = "flipbook-container";
             container.style.width = `${singleWidth * 2}px`;
             container.style.height = `${singleHeight}px`;
-            container.style.transform = "scale(1)";
+            container.style.transform = "none";
+            slot.appendChild(container);
+            flipContainerRef.current = container;
 
             const displayTitle = formatBookTitle(book.title);
             const rendered = new Set<number>();
@@ -361,7 +419,8 @@ export function LibraryReader({
               startZIndex: 1,
               autoSize: false,
               showPageCorners: false,
-              flippingTime: 620,
+              mobileScrollSupport: false,
+              flippingTime: 520,
             });
             flip.loadFromHTML(pageElements);
 
@@ -419,6 +478,7 @@ export function LibraryReader({
 
             flip.on("flip", (e) => {
               const idx = e.data;
+              currentPageRef.current = idx;
               updateCounter(idx);
               let pageNum = idx;
               let pct = 0;
@@ -520,7 +580,7 @@ export function LibraryReader({
           if (!window.ePub || !epubHostRef.current) {
             throw new Error("Offline EPUB engine (epub.min.js) failed to load.");
           }
-          const epub = window.ePub(buf);
+          const epub = window.ePub(buf.slice(0));
           epubBookRef.current = epub;
           const rendition = epub.renderTo(epubHostRef.current, {
             width: "100%",
@@ -588,7 +648,18 @@ export function LibraryReader({
       cancelled = true;
       cleanupInstances();
     };
-  }, [book.id, pdfMode, book.fileType, book.title, book.author, coverDataUrl, flushProgress, scheduleProgressSave]);
+  }, [
+    book.id,
+    pdfMode,
+    book.fileType,
+    book.title,
+    book.author,
+    coverDataUrl,
+    stageSize.width,
+    stageSize.height,
+    flushProgress,
+    scheduleProgressSave,
+  ]);
 
   // Ctrl + wheel zoom and Ctrl + drag panning in flipbook stage
   useEffect(() => {
@@ -766,10 +837,10 @@ export function LibraryReader({
       )}
       <div
         ref={flipWrapperRef}
-        className="flipbook-wrapper"
+        className={`flipbook-wrapper${zoom > 1.01 ? " is-zoomed" : ""}`}
         style={{ opacity: loading ? 0 : 1 }}
       >
-        <div ref={flipContainerRef} className="flipbook-container" />
+        <div ref={flipSlotRef} className="flipbook-slot" />
       </div>
 
       {!loading && (

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactDOM from "react-dom/client";
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { Effect, EffectState } from "@tauri-apps/api/window";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import {
@@ -8,12 +9,15 @@ import {
   BookOpen,
   Bot,
   Edit3,
+  ExternalLink,
   Eye,
   EyeOff,
   FolderKanban,
   Image as ImageIcon,
   LayoutDashboard,
   Library as LibraryIcon,
+  Maximize2,
+  Minimize2,
   Play,
   Plus,
   RefreshCw,
@@ -42,6 +46,9 @@ import {
 } from "./libraryApi";
 import "./surfaces.css";
 import "./Library.css";
+import { initClickSounds } from "./clickSounds";
+
+initClickSounds();
 
 type LibraryTab = "dashboard" | "collection";
 type PdfMode = "flip" | "scroll";
@@ -188,17 +195,24 @@ function LibraryWindowApp() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [dropActive, setDropActive] = useState(false);
 
-  // Reader state
+  // Window sizing & Reader state
   const [activeBookId, setActiveBookId] = useState<string | null>(null);
   const [pdfMode, setPdfMode] = useState<PdfMode>("flip");
   const [focusMode, setFocusMode] = useState(true);
   const [chromePeek, setChromePeek] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isMaximized, setIsMaximized] = useState(false);
 
-  // AI Split Pane state (wired in Phase 4 native child WebView2)
+  // AI Split Pane state (native child WebView2)
   const [aiOpen, setAiOpen] = useState(false);
   const [aiProvider, setAiProvider] = useState<AiProvider>("gemini");
   const [aiWidth, setAiWidth] = useState(440);
+  const [aiStatus, setAiStatus] = useState<{
+    state: "idle" | "loading" | "ready" | "error";
+    error: string | null;
+  }>({ state: "idle", error: null });
   const aiSlotRef = useRef<HTMLDivElement>(null);
+  const aiPaneHostRef = useRef<HTMLElement>(null);
   const isResizingRef = useRef(false);
 
   // Form Modal state
@@ -219,6 +233,12 @@ function LibraryWindowApp() {
 
   useEffect(() => {
     const appWindow = getCurrentWebviewWindow();
+    const syncWinFlags = () => {
+      appWindow.isFullscreen().then(setIsFullscreen).catch(() => {});
+      appWindow.isMaximized().then(setIsMaximized).catch(() => {});
+    };
+    syncWinFlags();
+    const unlistenResize = appWindow.onResized(syncWinFlags);
     appWindow
       .setEffects({ effects: [Effect.Acrylic], state: EffectState.Active, color: [10, 10, 15, 20] })
       .catch(() => {})
@@ -227,6 +247,51 @@ function LibraryWindowApp() {
           requestAnimationFrame(() => invoke("on_demand_window_ready").catch(() => {}))
         );
       });
+    return () => {
+      unlistenResize.then((fn) => fn());
+    };
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    const appWindow = getCurrentWebviewWindow();
+    setIsFullscreen((prev) => {
+      const next = !prev;
+      void appWindow.setFullscreen(next).catch(() => {});
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    const onGlobalKey = (e: KeyboardEvent) => {
+      if (e.key === "F11") {
+        e.preventDefault();
+        toggleFullscreen();
+      }
+    };
+    window.addEventListener("keydown", onGlobalKey);
+    return () => window.removeEventListener("keydown", onGlobalKey);
+  }, [toggleFullscreen]);
+
+  useEffect(() => {
+    const unlisten = listen<{ state?: string; url?: string; error?: string | null }>(
+      "lib-ai-status",
+      (event) => {
+        const s = event.payload.state;
+        if (s === "ready") {
+          setAiStatus({ state: "ready", error: null });
+        } else if (s === "error") {
+          setAiStatus({
+            state: "error",
+            error: event.payload.error || "Unable to connect to AI provider.",
+          });
+        } else if (s === "loading") {
+          setAiStatus({ state: "loading", error: null });
+        }
+      }
+    );
+    return () => {
+      void unlisten.then((fn) => fn());
+    };
   }, []);
 
   const loadBooks = useCallback(async () => {
@@ -312,7 +377,7 @@ function LibraryWindowApp() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [activeBook, focusMode, chromePeek]);
 
-  // Sync native Win32 child AI WebView2 bounds (implemented in Phase 4, safely ignored until wired)
+  // Sync native Win32 child AI WebView2 bounds
   const syncAiPane = useCallback(() => {
     const visible = Boolean(activeBook && aiOpen);
     const slot = aiSlotRef.current;
@@ -340,6 +405,11 @@ function LibraryWindowApp() {
   }, [activeBook, aiOpen, aiProvider]);
 
   useEffect(() => {
+    if (activeBook && aiOpen) {
+      setAiStatus((prev) =>
+        prev.state === "error" ? prev : { state: "loading", error: null }
+      );
+    }
     syncAiPane();
     const slot = aiSlotRef.current;
     if (!slot || !aiOpen || !activeBook) return;
@@ -519,7 +589,11 @@ function LibraryWindowApp() {
   }, [books, search, categoryFilter, statusFilter]);
 
   return (
-    <div className="lib-shell">
+    <div
+      className={`lib-shell${isFullscreen ? " is-fullscreen" : ""}${
+        isMaximized ? " is-maximized" : ""
+      }`}
+    >
       {(!activeBook || !focusMode) && (
         <header className="lib-titlebar" data-tauri-drag-region>
           <div className="lib-titlebar-left">
@@ -536,7 +610,16 @@ function LibraryWindowApp() {
               <FolderKanban size={12} />
               <span>Workspace</span>
             </button>
-            <WindowControls />
+            <button
+              type="button"
+              className={`lib-btn sm ${isFullscreen ? "primary" : ""}`}
+              onClick={toggleFullscreen}
+              title={isFullscreen ? "Exit Fullscreen (F11)" : "Fullscreen (F11)"}
+            >
+              {isFullscreen ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
+              <span>{isFullscreen ? "Windowed" : "Fullscreen"}</span>
+            </button>
+            <WindowControls allowMaximize />
           </div>
         </header>
       )}
@@ -545,8 +628,11 @@ function LibraryWindowApp() {
         <div
           className={`lib-reader-shell ${focusMode ? "focus-mode" : ""}`}
           onMouseMove={(e) => {
-            if (focusMode && e.clientY <= 48) setChromePeek(true);
-            else if (focusMode && chromePeek && e.clientY > 72) setChromePeek(false);
+            if (!focusMode) return;
+            const targetNode = e.target as Node | null;
+            const inAiPane = Boolean(aiPaneHostRef.current && targetNode && aiPaneHostRef.current.contains(targetNode));
+            if (!inAiPane && e.clientY <= 14) setChromePeek(true);
+            else if (chromePeek && e.clientY > 92) setChromePeek(false);
           }}
         >
           <div
@@ -614,6 +700,20 @@ function LibraryWindowApp() {
                 <Bot size={12} />
                 <span>AI Companion</span>
               </button>
+
+              {focusMode && (
+                <>
+                  <button
+                    type="button"
+                    className={`lib-btn sm ${isFullscreen ? "primary" : ""}`}
+                    onClick={toggleFullscreen}
+                    title={isFullscreen ? "Exit Fullscreen (F11)" : "Fullscreen (F11)"}
+                  >
+                    {isFullscreen ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
+                  </button>
+                  <WindowControls allowMaximize />
+                </>
+              )}
             </div>
           </div>
 
@@ -621,6 +721,7 @@ function LibraryWindowApp() {
             <button
               type="button"
               className="lib-focus-reveal-btn"
+              style={aiOpen ? { right: aiWidth + 20 } : undefined}
               onClick={() => setChromePeek(true)}
               title="Show reader controls (or press F)"
             >
@@ -648,7 +749,7 @@ function LibraryWindowApp() {
                     isResizingRef.current = true;
                   }}
                 />
-                <aside className="lib-ai-pane-host" style={{ width: aiWidth }}>
+                <aside ref={aiPaneHostRef} className="lib-ai-pane-host" style={{ width: aiWidth }}>
                   <div className="lib-ai-toolbar">
                     <div className="lib-ai-providers">
                       {(Object.keys(AI_PROVIDERS) as AiProvider[]).map((key) => (
@@ -656,7 +757,10 @@ function LibraryWindowApp() {
                           key={key}
                           type="button"
                           className={`lib-ai-chip ${aiProvider === key ? "active" : ""}`}
-                          onClick={() => setAiProvider(key)}
+                          onClick={() => {
+                            setAiStatus({ state: "loading", error: null });
+                            setAiProvider(key);
+                          }}
                         >
                           {AI_PROVIDERS[key].label}
                         </button>
@@ -666,10 +770,25 @@ function LibraryWindowApp() {
                       <button
                         type="button"
                         className="lib-icon-btn"
-                        onClick={() => void invoke("lib_ai_reload").catch(() => {})}
+                        onClick={() => {
+                          setAiStatus({ state: "loading", error: null });
+                          void invoke("lib_ai_reload").catch(() => {});
+                        }}
                         title="Reload AI companion"
                       >
                         <RefreshCw size={12} />
+                      </button>
+                      <button
+                        type="button"
+                        className="lib-icon-btn"
+                        onClick={() =>
+                          void invoke("lib_ai_open_external", {
+                            url: AI_PROVIDERS[aiProvider].url,
+                          }).catch(() => {})
+                        }
+                        title="Open in default browser"
+                      >
+                        <ExternalLink size={12} />
                       </button>
                       <button
                         type="button"
@@ -682,9 +801,43 @@ function LibraryWindowApp() {
                     </div>
                   </div>
                   <div ref={aiSlotRef} className="lib-ai-viewport-slot">
-                    <span>
-                      Connecting to {AI_PROVIDERS[aiProvider].label}…
-                    </span>
+                    {aiStatus.state === "error" ? (
+                      <div className="lib-ai-fallback">
+                        <p className="lib-ai-fallback-title">
+                          Could not connect to {AI_PROVIDERS[aiProvider].label}
+                        </p>
+                        <p className="lib-ai-fallback-desc">{aiStatus.error}</p>
+                        <div className="lib-ai-fallback-actions">
+                          <button
+                            type="button"
+                            className="lib-btn primary sm"
+                            onClick={() => {
+                              setAiStatus({ state: "loading", error: null });
+                              void invoke("lib_ai_reload").catch(() => {});
+                            }}
+                          >
+                            <RefreshCw size={12} />
+                            <span>Retry</span>
+                          </button>
+                          <button
+                            type="button"
+                            className="lib-btn sm"
+                            onClick={() =>
+                              void invoke("lib_ai_open_external", {
+                                url: AI_PROVIDERS[aiProvider].url,
+                              }).catch(() => {})
+                            }
+                          >
+                            <ExternalLink size={12} />
+                            <span>Open in Browser</span>
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <span>
+                        Connecting to {AI_PROVIDERS[aiProvider].label}…
+                      </span>
+                    )}
                   </div>
                 </aside>
               </>

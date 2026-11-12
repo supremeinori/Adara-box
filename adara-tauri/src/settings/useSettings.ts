@@ -7,6 +7,16 @@ import type { UpdateCheckResult } from "../updater";
 import { useSettingsSync } from "../hooks/useSettingsSync";
 import { hexToHsl, DEFAULT_ACCENT_COLOR, STYLE_OPACITY, type ThemePreset } from "../theme";
 import { DEFAULT_DUAL_CLOCK_ZONE } from "../dualClock";
+import {
+  CLICK_SOUND_ENABLED_KEY,
+  CLICK_SOUND_PRESET_KEY,
+  broadcastClickSoundChanged,
+  getClickSoundPreset,
+  isClickSoundEnabled,
+  playClickSound,
+  setClickSoundState,
+  type ClickSoundPreset,
+} from "../clickSounds";
 import type { WidgetConfig, MonitorInfo, MonitorMode } from "./types";
 
 function saveSetting(key: string, value: string) {
@@ -118,6 +128,8 @@ export function useSettings() {
   const [ramUltra, setRamUltra] = useState(
     () => localStorage.getItem("nectar-ram-ultra") === "true"
   );
+  const [clickSoundEnabled, setClickSoundEnabled] = useState<boolean>(() => isClickSoundEnabled());
+  const [clickSoundPreset, setClickSoundPreset] = useState<ClickSoundPreset>(() => getClickSoundPreset());
   const [tempUnitFahrenheit, setTempUnitFahrenheit] = useState(false);
   const [cityName, setCityName] = useState("");
   const [cityQuery, setCityQuery] = useState("");
@@ -297,6 +309,10 @@ export function useSettings() {
       apply(getVal("nectar-show-update-indicator"), setShowUpdateIndicator, readBool);
       apply(getVal("nectar-ram-saver"), setRamSaver, (v) => v === "true");
       apply(getVal("nectar-ram-ultra"), setRamUltra, readBool);
+      apply(getVal(CLICK_SOUND_ENABLED_KEY), setClickSoundEnabled, (v) => v !== "false");
+      apply(getVal(CLICK_SOUND_PRESET_KEY), setClickSoundPreset, (v) =>
+        v === "soft" || v === "mechanical" ? v : "crisp"
+      );
       apply(getVal("nectar-auto-update"), setAutoUpdate, readBool);
       apply(getVal("nectar-update-channel"), setPrereleaseChannel, (v) => v === "prerelease");
       apply(getVal("nectar-volume-edge-enabled"), setVolumeEdgeEnabled, readBool);
@@ -783,6 +799,25 @@ export function useSettings() {
     const next = !tempUnitFahrenheit;
     setTempUnitFahrenheit(next);
     saveSetting("nectar-temp-unit", next ? "fahrenheit" : "celsius");
+  };
+
+  const toggleClickSound = () => {
+    const next = !clickSoundEnabled;
+    setClickSoundEnabled(next);
+    setClickSoundState(next, clickSoundPreset);
+    saveSetting(CLICK_SOUND_ENABLED_KEY, String(next));
+    void broadcastClickSoundChanged();
+    if (next) playClickSound(true, clickSoundPreset);
+  };
+
+  const changeClickSoundPreset = (val: string) => {
+    const preset: ClickSoundPreset =
+      val === "soft" || val === "mechanical" ? val : "crisp";
+    setClickSoundPreset(preset);
+    setClickSoundState(clickSoundEnabled, preset);
+    saveSetting(CLICK_SOUND_PRESET_KEY, preset);
+    void broadcastClickSoundChanged();
+    playClickSound(true, preset);
   };
 
   const toggleDock = () => {
@@ -1455,6 +1490,10 @@ export function useSettings() {
     handleUninstallNectar,
 
     // Utilities
+    clickSoundEnabled,
+    toggleClickSound,
+    clickSoundPreset,
+    changeClickSoundPreset,
     restartNectar: () => invoke("restart_nectar"),
     quitNectar: () => invoke("quit_nectar"),
   };

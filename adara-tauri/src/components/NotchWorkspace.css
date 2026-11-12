@@ -780,12 +780,12 @@
 .ws-overview-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 7px;
+  gap: 8px;
 }
 
 .is-window .ws-overview-grid {
-  grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(154px, 1fr));
+  gap: 12px;
 }
 
 .ws-overview-card {
@@ -793,20 +793,29 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-end;
   gap: 6px;
-  padding: 9px 7px 8px;
-  border-radius: 12px;
-  border: 1px solid var(--nectar-border, rgba(255, 255, 255, 0.1));
+  min-height: 98px;
+  padding: 10px 8px 8px;
+  border-radius: 14px;
+  border: 1px solid var(--nectar-border, rgba(255, 255, 255, 0.14));
   background: var(--nectar-group-bg, rgba(255, 255, 255, 0.05));
   cursor: pointer;
   text-align: center;
-  transition: background 0.14s ease, border-color 0.14s ease, transform 0.1s ease;
+  overflow: hidden;
+  transition: background 0.14s ease, border-color 0.14s ease, transform 0.12s ease, box-shadow 0.14s ease;
+}
+
+.is-window .ws-overview-card {
+  min-height: 152px;
+  padding: 12px 10px 10px;
 }
 
 .ws-overview-card:hover {
   background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.24);
+  border-color: rgba(255, 255, 255, 0.34);
   transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
 }
 
 .ws-overview-card:active {
@@ -816,14 +825,18 @@
 .ws-overview-card.is-new {
   border-style: dashed;
   justify-content: center;
-  min-height: 92px;
+  min-height: 98px;
   color: var(--nectar-text-muted, rgba(255, 255, 255, 0.72));
 }
 
+.is-window .ws-overview-card.is-new {
+  min-height: 152px;
+}
+
 .ws-overview-cover {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
@@ -834,24 +847,73 @@
 }
 
 .is-window .ws-overview-cover {
-  width: 68px;
-  height: 68px;
-  border-radius: 12px;
+  width: 72px;
+  height: 72px;
+  border-radius: 14px;
+}
+
+.ws-overview-card.has-image {
+  align-items: stretch;
+  text-align: left;
+  padding: 9px 10px;
+  border-color: rgba(255, 255, 255, 0.22);
+  background: #0d0e14;
+}
+
+.ws-overview-card.has-image .ws-overview-cover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  border: none;
+  background: transparent;
+  z-index: 0;
+}
+
+.ws-overview-card.has-image::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    rgba(6, 7, 11, 0.9) 0%,
+    rgba(6, 7, 11, 0.52) 44%,
+    rgba(6, 7, 11, 0.08) 100%
+  );
 }
 
 .ws-card-cover-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
+  transition: transform 0.25s ease;
+}
+
+.ws-overview-card.has-image:hover .ws-card-cover-img {
+  transform: scale(1.04);
 }
 
 .ws-card-cover-emoji {
-  font-size: 24px;
+  font-size: 26px;
   line-height: 1;
 }
 
 .is-window .ws-card-cover-emoji {
-  font-size: 32px;
+  font-size: 36px;
+}
+
+.ws-overview-meta {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
 
 .ws-overview-name {
@@ -864,20 +926,35 @@
   text-overflow: ellipsis;
 }
 
+.ws-overview-card.has-image .ws-overview-name {
+  color: #ffffff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+}
+
 .ws-overview-count {
   font-size: 10px;
   color: var(--nectar-text-muted, rgba(255, 255, 255, 0.56));
 }
 
-.ws-overview-edit {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  opacity: 0;
-  transition: opacity 0.12s ease;
+.ws-overview-card.has-image .ws-overview-count {
+  color: rgba(255, 255, 255, 0.8);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 
-.ws-overview-card:hover .ws-overview-edit {
+.ws-overview-edit {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 3;
+  opacity: 0;
+  background: rgba(10, 12, 18, 0.65);
+  backdrop-filter: blur(6px);
+  color: #fff;
+  transition: opacity 0.12s ease, background 0.12s ease;
+}
+
+.ws-overview-card:hover .ws-overview-edit,
+.ws-overview-edit:focus-visible {
   opacity: 1;
 }
 

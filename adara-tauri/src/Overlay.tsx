@@ -15,6 +15,9 @@ import "./surfaces.css";
 import { SurfaceShape } from "./components/SurfaceShape";
 import { initTheme } from "./theme";
 import { setVisibleInterval } from "./hooks/visibleInterval";
+import { initClickSounds } from "./clickSounds";
+
+initClickSounds();
 
 // ─── App Volume Mixer ───────────────────────────────────────────────────────
 

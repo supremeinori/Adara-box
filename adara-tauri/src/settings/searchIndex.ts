@@ -11,7 +11,8 @@ const group = (tab: SettingsTab, keys: string[]): SearchEntry[] => keys.map((key
 export const SEARCH_ENTRIES: SearchEntry[] = [
   ...group("general", [
     "general.launchAtLogin", "general.updateIndicator", "general.language", "general.weekStart", "general.time24h",
-    "general.legacyMode", "general.ramSaver", "general.ramUltra", "general.lowBattery", "general.restart", "general.quit",
+    "general.legacyMode", "general.ramSaver", "general.ramUltra", "general.clickSound", "general.clickSoundStyle",
+    "general.lowBattery", "general.restart", "general.quit",
   ]),
   ...group("appearance", [
     "appearance.style", "appearance.mode", "appearance.presets", "appearance.accent", "appearance.accentColor",
@@ -58,6 +59,8 @@ export const KEYWORDS: Record<string, string> = {
   "general.launchAtLogin": "startup boot autostart start with windows run on startup login",
   "general.ramSaver": "memory ram performance lag cpu slow",
   "general.ramUltra": "memory ram gpu performance lag",
+  "general.clickSound": "click sound audio effect sfx python feedback tactile mute",
+  "general.clickSoundStyle": "click sound crisp soft mechanical audio preset",
   "general.lowBattery": "power charge percent warning",
   "general.restart": "reload relaunch",
   "general.quit": "exit close stop",

@@ -22,7 +22,10 @@ import { initTheme } from "./theme";
 import { useT } from "./i18n";
 import { SettingsSearchBox, SearchResults, useSearchHits } from "./settings/SettingsSearch";
 import type { SearchEntry } from "./settings/searchIndex";
+import { initClickSounds } from "./clickSounds";
 import "./Settings.css";
+
+initClickSounds();
 
 const appWindow = getCurrentWebviewWindow();
 
@@ -152,6 +155,10 @@ function SettingsApp() {
               toggleRamSaver={settings.toggleRamSaver}
               ramUltra={settings.ramUltra}
               toggleRamUltra={settings.toggleRamUltra}
+              clickSoundEnabled={settings.clickSoundEnabled}
+              toggleClickSound={settings.toggleClickSound}
+              clickSoundPreset={settings.clickSoundPreset}
+              changeClickSoundPreset={settings.changeClickSoundPreset}
               lowBatteryThreshold={settings.lowBatteryThreshold}
               hasBattery={settings.hasBattery}
               handleThresholdChange={settings.handleThresholdChange}

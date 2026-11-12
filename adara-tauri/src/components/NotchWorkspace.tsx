@@ -908,12 +908,14 @@ export function WorkspaceView({
               </div>
             ) : (
               <div className="ws-overview-grid">
-                {filteredWorkspaces.map((ws) => (
+                {filteredWorkspaces.map((ws) => {
+                  const hasImage = isImageWorkspaceIcon(ws.icon);
+                  return (
                   <div
                     key={ws.id}
                     role="button"
                     tabIndex={0}
-                    className="ws-overview-card"
+                    className={`ws-overview-card${hasImage ? " has-image" : ""}`}
                     onClick={() => enterWorkspace(ws)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") enterWorkspace(ws);
@@ -935,14 +937,17 @@ export function WorkspaceView({
                     <div className="ws-overview-cover">
                       <WorkspaceAvatar icon={ws.icon} size="lg" />
                     </div>
-                    <div className="ws-overview-name">{ws.name}</div>
-                    <div className="ws-overview-count">
-                      {ws.resourceCount === 1
-                        ? t("ws.itemCountOne")
-                        : t("ws.itemCount", { count: ws.resourceCount })}
+                    <div className="ws-overview-meta">
+                      <div className="ws-overview-name">{ws.name}</div>
+                      <div className="ws-overview-count">
+                        {ws.resourceCount === 1
+                          ? t("ws.itemCountOne")
+                          : t("ws.itemCount", { count: ws.resourceCount })}
+                      </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
                 <button
                   type="button"
                   className="ws-overview-card is-new"

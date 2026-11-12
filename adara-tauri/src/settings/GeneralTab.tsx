@@ -1,8 +1,9 @@
-import { Power, Download, Clock, CalendarDays, History, BatteryWarning, RefreshCw, LogOut, Languages, MemoryStick, Zap } from "lucide-react";
+import { Power, Download, Clock, CalendarDays, History, BatteryWarning, RefreshCw, LogOut, Languages, MemoryStick, Zap, Volume2, Music } from "lucide-react";
 import { SettingRow } from "./SettingRow";
 import { SettingSection } from "./SettingSection";
 import { Dropdown } from "./Dropdown";
 import { LANGUAGES, getLanguagePreference, setLanguagePreference, useT } from "../i18n";
+import { playClickSound, type ClickSoundPreset } from "../clickSounds";
 
 interface GeneralTabProps {
   autostart: boolean;
@@ -19,6 +20,10 @@ interface GeneralTabProps {
   toggleRamSaver: () => void;
   ramUltra: boolean;
   toggleRamUltra: () => void;
+  clickSoundEnabled: boolean;
+  toggleClickSound: () => void;
+  clickSoundPreset: ClickSoundPreset;
+  changeClickSoundPreset: (value: string) => void;
   lowBatteryThreshold: number;
   hasBattery: boolean;
   handleThresholdChange: (val: number) => void;
@@ -41,6 +46,10 @@ export function GeneralTab({
   toggleRamSaver,
   ramUltra,
   toggleRamUltra,
+  clickSoundEnabled,
+  toggleClickSound,
+  clickSoundPreset,
+  changeClickSoundPreset,
   lowBatteryThreshold,
   hasBattery,
   handleThresholdChange,
@@ -118,13 +127,52 @@ export function GeneralTab({
           icon={Zap}
           label={t("general.ramUltra")}
           desc={t("general.ramUltra.desc")}
-          divider={hasBattery}
         >
           <label className="toggle-switch">
             <input type="checkbox" checked={ramUltra} onChange={toggleRamUltra} />
             <span className="slider"></span>
           </label>
         </SettingRow>
+
+        <SettingRow
+          icon={Volume2}
+          label={t("general.clickSound")}
+          desc={t("general.clickSound.desc")}
+          divider={clickSoundEnabled || hasBattery}
+        >
+          <label className="toggle-switch">
+            <input type="checkbox" checked={clickSoundEnabled} onChange={toggleClickSound} />
+            <span className="slider"></span>
+          </label>
+        </SettingRow>
+
+        {clickSoundEnabled && (
+          <SettingRow
+            icon={Music}
+            label={t("general.clickSoundStyle")}
+            desc={t("general.clickSoundStyle.desc")}
+            divider={hasBattery}
+          >
+            <div className="agent-sound-actions">
+              <Dropdown
+                value={clickSoundPreset}
+                options={[
+                  { value: "crisp", label: t("general.clickSoundStyle.crisp") },
+                  { value: "soft", label: t("general.clickSoundStyle.soft") },
+                  { value: "mechanical", label: t("general.clickSoundStyle.mechanical") },
+                ]}
+                onChange={changeClickSoundPreset}
+              />
+              <button
+                type="button"
+                className="agent-sound-btn"
+                onClick={() => playClickSound(true, clickSoundPreset)}
+              >
+                {t("general.clickSoundPreview")}
+              </button>
+            </div>
+          </SettingRow>
+        )}
 
         {hasBattery && (
           <SettingRow

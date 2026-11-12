@@ -11,6 +11,9 @@ import { initTheme } from "./theme";
 import { openLibraryWindow } from "./workspaceApi";
 import "./surfaces.css";
 import "./components/NotchWorkspace.css";
+import { initClickSounds } from "./clickSounds";
+
+initClickSounds();
 
 function WorkspaceWindowApp() {
   const t = useT();
@@ -46,7 +49,7 @@ function WorkspaceWindowApp() {
             <BookOpen size={12} />
             <span>{t("ws.library")}</span>
           </button>
-          <WindowControls />
+          <WindowControls allowMaximize />
         </div>
       </header>
       <div style={{ flex: 1, minHeight: 0, display: "flex" }}>

@@ -10,7 +10,10 @@ import { initTheme } from "./theme";
 import { useCaldav, type CalEvent } from "./hooks/useCaldav";
 import { dateLocale, timeAgo, useT, weekdayNames } from "./i18n";
 import { daysSinceWeekStart, useWeekStart } from "./weekStart";
+import { initClickSounds } from "./clickSounds";
 import "./Calendar.css";
+
+initClickSounds();
 
 type View = "day" | "week" | "month" | "agenda";
 

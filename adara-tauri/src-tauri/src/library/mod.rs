@@ -167,3 +167,8 @@ pub fn lib_ai_sync(
 pub fn lib_ai_reload(app: AppHandle) {
     ai_pane::reload_pane(&app);
 }
+
+#[tauri::command]
+pub fn lib_ai_open_external(url: String) -> Result<(), String> {
+    ai_pane::open_external(&url)
+}
