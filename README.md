@@ -12,6 +12,36 @@
   Built with <strong>Tauri v2</strong> · <strong>Rust</strong> · <strong>React + TypeScript</strong> · <strong>SQLite</strong> · <strong>WebView2</strong>
 </p>
 
+<p align="center">
+  <a href="https://github.com/supremeinori/Adara-box/releases/download/v2.0.0/Adara-Box-2.0.0-Setup.exe">
+    <img src="https://img.shields.io/badge/%E2%AC%87%EF%B8%8F%20Download%20Installer-v2.0.0%20(Windows%20x64)-000000?style=for-the-badge&logo=windows&logoColor=white" alt="Download Windows Installer" />
+  </a>
+  <a href="https://github.com/supremeinori/Adara-box/releases/latest">
+    <img src="https://img.shields.io/github/v/release/supremeinori/Adara-box?style=for-the-badge&color=28C840&label=Latest%20Release" alt="Latest Release" />
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/license-GPL--3.0-blue?style=for-the-badge" alt="License" />
+  </a>
+</p>
+
+---
+
+## 💾 Download
+
+Download the latest ready-to-run installer for Windows 10/11:
+
+<p align="left">
+  <a href="https://github.com/supremeinori/Adara-box/releases/download/v2.0.0/Adara-Box-2.0.0-Setup.exe">
+    <img src="https://img.shields.io/badge/Download-Adara%20Box%20v2.0.0%20(64--bit%20Installer)-000000?style=for-the-badge&logo=windows&logoColor=white" alt="Download Windows Installer" />
+  </a>
+</p>
+
+Or view all versions on the [**GitHub Releases Page**](https://github.com/supremeinori/Adara-box/releases).
+
+1. Download **`Adara-Box-2.0.0-Setup.exe`**.
+2. Run the installer (per-user installation, no administrator privileges required).
+3. Adara Box launches immediately and is accessible anytime from your Desktop or by typing **Adara Box** in Windows Search.
+
 ---
 
 ## Overview
