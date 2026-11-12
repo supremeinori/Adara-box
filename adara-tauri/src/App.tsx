@@ -1988,6 +1988,12 @@ function App() {
   // Calculate width dynamically based on enabled features
   const agentNeedsYou = !!agentActivity && isNotchWindow && (agentActivity.state === 'needs_input' || agentActivity.state === 'error');
   const agentWings = !!agentActivity && isNotchWindow && !isHovered && (nectarMode === 'status' || isMusicMode);
+  const panelModesForBar =
+    isNotchWindow && isExpanded && isHovered && !isMusicMode && !tourActive && nectarMode !== 'agent'
+      ? availableNotchModes()
+      : [];
+  const showNotchPanelBar = panelModesForBar.length > 1;
+  const panelBarOffset = showNotchPanelBar ? 28 : 0;
 
   const getDynamicWidth = () => {
     const widgetsRowWidth = isHovered && statusWidgets.left.length + statusWidgets.right.length > 0
@@ -2003,7 +2009,8 @@ function App() {
     }
     if (nectarMode === 'status' && isHovered) {
       const totalWidgets = Math.max(statusWidgets.left.length, statusWidgets.right.length) * 2;
-      return Math.min(200 + totalWidgets * 65, 530) + dualClockExtra;
+      const minW = showNotchPanelBar ? 390 : 0;
+      return Math.max(minW, Math.min(200 + totalWidgets * 65, 530)) + dualClockExtra;
     }
     if (isMusicMode && isHovered) return mediaLayout === 'compact' ? 300 : 340;
     if ((showPowerPulse || showLowBatteryPulse || showUpdatePulse) && !isHovered) return 200;
@@ -2035,18 +2042,18 @@ function App() {
       const base = ask ? 184 : text ? 160 : 130;
       return Math.min(300, base + Math.max(0, lines - 2) * 16);
     }
-    if (nectarMode === 'workspace') return 350;
-    if (nectarMode === 'shelf') return shelf.items.length === 0 ? 96 : 176;
-    if (nectarMode === 'calendar') return settingsCalendarEnabled ? (caldav.connected ? 350 : 310) : 262;
+    if (nectarMode === 'workspace') return 350 + panelBarOffset;
+    if (nectarMode === 'shelf') return (shelf.items.length === 0 ? 96 : 176) + panelBarOffset;
+    if (nectarMode === 'calendar') return (settingsCalendarEnabled ? (caldav.connected ? 350 : 310) : 262) + panelBarOffset;
     if (nectarMode === 'command-center') {
       if (!isHovered) return 36;
       const tileRows = Math.ceil(ccResolved.tiles.length / 2);
       const tilesH = tileRows ? tileRows * 42 + (tileRows - 1) * 10 + 14 : 0;
       const buttonsH = ccResolved.buttons.length ? 44 : 0;
       const slidersH = ccResolved.sliders.length ? ccResolved.sliders.length * 22 + (ccResolved.sliders.length - 1) * 12 + 14 : 0;
-      return 46 + tilesH + buttonsH + slidersH;
+      return 46 + tilesH + buttonsH + slidersH + panelBarOffset;
     }
-    if (nectarMode === 'status') return 36;
+    if (nectarMode === 'status') return showNotchPanelBar ? 68 : 36;
     if (isMusicMode && isHovered) {
       const hasProgressBar = (mediaInfo.duration_ms ?? 0) > 0;
       let h = mediaLayout === 'compact' ? (hasProgressBar ? 132 : 116) : 120;
@@ -2116,7 +2123,7 @@ function App() {
       <div style={{ zoom: scale, width: '100%', display: 'flex', justifyContent: 'center' }}>
         <motion.div
           ref={nectarRef}
-          className={`nectar ${isHovered ? 'expanded' : ''} ${isImpacted ? 'is-impacted' : ''} ${isPanelOpen ? 'panel-open' : ''}`}
+          className={`nectar ${isHovered ? 'expanded' : ''} ${isImpacted ? 'is-impacted' : ''} ${isPanelOpen ? 'panel-open' : ''} ${showNotchPanelBar ? 'has-panel-bar' : ''}`}
           onMouseEnter={() => setIsNotchHovered(true)}
         onMouseLeave={() => setIsNotchHovered(false)}
         onWheel={handleWheel}
@@ -2274,6 +2281,19 @@ function App() {
                           </div>
                           <div className="header-visualizer-wrap">
                             <MediaSourceButton sessions={mediaSessions} />
+                            {panelWorkspace && isNotchWindow && (
+                              <button
+                                className="music-calendar-btn"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setNectarMode('workspace');
+                                }}
+                                {...tip(t("panel.workspace"))}
+                                aria-label={t("panel.workspace")}
+                              >
+                                <LayoutGrid size={14} strokeWidth={1.85} />
+                              </button>
+                            )}
                             <button className="music-calendar-btn" onClick={cycleNotchMode} {...tip(t("music.nextPanel"))} aria-label={t("music.nextPanel")}>
                               <ChevronRight size={16} strokeWidth={1.75} />
                             </button>
@@ -2603,6 +2623,25 @@ function App() {
                         )}
                       </AnimatePresence>
                     </div>
+                    {showNotchPanelBar && (
+                      <div className="notch-panel-bar" onClick={(e) => e.stopPropagation()}>
+                        {panelModesForBar.map((modeId) => (
+                          <button
+                            key={modeId}
+                            type="button"
+                            className={`notch-panel-pill ${nectarMode === modeId ? 'active' : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              manualMusicRef.current = modeId === 'music';
+                              setNectarMode(modeId);
+                              tourSignal('panel');
+                            }}
+                          >
+                            {t(`panel.${modeId}`)}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>

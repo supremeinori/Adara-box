@@ -1551,10 +1551,10 @@ img {
 
 .calendar-timer-content {
     position: absolute;
-    top: 36px;
+    top: var(--notch-panel-top, 36px);
     left: 0;
     width: 100%;
-    height: calc(100% - 36px);
+    height: calc(100% - var(--notch-panel-top, 36px));
     box-sizing: border-box;
     z-index: 2;
 }
@@ -1562,10 +1562,10 @@ img {
 /* Command Center Panel - Minimal */
 .command-center-content-minimal {
     position: absolute;
-    top: 36px;
+    top: var(--notch-panel-top, 36px);
     left: 0;
     width: 100%;
-    height: calc(100% - 36px);
+    height: calc(100% - var(--notch-panel-top, 36px));
     box-sizing: border-box;
     z-index: 2;
     padding: 12px 14px 12px 14px;
@@ -2410,10 +2410,10 @@ img {
 
 .shelf-panel {
     position: absolute;
-    top: 36px;
+    top: var(--notch-panel-top, 36px);
     left: 0;
     width: 100%;
-    height: calc(100% - 36px);
+    height: calc(100% - var(--notch-panel-top, 36px));
     box-sizing: border-box;
     z-index: 2;
     padding: 6px 14px 10px 14px;
@@ -2817,4 +2817,56 @@ img {
     font-weight: 600;
     margin-right: 6px;
     color: var(--nectar-text-muted, rgba(255, 255, 255, 0.6));
+}
+
+/* Hovered Notch panel switcher bar */
+.nectar.has-panel-bar {
+    --notch-panel-top: 64px;
+}
+
+.notch-panel-bar {
+    width: 100%;
+    height: 28px;
+    padding: 0 12px 4px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    flex-shrink: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    z-index: 3;
+}
+
+.notch-panel-bar::-webkit-scrollbar {
+    display: none;
+}
+
+.notch-panel-pill {
+    height: 21px;
+    padding: 0 9px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--nectar-text-muted, rgba(255, 255, 255, 0.72));
+    font-size: 10.5px;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+}
+
+.notch-panel-pill:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--nectar-text, #fff);
+}
+
+.notch-panel-pill.active {
+    background: var(--nectar-accent, #ffffff);
+    color: var(--nectar-accent-fg, #0a0a0f);
+    border-color: transparent;
+    font-weight: 600;
 }

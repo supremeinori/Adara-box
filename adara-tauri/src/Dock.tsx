@@ -213,6 +213,26 @@ function CalendarIcon() {
   );
 }
 
+function WorkspaceIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="7.5" height="7" rx="1.8" />
+      <rect x="13.5" y="4" width="7.5" height="7" rx="1.8" />
+      <rect x="3" y="13.5" width="7.5" height="6.5" rx="1.8" />
+      <rect x="13.5" y="13.5" width="7.5" height="6.5" rx="1.8" />
+    </svg>
+  );
+}
+
+function LibraryIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 5.5A2.5 2.5 0 0 1 4.5 3H11v17H4.5A2.5 2.5 0 0 0 2 22V5.5z" />
+      <path d="M22 5.5A2.5 2.5 0 0 0 19.5 3H13v17h6.5A2.5 2.5 0 0 1 22 22V5.5z" />
+    </svg>
+  );
+}
+
 function ChevronUpIcon() {
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
@@ -553,6 +573,8 @@ const Dock = memo(function Dock() {
   const [attentionWindows, setAttentionWindows] = useState<Set<number>>(() => new Set());
   const [dockSearchEnabled, setDockSearchEnabled] = useState(() => localStorage.getItem("nectar-dock-search-enabled") !== "false");
   const [dockCalendarEnabled, setDockCalendarEnabled] = useState(() => localStorage.getItem("nectar-dock-calendar-enabled") !== "false");
+  const [dockWorkspaceEnabled, setDockWorkspaceEnabled] = useState(() => localStorage.getItem("nectar-dock-workspace-enabled") !== "false");
+  const [dockLibraryEnabled, setDockLibraryEnabled] = useState(() => localStorage.getItem("nectar-dock-library-enabled") !== "false");
   const [legacyMode, setLegacyMode] = useState(() => localStorage.getItem("nectar-legacy-mode") === "true");
   const [dockTray, setDockTray] = useState(() => localStorage.getItem("nectar-dock-tray-enabled") !== "false");
   const [dockTaskView, setDockTaskView] = useState(() => localStorage.getItem("nectar-dock-taskview-enabled") === "true");
@@ -769,6 +791,8 @@ const Dock = memo(function Dock() {
 
       const calendarEnabled = getVal("nectar-dock-calendar-enabled", "true");
       setDockCalendarEnabled(calendarEnabled === "true");
+      setDockWorkspaceEnabled(getVal("nectar-dock-workspace-enabled", "true") !== "false");
+      setDockLibraryEnabled(getVal("nectar-dock-library-enabled", "true") !== "false");
 
       setLegacyMode(getVal("nectar-legacy-mode", "false") === "true");
       setDockTray(getVal("nectar-dock-tray-enabled", "true") !== "false");
@@ -863,6 +887,8 @@ const Dock = memo(function Dock() {
       "nectar-dock-attention-enabled": (v) => setDockAttentionEnabled(v !== false && v !== "false"),
       "nectar-dock-search-enabled": setDockSearchEnabled,
       "nectar-dock-calendar-enabled": setDockCalendarEnabled,
+      "nectar-dock-workspace-enabled": (v) => setDockWorkspaceEnabled(v !== false && v !== "false"),
+      "nectar-dock-library-enabled": (v) => setDockLibraryEnabled(v !== false && v !== "false"),
       "nectar-legacy-mode": setLegacyMode,
       "nectar-dock-tray-enabled": (v) => setDockTray(v !== false && v !== "false"),
       "nectar-dock-taskview-enabled": setDockTaskView,
@@ -1718,6 +1744,18 @@ const Dock = memo(function Dock() {
                     <CalendarIcon />
                   </motion.div>
                 </motion.div>
+              )}
+
+              {dockWorkspaceEnabled && renderShortcut(
+                'workspace', t('panel.workspace'), 0.205,
+                () => invoke('open_workspace_window').catch((err) => console.error('Failed to open Workspace:', err)),
+                <WorkspaceIcon />
+              )}
+
+              {dockLibraryEnabled && renderShortcut(
+                'library', t('ws.library'), 0.208,
+                () => invoke('open_library_window').catch((err) => console.error('Failed to open Library:', err)),
+                <LibraryIcon />
               )}
 
               {!legacyMode && dockTray && renderShortcut(

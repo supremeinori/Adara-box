@@ -151,14 +151,32 @@ pub fn ws_get_icon_data_url(
     icon: String,
 ) -> Result<Option<String>, String> {
     let clean = validator::validate_workspace_icon(Some(&icon))?;
-    let Some(filename) = clean.strip_prefix("custom:") else {
-        return Ok(None);
-    };
-    let path = state.store.icons_dir().join(filename);
-    if !path.is_file() {
-        return Ok(None);
+    if let Some(filename) = clean.strip_prefix("custom:") {
+        let path = state.store.icons_dir().join(filename);
+        if !path.is_file() {
+            return Ok(None);
+        }
+        return Ok(crate::utils::image_file_to_base64(&path.to_string_lossy()));
     }
-    Ok(crate::utils::image_file_to_base64(&path.to_string_lossy()))
+
+    // Legacy AdaraBox (C#) databases store direct filesystem paths for workspace cover art.
+    let path = std::path::Path::new(&clean);
+    if path.is_file() {
+        let is_image = path
+            .extension()
+            .and_then(|e| e.to_str())
+            .is_some_and(|ext| {
+                matches!(
+                    ext.to_ascii_lowercase().as_str(),
+                    "png" | "jpg" | "jpeg" | "webp" | "ico" | "bmp" | "gif"
+                )
+            });
+        if is_image {
+            return Ok(crate::utils::image_file_to_base64(&clean));
+        }
+    }
+
+    Ok(None)
 }
 
 #[tauri::command]

@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   AppWindow,
   ArrowDown,
+  ArrowLeft,
   ArrowUp,
   BookOpen,
   Check,
@@ -27,6 +28,7 @@ import {
 } from "lucide-react";
 import { useT } from "../i18n";
 import {
+  isImageWorkspaceIcon,
   type AvailabilityResult,
   type BatchLaunchSummary,
   type LaunchProgressEvent,
@@ -82,12 +84,19 @@ type WorkspaceViewProps = {
   onDropHoverChange?: (hovering: boolean) => void;
 };
 
-function WorkspaceAvatar({ icon }: { icon: string }) {
+function WorkspaceAvatar({
+  icon,
+  size = "sm",
+}: {
+  icon: string;
+  size?: "sm" | "lg";
+}) {
   const [dataUrl, setDataUrl] = useState<string | null>(null);
+  const isImage = isImageWorkspaceIcon(icon);
 
   useEffect(() => {
     let cancelled = false;
-    if (!icon.startsWith("custom:")) {
+    if (!isImage) {
       setDataUrl(null);
       return;
     }
@@ -97,12 +106,24 @@ function WorkspaceAvatar({ icon }: { icon: string }) {
     return () => {
       cancelled = true;
     };
-  }, [icon]);
+  }, [icon, isImage]);
 
-  if (icon.startsWith("custom:") && dataUrl) {
-    return <img className="ws-avatar-img" src={dataUrl} alt="" draggable={false} />;
+  if (isImage && dataUrl) {
+    return (
+      <img
+        className={size === "lg" ? "ws-card-cover-img" : "ws-avatar-img"}
+        src={dataUrl}
+        alt=""
+        draggable={false}
+      />
+    );
   }
-  return <span className="ws-avatar-emoji">{icon.startsWith("custom:") ? "🖼️" : icon || "📁"}</span>;
+  const fallback = isImage ? "📁" : icon || "📁";
+  return (
+    <span className={size === "lg" ? "ws-card-cover-emoji" : "ws-avatar-emoji"}>
+      {fallback}
+    </span>
+  );
 }
 
 function ResourceGlyph({ resource }: { resource: ResourceDto }) {
@@ -154,6 +175,7 @@ export function WorkspaceView({
   const [viewMode, setViewMode] = useState<"grid" | "list">(() =>
     localStorage.getItem(VIEW_MODE_STORAGE) === "list" ? "list" : "grid"
   );
+  const [showOverview, setShowOverview] = useState<boolean>(() => mode === "notch");
   const [search, setSearch] = useState("");
   const [sheet, setSheet] = useState<SheetState>({ kind: "none" });
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -321,6 +343,18 @@ export function WorkspaceView({
     };
   }, [mode, active, windowLabel, loadWorkspaces, loadResources, onDropHoverChange]);
 
+  const enterWorkspace = (ws: WorkspaceDto) => {
+    setActiveWsId(ws.id);
+    setSearch("");
+    setShowOverview(false);
+  };
+
+  const filteredWorkspaces = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q || !showOverview) return workspaces;
+    return workspaces.filter((w) => w.name.toLowerCase().includes(q));
+  }, [workspaces, search, showOverview]);
+
   const filteredResources = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return resources;
@@ -386,6 +420,7 @@ export function WorkspaceView({
       if (sheet.kind === "create-ws") {
         const created = await wsCreate(wsName, wsIcon);
         setActiveWsId(created.id);
+        setShowOverview(false);
         setSheet({ kind: "none" });
         await loadWorkspaces();
       } else if (sheet.kind === "edit-ws") {
@@ -542,14 +577,28 @@ export function WorkspaceView({
           <div className="ws-sidebar-header">
             <span>{t("panel.workspace")}</span>
             <button
-              className="ws-icon-btn"
+              className="ws-action-btn primary"
+              style={{ height: 24, padding: "0 8px", fontSize: 11 }}
               onClick={openCreateWsSheet}
               title={t("ws.newWorkspace")}
               aria-label={t("ws.newWorkspace")}
             >
-              <Plus size={14} />
+              <Plus size={12} />
+              <span>{t("ws.add")}</span>
             </button>
           </div>
+
+          <button
+            className={`ws-sidebar-item ${showOverview ? "active" : ""}`}
+            onClick={() => {
+              setSearch("");
+              setShowOverview(true);
+            }}
+          >
+            <LayoutGrid size={14} />
+            <span className="ws-sidebar-item-name">{t("ws.allWorkspaces")}</span>
+            <span className="ws-pill-count">{workspaces.length}</span>
+          </button>
 
           <div className="ws-sidebar-list">
             {workspaces.map((ws, idx) => (
@@ -557,10 +606,10 @@ export function WorkspaceView({
                 key={ws.id}
                 role="button"
                 tabIndex={0}
-                className={`ws-sidebar-item ${ws.id === activeWorkspace?.id ? "active" : ""}`}
-                onClick={() => setActiveWsId(ws.id)}
+                className={`ws-sidebar-item ${!showOverview && ws.id === activeWorkspace?.id ? "active" : ""}`}
+                onClick={() => enterWorkspace(ws)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") setActiveWsId(ws.id);
+                  if (e.key === "Enter" || e.key === " ") enterWorkspace(ws);
                 }}
               >
                 <WorkspaceAvatar icon={ws.icon} />
@@ -612,121 +661,195 @@ export function WorkspaceView({
       )}
 
       <div className="ws-main">
-        {mode === "notch" && (
-          <div className="ws-tabs-row">
-            <div className="ws-tabs-scroll">
-              {workspaces.map((ws) => (
-                <button
-                  key={ws.id}
-                  className={`ws-pill ${ws.id === activeWorkspace?.id ? "active" : ""}`}
-                  onClick={() => setActiveWsId(ws.id)}
-                  title={`${ws.name} (${ws.resourceCount})`}
-                >
-                  <WorkspaceAvatar icon={ws.icon} />
-                  <span>{ws.name}</span>
-                  <span className="ws-pill-count">{ws.resourceCount}</span>
-                </button>
-              ))}
+        {showOverview ? (
+          <>
+            <div className="ws-detail-head">
+              <div className="ws-detail-title">
+                <LayoutGrid size={14} />
+                <span className="ws-detail-title-text">
+                  {t("ws.allWorkspaces")} ({workspaces.length})
+                </span>
+              </div>
+              <button
+                className="ws-action-btn primary"
+                onClick={openCreateWsSheet}
+                title={t("ws.newWorkspace")}
+              >
+                <Plus size={12} />
+                <span>{t("ws.newWorkspaceShort")}</span>
+              </button>
+              {mode === "notch" && (
+                <>
+                  <button
+                    className="ws-icon-btn"
+                    onClick={() => openLibraryWindow().catch(() => {})}
+                    title={t("ws.openLibrary")}
+                    aria-label={t("ws.openLibrary")}
+                  >
+                    <BookOpen size={13} />
+                  </button>
+                  <button
+                    className="ws-icon-btn"
+                    onClick={() => openWorkspaceWindow().catch(() => {})}
+                    title={t("ws.popOut")}
+                    aria-label={t("ws.popOut")}
+                  >
+                    <ExternalLink size={12} />
+                  </button>
+                </>
+              )}
             </div>
-            {activeWorkspace && (
+
+            {workspaces.length > 0 && (
+              <div className="ws-toolbar">
+                <div className="ws-search-wrap">
+                  <Search size={12} className="ws-search-icon" />
+                  <input
+                    className="ws-search-input"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") setSearch("");
+                    }}
+                    placeholder={t("ws.allWorkspaces")}
+                  />
+                  {search && (
+                    <button
+                      className="ws-search-clear"
+                      onClick={() => setSearch("")}
+                      aria-label="Clear search"
+                    >
+                      <X size={10} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            <div className="ws-detail-head">
+              <button
+                className="ws-action-btn"
+                onClick={() => {
+                  setSearch("");
+                  setShowOverview(true);
+                }}
+                title={t("ws.allWorkspaces")}
+              >
+                <ArrowLeft size={12} />
+                <span>{t("ws.backToWorkspaces")}</span>
+              </button>
+              <div className="ws-detail-title">
+                {activeWorkspace && <WorkspaceAvatar icon={activeWorkspace.icon} />}
+                <span className="ws-detail-title-text">
+                  {activeWorkspace?.name ?? t("panel.workspace")}
+                </span>
+              </div>
+              {activeWorkspace && (
+                <button
+                  className="ws-icon-btn"
+                  onClick={() => openEditWsSheet(activeWorkspace)}
+                  title={t("ws.editWorkspace")}
+                  aria-label={t("ws.editWorkspace")}
+                >
+                  <Pencil size={12} />
+                </button>
+              )}
+              {mode === "notch" && (
+                <>
+                  <button
+                    className="ws-icon-btn"
+                    onClick={openCreateWsSheet}
+                    title={t("ws.newWorkspace")}
+                    aria-label={t("ws.newWorkspace")}
+                  >
+                    <Plus size={13} />
+                  </button>
+                  <button
+                    className="ws-icon-btn"
+                    onClick={() => openLibraryWindow().catch(() => {})}
+                    title={t("ws.openLibrary")}
+                    aria-label={t("ws.openLibrary")}
+                  >
+                    <BookOpen size={13} />
+                  </button>
+                  <button
+                    className="ws-icon-btn"
+                    onClick={() => openWorkspaceWindow().catch(() => {})}
+                    title={t("ws.popOut")}
+                    aria-label={t("ws.popOut")}
+                  >
+                    <ExternalLink size={12} />
+                  </button>
+                </>
+              )}
+            </div>
+
+            <div className="ws-toolbar">
+              <div className="ws-search-wrap">
+                <Search size={12} className="ws-search-icon" />
+                <input
+                  className="ws-search-input"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") setSearch("");
+                  }}
+                  placeholder={t("ws.searchPlaceholder")}
+                />
+                {search && (
+                  <button
+                    className="ws-search-clear"
+                    onClick={() => setSearch("")}
+                    aria-label="Clear search"
+                  >
+                    <X size={10} />
+                  </button>
+                )}
+              </div>
+
               <button
                 className="ws-icon-btn"
-                onClick={() => openEditWsSheet(activeWorkspace)}
-                title={t("ws.editWorkspace")}
-                aria-label={t("ws.editWorkspace")}
+                onClick={toggleViewMode}
+                title={viewMode === "grid" ? t("ws.listView") : t("ws.gridView")}
+                aria-label={viewMode === "grid" ? t("ws.listView") : t("ws.gridView")}
               >
-                <Pencil size={12} />
+                {viewMode === "grid" ? <List size={13} /> : <LayoutGrid size={13} />}
               </button>
-            )}
-            <button
-              className="ws-icon-btn"
-              onClick={openCreateWsSheet}
-              title={t("ws.newWorkspace")}
-              aria-label={t("ws.newWorkspace")}
-            >
-              <Plus size={13} />
-            </button>
-            <button
-              className="ws-icon-btn"
-              onClick={() => openLibraryWindow().catch(() => {})}
-              title={t("ws.openLibrary")}
-              aria-label={t("ws.openLibrary")}
-            >
-              <BookOpen size={13} />
-            </button>
-            <button
-              className="ws-icon-btn"
-              onClick={() => openWorkspaceWindow().catch(() => {})}
-              title={t("ws.popOut")}
-              aria-label={t("ws.popOut")}
-            >
-              <ExternalLink size={12} />
-            </button>
-          </div>
-        )}
 
-        <div className="ws-toolbar">
-          <div className="ws-search-wrap">
-            <Search size={12} className="ws-search-icon" />
-            <input
-              className="ws-search-input"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Escape") setSearch("");
-              }}
-              placeholder={t("ws.searchPlaceholder")}
-            />
-            {search && (
               <button
-                className="ws-search-clear"
-                onClick={() => setSearch("")}
-                aria-label="Clear search"
+                className="ws-action-btn"
+                onClick={openAddResSheet}
+                disabled={!activeWorkspace}
+                title={t("ws.addResource")}
               >
-                <X size={10} />
+                <Plus size={13} />
+                <span>{t("ws.add")}</span>
               </button>
-            )}
-          </div>
 
-          <button
-            className="ws-icon-btn"
-            onClick={toggleViewMode}
-            title={viewMode === "grid" ? t("ws.listView") : t("ws.gridView")}
-            aria-label={viewMode === "grid" ? t("ws.listView") : t("ws.gridView")}
-          >
-            {viewMode === "grid" ? <List size={13} /> : <LayoutGrid size={13} />}
-          </button>
-
-          <button
-            className="ws-action-btn"
-            onClick={openAddResSheet}
-            disabled={!activeWorkspace}
-            title={t("ws.addResource")}
-          >
-            <Plus size={13} />
-            <span>{t("ws.add")}</span>
-          </button>
-
-          {batchRunning ? (
-            <button
-              className="ws-action-btn danger"
-              onClick={() => wsCancelLaunch().catch(() => {})}
-            >
-              <Square size={11} />
-              <span>{t("ws.cancel")}</span>
-            </button>
-          ) : (
-            <button
-              className="ws-action-btn primary"
-              onClick={() => handleLaunchBatch()}
-              disabled={!activeWorkspace || resources.length === 0}
-              title={t("ws.openAll")}
-            >
-              <Play size={12} />
-              <span>{t("ws.openAll")}</span>
-            </button>
-          )}
-        </div>
+              {batchRunning ? (
+                <button
+                  className="ws-action-btn danger"
+                  onClick={() => wsCancelLaunch().catch(() => {})}
+                >
+                  <Square size={11} />
+                  <span>{t("ws.cancel")}</span>
+                </button>
+              ) : (
+                <button
+                  className="ws-action-btn primary"
+                  onClick={() => handleLaunchBatch()}
+                  disabled={!activeWorkspace || resources.length === 0}
+                  title={t("ws.openAll")}
+                >
+                  <Play size={12} />
+                  <span>{t("ws.openAll")}</span>
+                </button>
+              )}
+            </div>
+          </>
+        )}
 
         {launchProgress && (
           <div className="ws-progress-bar-wrap">
@@ -772,7 +895,67 @@ export function WorkspaceView({
         )}
 
         <div className="ws-scroll">
-          {filteredResources.length === 0 ? (
+          {showOverview ? (
+            filteredWorkspaces.length === 0 ? (
+              <div className="ws-empty">
+                <div>{workspaces.length === 0 ? t("ws.emptyList") : t("ws.noMatches")}</div>
+                {workspaces.length === 0 && (
+                  <button className="ws-action-btn primary" onClick={openCreateWsSheet}>
+                    <Plus size={12} />
+                    <span>{t("ws.newWorkspace")}</span>
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="ws-overview-grid">
+                {filteredWorkspaces.map((ws) => (
+                  <div
+                    key={ws.id}
+                    role="button"
+                    tabIndex={0}
+                    className="ws-overview-card"
+                    onClick={() => enterWorkspace(ws)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") enterWorkspace(ws);
+                    }}
+                    title={ws.name}
+                  >
+                    <button
+                      type="button"
+                      className="ws-mini-btn ws-overview-edit"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEditWsSheet(ws);
+                      }}
+                      title={t("ws.editWorkspace")}
+                      aria-label={t("ws.editWorkspace")}
+                    >
+                      <Pencil size={11} />
+                    </button>
+                    <div className="ws-overview-cover">
+                      <WorkspaceAvatar icon={ws.icon} size="lg" />
+                    </div>
+                    <div className="ws-overview-name">{ws.name}</div>
+                    <div className="ws-overview-count">
+                      {ws.resourceCount === 1
+                        ? t("ws.itemCountOne")
+                        : t("ws.itemCount", { count: ws.resourceCount })}
+                    </div>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="ws-overview-card is-new"
+                  onClick={openCreateWsSheet}
+                >
+                  <Plus size={18} />
+                  <span style={{ fontSize: 11, fontWeight: 500 }}>
+                    {t("ws.newWorkspace")}
+                  </span>
+                </button>
+              </div>
+            )
+          ) : filteredResources.length === 0 ? (
             <div className="ws-empty">
               <div>
                 {resources.length === 0 ? t("ws.emptyWorkspace") : t("ws.noMatches")}

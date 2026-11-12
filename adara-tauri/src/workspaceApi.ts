@@ -129,8 +129,13 @@ export const wsDelete = async (id: string) => {
 export const wsCreateBackup = () => invoke<string>("ws_create_backup");
 export const wsPickIconImage = () => invoke<string | null>("ws_pick_icon_image");
 
+export function isImageWorkspaceIcon(icon: string | null | undefined): boolean {
+  if (!icon) return false;
+  return icon.startsWith("custom:") || /[\\/]/.test(icon) || /^[a-zA-Z]:/.test(icon);
+}
+
 export async function wsGetIconDataUrl(icon: string): Promise<string | null> {
-  if (!icon.startsWith("custom:")) return null;
+  if (!isImageWorkspaceIcon(icon)) return null;
   if (customIconCache.has(icon)) return customIconCache.get(icon) ?? null;
   try {
     const dataUrl = await invoke<string | null>("ws_get_icon_data_url", { icon });

@@ -5,7 +5,7 @@ use super::models::ResourceType;
 const MAX_WORKSPACE_NAME_LEN: usize = 60;
 const MAX_RESOURCE_NAME_LEN: usize = 100;
 const MAX_TARGET_LEN: usize = 2048;
-const MAX_ICON_LEN: usize = 128;
+const MAX_ICON_LEN: usize = 512;
 
 fn has_control_chars(s: &str) -> bool {
     s.chars().any(|c| c < '\u{20}' || c == '\u{7f}')
@@ -289,5 +289,7 @@ mod tests {
         assert!(validate_workspace_icon(Some("custom:../secret.png")).is_err());
         assert!(validate_workspace_icon(Some("custom:ws-123.png")).is_ok());
         assert_eq!(validate_workspace_icon(Some("")).unwrap(), "📁");
+        let legacy = r"C:\Users\HYPE AMD\AppData\Local\AdaraBox\workspace-icons\ws_123.jpeg";
+        assert_eq!(validate_workspace_icon(Some(legacy)).unwrap(), legacy);
     }
 }
