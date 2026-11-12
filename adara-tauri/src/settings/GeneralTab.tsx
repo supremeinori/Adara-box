@@ -3,7 +3,7 @@ import { SettingRow } from "./SettingRow";
 import { SettingSection } from "./SettingSection";
 import { Dropdown } from "./Dropdown";
 import { LANGUAGES, getLanguagePreference, setLanguagePreference, useT } from "../i18n";
-import { playClickSound, type ClickSoundPreset } from "../clickSounds";
+import { playClickSound, playStartupSound, type ClickSoundPreset } from "../clickSounds";
 
 interface GeneralTabProps {
   autostart: boolean;
@@ -24,6 +24,8 @@ interface GeneralTabProps {
   toggleClickSound: () => void;
   clickSoundPreset: ClickSoundPreset;
   changeClickSoundPreset: (value: string) => void;
+  startupSoundEnabled: boolean;
+  toggleStartupSound: () => void;
   lowBatteryThreshold: number;
   hasBattery: boolean;
   handleThresholdChange: (val: number) => void;
@@ -50,6 +52,8 @@ export function GeneralTab({
   toggleClickSound,
   clickSoundPreset,
   changeClickSoundPreset,
+  startupSoundEnabled,
+  toggleStartupSound,
   lowBatteryThreshold,
   hasBattery,
   handleThresholdChange,
@@ -151,7 +155,6 @@ export function GeneralTab({
             icon={Music}
             label={t("general.clickSoundStyle")}
             desc={t("general.clickSoundStyle.desc")}
-            divider={hasBattery}
           >
             <div className="agent-sound-actions">
               <Dropdown
@@ -173,6 +176,27 @@ export function GeneralTab({
             </div>
           </SettingRow>
         )}
+
+        <SettingRow
+          icon={Volume2}
+          label={t("general.startupSound")}
+          desc={t("general.startupSound.desc")}
+          divider={hasBattery}
+        >
+          <div className="agent-sound-actions">
+            <button
+              type="button"
+              className="agent-sound-btn"
+              onClick={() => void playStartupSound(true)}
+            >
+              {t("general.startupSoundPreview")}
+            </button>
+            <label className="toggle-switch">
+              <input type="checkbox" checked={startupSoundEnabled} onChange={toggleStartupSound} />
+              <span className="slider"></span>
+            </label>
+          </div>
+        </SettingRow>
 
         {hasBattery && (
           <SettingRow

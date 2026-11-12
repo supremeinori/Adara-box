@@ -10,11 +10,15 @@ import { DEFAULT_DUAL_CLOCK_ZONE } from "../dualClock";
 import {
   CLICK_SOUND_ENABLED_KEY,
   CLICK_SOUND_PRESET_KEY,
+  STARTUP_SOUND_ENABLED_KEY,
   broadcastClickSoundChanged,
   getClickSoundPreset,
   isClickSoundEnabled,
+  isStartupSoundEnabled,
   playClickSound,
+  playStartupSound,
   setClickSoundState,
+  setStartupSoundState,
   type ClickSoundPreset,
 } from "../clickSounds";
 import type { WidgetConfig, MonitorInfo, MonitorMode } from "./types";
@@ -87,7 +91,7 @@ export function useSettings() {
     () => localStorage.getItem("nectar-notch-scroll-volume") === "true"
   );
   const [rememberMode, setRememberMode] = useState(
-    () => localStorage.getItem("nectar-notch-remember-mode") === "true"
+    () => localStorage.getItem("nectar-notch-remember-mode") !== "false"
   );
   const [shelfPersist, setShelfPersist] = useState(
     () => localStorage.getItem("nectar-shelf-persist") === "true"
@@ -130,6 +134,7 @@ export function useSettings() {
   );
   const [clickSoundEnabled, setClickSoundEnabled] = useState<boolean>(() => isClickSoundEnabled());
   const [clickSoundPreset, setClickSoundPreset] = useState<ClickSoundPreset>(() => getClickSoundPreset());
+  const [startupSoundEnabled, setStartupSoundEnabled] = useState<boolean>(() => isStartupSoundEnabled());
   const [tempUnitFahrenheit, setTempUnitFahrenheit] = useState(false);
   const [cityName, setCityName] = useState("");
   const [cityQuery, setCityQuery] = useState("");
@@ -172,7 +177,7 @@ export function useSettings() {
     () => localStorage.getItem("nectar-panel-status-enabled") !== "false"
   );
   const [panelShelf, setPanelShelf] = useState(
-    () => localStorage.getItem("nectar-panel-shelf-enabled") !== "false"
+    () => localStorage.getItem("nectar-panel-shelf-enabled") === "true"
   );
   const [panelWorkspace, setPanelWorkspace] = useState(
     () => localStorage.getItem("nectar-panel-workspace-enabled") !== "false"
@@ -297,7 +302,7 @@ export function useSettings() {
       apply(getVal("nectar-notch-scroll-volume"), setNotchScrollVolume, (v) => v === "true");
       apply(getVal("nectar-agent-api"), setAgentApi, (v) => v === "true");
       apply(getVal("nectar-shelf-persist"), setShelfPersist, (v) => v === "true");
-      apply(getVal("nectar-notch-remember-mode"), setRememberMode, (v) => v === "true");
+      apply(getVal("nectar-notch-remember-mode"), setRememberMode, (v) => v !== "false");
       apply(getVal("nectar-volume-overlay-enabled"), setVolumeOverlayEnabled, readBool);
       apply(getVal("nectar-brightness-overlay-enabled"), setBrightnessOverlayEnabled, readBool);
       apply(getVal("nectar-media-ambience-enabled"), setMediaAmbienceEnabled, readBool);
@@ -313,6 +318,7 @@ export function useSettings() {
       apply(getVal(CLICK_SOUND_PRESET_KEY), setClickSoundPreset, (v) =>
         v === "soft" || v === "mechanical" ? v : "crisp"
       );
+      apply(getVal(STARTUP_SOUND_ENABLED_KEY), setStartupSoundEnabled, (v) => v !== "false");
       apply(getVal("nectar-auto-update"), setAutoUpdate, readBool);
       apply(getVal("nectar-update-channel"), setPrereleaseChannel, (v) => v === "prerelease");
       apply(getVal("nectar-volume-edge-enabled"), setVolumeEdgeEnabled, readBool);
@@ -329,7 +335,7 @@ export function useSettings() {
       apply(getVal("nectar-dock-taskview-enabled"), setDockTaskView, readBool);
       apply(getVal("nectar-dock-show-desktop-corner"), setDockShowDesktop, readBool);
       apply(getVal("nectar-panel-control-center-enabled"), setPanelControlCenter, (v) => v !== "false");
-      apply(getVal("nectar-panel-shelf-enabled"), setPanelShelf, (v) => v !== "false");
+      apply(getVal("nectar-panel-shelf-enabled"), setPanelShelf, (v) => v === "true");
       apply(getVal("nectar-panel-workspace-enabled"), setPanelWorkspace, (v) => v !== "false");
       apply(getVal("nectar-panel-status-enabled"), setPanelStatus, (v) => v !== "false");
       apply(getVal("nectar-panel-order"), setPanelOrder, (v) => parsePanelOrder(v));
@@ -443,7 +449,7 @@ export function useSettings() {
     "nectar-dock-taskview-enabled": setDockTaskView,
     "nectar-dock-show-desktop-corner": setDockShowDesktop,
     "nectar-panel-control-center-enabled": (v) => setPanelControlCenter(v !== false && v !== "false"),
-    "nectar-panel-shelf-enabled": (v) => setPanelShelf(v !== false && v !== "false"),
+    "nectar-panel-shelf-enabled": (v) => setPanelShelf(v === true || v === "true"),
     "nectar-panel-workspace-enabled": (v) => setPanelWorkspace(v !== false && v !== "false"),
     "nectar-panel-status-enabled": (v) => setPanelStatus(v !== false && v !== "false"),
     "nectar-panel-order": (v) => setPanelOrder(parsePanelOrder(v === null ? null : String(v))),
@@ -481,7 +487,7 @@ export function useSettings() {
     "nectar-notch-scroll-volume": setNotchScrollVolume,
     "nectar-agent-api": setAgentApi,
     "nectar-shelf-persist": setShelfPersist,
-    "nectar-notch-remember-mode": setRememberMode,
+    "nectar-notch-remember-mode": (v) => setRememberMode(v !== false && v !== "false"),
     "nectar-media-ambience-enabled": setMediaAmbienceEnabled,
     "nectar-media-compact-glow-enabled": setMediaCompactGlowEnabled,
     "nectar-media-artwork-theme": setMediaArtworkThemeEnabled,
@@ -799,6 +805,15 @@ export function useSettings() {
     const next = !tempUnitFahrenheit;
     setTempUnitFahrenheit(next);
     saveSetting("nectar-temp-unit", next ? "fahrenheit" : "celsius");
+  };
+
+  const toggleStartupSound = () => {
+    const next = !startupSoundEnabled;
+    setStartupSoundEnabled(next);
+    setStartupSoundState(next);
+    saveSetting(STARTUP_SOUND_ENABLED_KEY, String(next));
+    void broadcastClickSoundChanged();
+    if (next) void playStartupSound(true);
   };
 
   const toggleClickSound = () => {
@@ -1494,6 +1509,8 @@ export function useSettings() {
     toggleClickSound,
     clickSoundPreset,
     changeClickSoundPreset,
+    startupSoundEnabled,
+    toggleStartupSound,
     restartNectar: () => invoke("restart_nectar"),
     quitNectar: () => invoke("quit_nectar"),
   };

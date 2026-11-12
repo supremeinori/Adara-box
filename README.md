@@ -1,116 +1,126 @@
 # Adara Box
 
-> **Adara Box** adalah aplikasi produktivitas desktop Windows bertema **Apple Dark Neomorphism** yang sangat ringan, hemat memori, dan non-intrusif. Dirancang dengan overlay top bar (ala macOS Menu Bar) yang elegan untuk menyediakan akses instan 1-klik ke workspace harian Anda, pengontrol musik native Windows (GSMTC), dan pemantau performa hardware PC secara real-time.
+<p align="center">
+  <img src="adara-tauri/public/adara.png" alt="Adara Box Logo" width="96" />
+</p>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Platform: Windows](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-0078D6.svg)](https://microsoft.com/windows)
-[![.NET 8.0](https://img.shields.io/badge/.NET-8.0-512BD4.svg)](https://dotnet.microsoft.com/)
-[![Tests: 251 Passed](https://img.shields.io/badge/Tests-251%20Passed-success.svg)](tests/)
+<p align="center">
+  <strong>A unified Windows desktop command shell combining a top-edge Dynamic Notch, an application/file Workspace launcher, and an interactive 3D Document Library.</strong>
+</p>
 
----
-
-## 🚀 Download & Instalasi (Tinggal Download 1 File)
-
-Untuk pengguna umum yang ingin langsung memakai Adara Box, Anda hanya perlu mengunduh **satu file installer**:
-
-### 📥 [Unduh AdaraBox-Setup-1.0.0.exe](https://github.com/supremeinori/Adara-box/releases)
-
-1. **Jalankan Installer**: Buka `AdaraBox-Setup-1.0.0.exe`.
-2. **Pemasangan Instan (Per-User)**: Otomatis terpasang di `%LOCALAPPDATA%\Programs\AdaraBox` tanpa memerlukan hak Administrator (UAC).
-3. **Pilihan Otomatis**: Buat ikon desktop dan opsi menjalankan otomatis saat Windows dinyalakan.
-4. **Langsung Pakai**: Tekan shortcut global `Ctrl+Alt+Space` kapan saja untuk memanggil Adara Box!
-
-*(Tersedia juga versi portable self-contained `AdaraBox-Portable-win-x64.zip` bagi yang tidak ingin melakukan instalasi).*
+<p align="center">
+  Built with <strong>Tauri v2</strong> · <strong>Rust</strong> · <strong>React + TypeScript</strong> · <strong>SQLite</strong> · <strong>WebView2</strong>
+</p>
 
 ---
 
-## ✨ Fitur Unggulan
+## Overview
 
-### 1. ✦ Apple Menu Bar & Dark Neomorphism
-- **Desain Ultra-Kompak (30 DIP):** Melayang tipis di tengah atas layar ala macOS Menu Bar tanpa menutupi bilah judul aplikasi lain atau mencuri fokus kerja.
-- **Dark Neomorphism Fisik:** Sentuhan tekstur matte charcoal (`#16161B`), hairline top highlight halus (`#25FFFFFF`), soft ambient drop shadow, dan efek kompresi taktil instan (`scale 0.97`) saat tombol atau kartu ditekan.
-- **Animasi Pop-Down & Pop-Up:** Panel modul meluncur turun dengan halus (*critically damped spring ease*) saat dibuka, dan meluncur kembali ke atas saat ditutup.
+**Adara Box** merges three projects into a single native-feeling Windows 10/11 desktop utility:
 
-### 2. 🎵 Multi-Session Media Controller (Spotify, YouTube & YouTube Music)
-- **Deteksi Multi-Sesi GSMTC:** Terintegrasi langsung dengan Windows WinRT GSMTC untuk mendeteksi semua sesi media yang sedang berjalan di sistem secara bersamaan.
-- **Filter Ketat (Strict Whitelist):** Hanya menyaring dan menampilkan sesi dari **Spotify** (Aplikasi & Web), **YouTube** (Tab Browser Chrome, Edge, Firefox, Brave), dan **YouTube Music**. Suara/video dari sumber lain otomatis diabaikan.
-- **List Sesi & Kontrol Play/Pause Independen:** Setiap sesi memiliki tombol putar/jeda masing-masing yang dapat dikendalikan secara independen tanpa memengaruhi pemutaran sesi lainnya.
-- **On-Top & Pinning:** Pengguna dapat menentukan sesi mana yang ingin diposisikan di paling atas sebagai sesi utama (*Primary/On-Top Card*) dan langsung terhubung ke pill Top Bar.
-- **Collapsible (Show More / Show Less):** Sesi utama selalu tampil; sesi-sesi lainnya dapat diciutkan (*collapse*) atau dibentangkan (*expand*) secara visual tanpa menutup tab atau aplikasi asli.
-- **Auto-Cleanup Tab Tertutup:** Begitu tab YouTube atau aplikasi Spotify ditutup, sesi tersebut secara otomatis dan instan hilang dari daftar Adara Box.
-- **Efisiensi Tinggi:** Bekerja dengan konsumsi CPU <0.5% tanpa memerlukan runtime Chromium/WebView2.
-
-### 3. 📁 Workspace Grid View & Kustomisasi Logo (Gambar & Emoji)
-- **Tampilan Grid Responsif:** Kartu workspace tertata rapi dalam format grid yang modern dan intuitif.
-- **Logo Gambar Kustom:** Pasang gambar logo kustom dari komputer Anda (`.png`, `.jpg`, `.ico`, `.webp`). Gambar otomatis dicache dengan aman di folder data aplikasi sehingga tidak akan hilang.
-- **Preset Emoji & Custom:** Pilihan preset emoji populer (📁, 💼, 🚀, 💻, 🎨, 📚, 🎮, 🎧, ⚡, 🌐, ☕, 🛠️, 📊, 🎯, 🎬, 💡) jika tidak menggunakan gambar.
-- **Detail Header:** Logo kustom Anda tampil elegan di kartu grid dan header detail workspace.
-
-### 4. ⚡ 1-Click Instant Shortcut Launch
-- **Buka Langsung:** Cukup 1 klik pada file, folder, aplikasi, atau tautan apa saja untuk langsung meluncurkannya tanpa langkah berbelit.
-- **Tombol "🚀 Buka Semua":** Luncurkan seluruh file dan aplikasi di dalam workspace sekaligus dengan pacing aman di background.
-- **Deteksi Ketersediaan Real-Time:** Peringatan visual otomatis jika berkas target telah dipindah atau dihapus dari disk.
-
-### 5. 📊 Real-Time Hardware Performance Monitor
-- Pemantau beban CPU, GPU (3D Engine counter), RAM, dan kapasitas penyimpanan drive lokal secara langsung dengan tampilan progress bar monokrom yang elegan.
-
-### 6. 🛡️ Keamanan & Privasi 100% Offline
-- **Golden Rule Non-Destructive:** Menghapus workspace atau resource dari Adara Box **hanya** menghapus referensinya di database; berkas fisik asli Anda di komputer tidak akan pernah disentuh atau dihapus.
-- **100% Offline:** Tanpa registrasi, tanpa analitik/telemetri, tanpa koneksi cloud. Seluruh database tersimpan di mesin lokal Anda.
+- **Dynamic Notch & Dock Shell** (based on *Nectar*): Always-reachable top notch and customizable Windows dock with glass/solid theming, remembered last-opened panel state, corner status widgets, media playback integration, CalDAV calendar/timers, and quick Control Panel toggles.
+- **Adara Workspace**: Organize projects into dedicated workspaces with full-cover artwork, drag-and-drop folders/files/executables/URLs, quick reordering, and local SQLite persistence (`%LOCALAPPDATA%\AdaraBox\adarabox.db`).
+- **My Little Library**: Built-in PDF (`.pdf`) and EPUB (`.epub`) manager with 3D Flipbook rendering, window-aware responsive reader framing (normal, maximized, and fullscreen modes without clipping or slide glitches), and a docked **AI Study Companion**.
 
 ---
 
-## ⌨️ Pintasan Keyboard (Shortcuts)
+## Key Features
 
-| Tombol Pintasan | Fungsi |
-| :--- | :--- |
-| `Ctrl + Alt + Space` | Buka / Sembunyikan Top Bar dari aplikasi mana pun |
-| `Esc` | Tutup panel aktif atau batalkan form input |
-| `Enter` / `Space` | Luncurkan resource terpilih atau simpan form |
-| `F2` | Ganti nama & logo workspace atau resource |
-| `Delete` | Hapus workspace atau resource |
-| `Ctrl + A` | Pilih semua resource dalam mode seleksi |
+### 1. Dynamic Notch (Last-Opened Memory & Panel Order)
+- **Last Opened, First Opened**: Automatically remembers the last active Notch panel when your cursor leaves and reopens that exact tab next time you hover in (configurable in Settings).
+- **Default Panel Flow**: `Workspace` → `Stats` → `Media` → `Calendar` → `Control Panel` (with `Shelf` optional and disabled by default).
+- **Widget Placement Settings**: Customize Notch panel ordering, toggle individual panels (including `Shelf`) on or off, and arrange corner status widgets across left/right Notch wings.
+
+### 2. Live PC Hardware Stats (`Stats` Panel)
+Real-time native Win32 & DXGI system telemetry polled directly from the Rust backend:
+- **CPU**: Processor model, logical thread count, and live system utilization.
+- **RAM**: Live memory load percentage with used/total GB readout.
+- **Disk (`C:\`)**: Used/total capacity and free GB remaining.
+- **GPU**: Hardware adapter name and DXGI local VRAM usage/capacity.
+- **Network, Power & Uptime**: Live `↑ Upload / ↓ Download` throughput, Wi-Fi/Ethernet status, battery state, and system uptime.
+
+### 3. Monochrome Workspace Canvas
+- Full-bleed square workspace cover cards inside both the Notch view and the full Dashboard window.
+- Instant native Windows launching for `.exe` shortcuts, folders, documents, and web links.
+- Atomic SQLite backups and `.adarabox` archive export/import support.
+
+### 4. Interactive 3D Library & AI Companion
+- PDF 3D flipbook + EPUB chapter reader (`pdfjs-dist` & `epubjs`).
+- Integrated Maximize / Minimize / Fullscreen window controls and non-overlapping navigation chrome.
+- Dockable WebView2 AI Study Companion panel with quick provider switching and external browser fallback.
+
+### 5. Synthesized Audio Feedback (Python)
+- Tactile UI click sound presets (`Crisp Tactile`, `Soft Pop`, `Mechanical Key`) and a smooth **Startup Rising Chime** generated offline using pure Python stdlib (`wave`, `math`, `struct`) via `adara-tauri/scripts/generate_click_sounds.py`.
+- Independently toggleable and previewable in **Settings → General**.
 
 ---
 
-## 🛠️ Cara Build dari Source Code
+## Repository Structure
 
-### Prasyarat
-- Sistem Operasi: Windows 10 (versi 21H2 build 19044 atau lebih baru) / Windows 11.
-- SDK: [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) (x64).
-- Inno Setup 6 (untuk membuat file installer `.exe`).
-
-### Langkah Build & Testing
-
-```powershell
-# 1. Clone repository
-git clone https://github.com/supremeinori/Adara-box.git
-cd Adara-box
-
-# 2. Jalankan seluruh automated test suite (251 tests)
-dotnet test AdaraBox.sln -c Release
-
-# 3. Publish rilis mandiri (Self-Contained win-x64)
-powershell -ExecutionPolicy Bypass -File build/publish.ps1
-
-# 4. Bangun paket installer tunggal (AdaraBox-Setup-1.0.0.exe)
-powershell -ExecutionPolicy Bypass -File build/build-installer.ps1 -SkipPublish
+```text
+Adara-box/
+├── adara-tauri/                  # Active unified Tauri v2 application
+│   ├── src/                      # React + TypeScript frontend (Notch, Dock, Workspace, Library, Settings)
+│   │   ├── components/           # Notch panels (SystemStatsPanel, NotchWorkspace, NotchLibrary, ...)
+│   │   ├── settings/             # Tabbed Settings UI (General, Appearance, Notch, Dock, Overlays, About)
+│   │   ├── locales/              # Multi-language UI localization JSON files
+│   │   └── clickSounds.ts        # Click & startup chime audio player + SQLite sync
+│   ├── src-tauri/                # Rust backend & Win32 / DXGI / WebView2 integrations
+│   │   ├── src/commands.rs       # Tauri IPC commands, Win32 controls & hardware telemetry
+│   │   ├── src/workspace/        # SQLite schema, CRUD, launcher & archive handling
+│   │   └── src/library/          # Document shelf, EPUB/PDF indexing & reader helpers
+│   ├── scripts/
+│   │   └── generate_click_sounds.py  # Offline WAV synthesizer for click & startup sounds
+│   ├── installer/                # NSIS packaging hooks (bundles WebView2Loader.dll)
+│   └── package.json
+└── AdaraBox/                     # Legacy .NET 8 prototype reference
 ```
 
-Hasil installer setup akan tersedia di `artifacts/installer/AdaraBox-Setup-1.0.0.exe` (~52 MB).
+---
+
+## Development & Build
+
+### Prerequisites
+- **Windows 10 / 11 (x64)** with Microsoft Edge WebView2 Runtime
+- **Bun** (v1.x+)
+- **Rust** (`stable-x86_64-pc-windows-gnu` toolchain with `llvm-mingw` / `lld` configured in `adara-tauri/src-tauri/.cargo/config.toml`)
+- **Python 3** (optional, only needed to regenerate `.wav` audio assets)
+
+### Commands
+
+```powershell
+# 1. Install frontend dependencies
+cd adara-tauri
+bun install
+
+# 2. (Optional) Regenerate click & startup WAV assets with Python
+python scripts/generate_click_sounds.py
+
+# 3. Run frontend type-check & production bundle check
+bun run build
+
+# 4. Run Rust unit tests
+cd src-tauri
+cargo +stable-x86_64-pc-windows-gnu test --bin adara-box
+
+# 5. Launch development build
+cd ..
+bun tauri dev
+
+# 6. Build Windows NSIS installer
+bun run tauri build --bundles nsis
+```
+
+The NSIS installer outputs to:
+`adara-tauri/src-tauri/target/release/bundle/nsis/Adara Box_<version>_x64-setup.exe`
 
 ---
 
-## 📂 Lokasi Data & Log Aplikasi
+## Credits & Acknowledgements
 
-Semua data lokal disimpan rapi di dalam direktori profil pengguna:
-- **Database SQLite:** `%LOCALAPPDATA%\AdaraBox\adarabox.db`
-- **Logo & Gambar Workspace:** `%LOCALAPPDATA%\AdaraBox\workspace-icons\`
-- **Cadangan Database (Auto-Backup):** `%LOCALAPPDATA%\AdaraBox\backups\`
-- **Log Serilog:** `%LOCALAPPDATA%\AdaraBox\logs\adarabox-.log` (rotasi otomatis 14 hari)
+**Adara Box** brings together:
+- **Adara Workspace** — workspace launcher & visual project canvas
+- **Nectar** — dynamic Windows Notch & Dock shell foundation
+- **My Little Library** — personal 3D book reader & study companion
 
----
-
-## 📄 Lisensi
-
-Proyek ini dilisensikan di bawah [MIT License](LICENSE).
+Licensed under **GPL-3.0-only**.

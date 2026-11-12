@@ -130,6 +130,7 @@ export function AboutTab({
         <img src="/adara.png" className="about-logo" alt="Adara Box Logo" />
         <h1 className="about-title">Adara Box</h1>
         <p className="about-version">{t("about.version", { version: appVersion || "—" })}</p>
+        <p className="about-heritage">{t("about.heritage")}</p>
         <button
           className={`update-pill update-pill--${updateStatus || "idle"}`}
           disabled={pillBusy}

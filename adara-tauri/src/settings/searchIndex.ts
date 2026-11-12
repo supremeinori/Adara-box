@@ -11,7 +11,7 @@ const group = (tab: SettingsTab, keys: string[]): SearchEntry[] => keys.map((key
 export const SEARCH_ENTRIES: SearchEntry[] = [
   ...group("general", [
     "general.launchAtLogin", "general.updateIndicator", "general.language", "general.weekStart", "general.time24h",
-    "general.legacyMode", "general.ramSaver", "general.ramUltra", "general.clickSound", "general.clickSoundStyle",
+    "general.legacyMode", "general.ramSaver", "general.ramUltra", "general.clickSound", "general.clickSoundStyle", "general.startupSound",
     "general.lowBattery", "general.restart", "general.quit",
   ]),
   ...group("appearance", [
@@ -22,7 +22,7 @@ export const SEARCH_ENTRIES: SearchEntry[] = [
   ...group("notch", [
     "notch.behavior", "notch.calendar", "notch.calendarSync", "notch.timer", "notch.timerSound", "notch.timerProgress",
     "notch.stopwatch", "notch.dualClock", "notch.musicMode", "notch.compactMode", "notch.mediaLayout", "notch.artworkTheme",
-    "notch.ambientGlow", "notch.compactGlow", "notch.rememberMode",
+    "notch.ambientGlow", "notch.compactGlow", "notch.rememberMode", "notch.panelShelf",
     "notch.panelOrder", "notch.scrollDirection", "notch.agentApi", "notch.agentSounds", "notch.scrollVolume", "notch.shelfPersist", "notch.weather",
     "notch.hotkey", "notch.netWidget", "notch.edgeDelay", "notch.widgets.group", "notch.ccTiles", "notch.ccButtons", "notch.ccSliders",
   ]),
@@ -61,6 +61,7 @@ export const KEYWORDS: Record<string, string> = {
   "general.ramUltra": "memory ram gpu performance lag",
   "general.clickSound": "click sound audio effect sfx python feedback tactile mute",
   "general.clickSoundStyle": "click sound crisp soft mechanical audio preset",
+  "general.startupSound": "startup boot chime rising sound audio python",
   "general.lowBattery": "power charge percent warning",
   "general.restart": "reload relaunch",
   "general.quit": "exit close stop",
@@ -81,6 +82,8 @@ export const KEYWORDS: Record<string, string> = {
   "notch.musicMode": "spotify media player song cover",
   "notch.weather": "temperature forecast city location",
   "notch.timer": "countdown pomodoro alarm",
+  "notch.widgets.group": "widget placement panel order shelf status cpu ram gpu disk",
+  "notch.panelShelf": "shelf drag drop hide show toggle placement",
   "notch.scrollDirection": "mouse wheel reverse invert natural scroll switch panels up down",
   "overlays.volume": "sound audio slider hud",
   "overlays.brightness": "screen light slider hud",

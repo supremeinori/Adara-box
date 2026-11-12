@@ -5,6 +5,8 @@ export type ClickSoundPreset = "crisp" | "soft" | "mechanical";
 
 export const CLICK_SOUND_ENABLED_KEY = "nectar-click-sound-enabled";
 export const CLICK_SOUND_PRESET_KEY = "nectar-click-sound-preset";
+export const STARTUP_SOUND_ENABLED_KEY = "adara-startup-sound-enabled";
+const STARTUP_SOUND_PATH = "/sounds/ui-startup-rising.wav";
 
 const PRESET_PATHS: Record<ClickSoundPreset, string> = {
   crisp: "/sounds/ui-click-crisp.wav",
@@ -34,6 +36,8 @@ const INTERACTIVE_SELECTOR = [
 
 let enabledCache: boolean | null = null;
 let presetCache: ClickSoundPreset | null = null;
+let startupEnabledCache: boolean | null = null;
+let startupBufferCache: AudioBuffer | null = null;
 let initialized = false;
 let audioCtx: AudioContext | null = null;
 const bufferCache = new Map<ClickSoundPreset, AudioBuffer>();
@@ -66,6 +70,26 @@ export function getClickSoundPreset(): ClickSoundPreset {
   return presetCache;
 }
 
+export function isStartupSoundEnabled(): boolean {
+  if (startupEnabledCache !== null) return startupEnabledCache;
+  try {
+    const val = localStorage.getItem(STARTUP_SOUND_ENABLED_KEY);
+    startupEnabledCache = val !== "false";
+  } catch {
+    startupEnabledCache = true;
+  }
+  return startupEnabledCache;
+}
+
+export function setStartupSoundState(enabled: boolean): void {
+  startupEnabledCache = enabled;
+  try {
+    localStorage.setItem(STARTUP_SOUND_ENABLED_KEY, String(enabled));
+  } catch {
+    // ignore storage failures
+  }
+}
+
 export function setClickSoundState(enabled: boolean, preset?: ClickSoundPreset): void {
   enabledCache = enabled;
   try {
@@ -89,6 +113,7 @@ export async function broadcastClickSoundChanged(): Promise<void> {
     await emit("click-sound-changed", {
       enabled: isClickSoundEnabled(),
       preset: getClickSoundPreset(),
+      startupEnabled: isStartupSoundEnabled(),
     });
   } catch {
     // ignore if emitted from a single-window context
@@ -182,6 +207,51 @@ export function playClickSound(force = false, overridePreset?: ClickSoundPreset)
   });
 }
 
+export async function playStartupSound(force = false): Promise<void> {
+  if (!force) {
+    // Check persisted SQLite flag first so user setting is authoritative at boot
+    try {
+      const settings = await invoke<Record<string, string>>("load_settings");
+      const raw = settings[STARTUP_SOUND_ENABLED_KEY];
+      if (raw !== undefined) {
+        setStartupSoundState(String(raw) !== "false");
+      }
+    } catch {
+      // fall back to local cache
+    }
+    if (!isStartupSoundEnabled()) return;
+  }
+
+  try {
+    const audio = new Audio(STARTUP_SOUND_PATH);
+    audio.volume = 0.55;
+    await audio.play();
+    return;
+  } catch {
+    // Fall through to WebAudio buffer playback
+  }
+
+  const ctx = getContext();
+  if (!ctx) return;
+  try {
+    if (!startupBufferCache) {
+      const res = await fetch(STARTUP_SOUND_PATH);
+      if (!res.ok) return;
+      startupBufferCache = await ctx.decodeAudioData(await res.arrayBuffer());
+    }
+    if (ctx.state === "suspended") await ctx.resume();
+    const src = ctx.createBufferSource();
+    const gain = ctx.createGain();
+    gain.gain.value = 0.55;
+    src.buffer = startupBufferCache;
+    src.connect(gain);
+    gain.connect(ctx.destination);
+    src.start(0);
+  } catch {
+    // ignore audio playback restrictions
+  }
+}
+
 export function initClickSounds(): void {
   if (initialized || typeof document === "undefined") return;
   initialized = true;
@@ -193,17 +263,24 @@ export function initClickSounds(): void {
     .then((settings) => {
       const rawEnabled = settings[CLICK_SOUND_ENABLED_KEY];
       const rawPreset = settings[CLICK_SOUND_PRESET_KEY];
+      const rawStartup = settings[STARTUP_SOUND_ENABLED_KEY];
       const nextEnabled =
         rawEnabled !== undefined ? String(rawEnabled) !== "false" : isClickSoundEnabled();
       const nextPreset = rawPreset ? normalizePreset(String(rawPreset)) : getClickSoundPreset();
       setClickSoundState(nextEnabled, nextPreset);
+      if (rawStartup !== undefined) {
+        setStartupSoundState(String(rawStartup) !== "false");
+      }
     })
     .catch(() => {});
 
-  void listen<{ enabled?: boolean; preset?: ClickSoundPreset }>("click-sound-changed", (event) => {
+  void listen<{ enabled?: boolean; preset?: ClickSoundPreset; startupEnabled?: boolean }>("click-sound-changed", (event) => {
     const enabled = event.payload.enabled ?? isClickSoundEnabled();
     const preset = event.payload.preset ? normalizePreset(event.payload.preset) : getClickSoundPreset();
     setClickSoundState(enabled, preset);
+    if (event.payload.startupEnabled !== undefined) {
+      setStartupSoundState(event.payload.startupEnabled);
+    }
   }).catch(() => {});
 
   window.addEventListener("storage", (e) => {
@@ -212,6 +289,8 @@ export function initClickSounds(): void {
     } else if (e.key === CLICK_SOUND_PRESET_KEY && e.newValue !== null) {
       presetCache = normalizePreset(e.newValue);
       void preloadPreset(presetCache);
+    } else if (e.key === STARTUP_SOUND_ENABLED_KEY && e.newValue !== null) {
+      startupEnabledCache = e.newValue !== "false";
     }
   });
 

@@ -159,6 +159,8 @@ function SettingsApp() {
               toggleClickSound={settings.toggleClickSound}
               clickSoundPreset={settings.clickSoundPreset}
               changeClickSoundPreset={settings.changeClickSoundPreset}
+              startupSoundEnabled={settings.startupSoundEnabled}
+              toggleStartupSound={settings.toggleStartupSound}
               lowBatteryThreshold={settings.lowBatteryThreshold}
               hasBattery={settings.hasBattery}
               handleThresholdChange={settings.handleThresholdChange}

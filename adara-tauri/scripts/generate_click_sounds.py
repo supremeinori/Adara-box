@@ -81,6 +81,49 @@ def synth_mechanical_tick() -> list[float]:
     return out
 
 
+def synth_startup_rising() -> list[float]:
+    """Smooth, warm rising startup chime for Adara Box cold boot (780ms)."""
+    duration_s = 0.78
+    n = int(SAMPLE_RATE * duration_s)
+    out = [0.0] * n
+
+    # Ascending warm major-9th arpeggio notes fading cleanly upward
+    # (start_s, freq_hz, weight, decay_s)
+    partials = [
+        (0.00, 261.63, 0.30, 0.42),  # C4 anchor
+        (0.07, 329.63, 0.32, 0.40),  # E4
+        (0.14, 392.00, 0.35, 0.38),  # G4
+        (0.22, 493.88, 0.34, 0.36),  # B4
+        (0.30, 587.33, 0.38, 0.38),  # D5 shimmer
+        (0.38, 783.99, 0.24, 0.34),  # G5 airy top
+    ]
+
+    for start_s, base_freq, weight, decay_s in partials:
+        start_idx = int(start_s * SAMPLE_RATE)
+        for i in range(start_idx, n):
+            t = (i - start_idx) / SAMPLE_RATE
+            attack = 1.0 - math.exp(-t / 0.018)
+            # Subtle upward pitch glide in the first 90ms for a rising feel
+            glide = base_freq * (0.97 + 0.03 * (1.0 - math.exp(-t / 0.045)))
+            fundamental = math.sin(2.0 * math.pi * glide * t)
+            octave_halo = 0.22 * math.sin(2.0 * math.pi * glide * 2.0 * t) * math.exp(-t / 0.20)
+            env = attack * math.exp(-t / decay_s)
+            out[i] += weight * env * (fundamental + octave_halo)
+
+    # Gentle master tail fade-out in final 120ms to guarantee zero click at EOF
+    tail_samples = int(0.12 * SAMPLE_RATE)
+    for k in range(tail_samples):
+        idx = n - tail_samples + k
+        if 0 <= idx < n:
+            out[idx] *= 0.5 * (1.0 + math.cos(math.pi * k / tail_samples))
+
+    peak = max((abs(s) for s in out), default=1.0)
+    if peak > 0.0:
+        norm = 0.72 / peak
+        out = [s * norm for s in out]
+    return out
+
+
 def main() -> None:
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     sounds_dir = os.path.join(root, "public", "sounds")
@@ -88,6 +131,7 @@ def main() -> None:
         "ui-click-crisp.wav": synth_crisp_click(),
         "ui-click-soft.wav": synth_soft_pop(),
         "ui-click-mechanical.wav": synth_mechanical_tick(),
+        "ui-startup-rising.wav": synth_startup_rising(),
     }
     for filename, samples in presets.items():
         out_path = os.path.join(sounds_dir, filename)

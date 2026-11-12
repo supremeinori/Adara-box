@@ -24,6 +24,8 @@ import { t as translate, useT } from "./i18n";
 import { NotchShelf, useShelf } from "./components/NotchShelf";
 import { WorkspaceView } from "./components/NotchWorkspace";
 import { parseCcLayout, parsePanelOrder, resolveCcLayout, type CcKind } from "./panelOrder";
+import { playStartupSound } from "./clickSounds";
+import { SystemStatsPanel, type SystemMetricsData } from "./components/SystemStatsPanel";
 import { NotchProgressBorder } from "./components/NotchProgressBorder";
 import { SurfaceShape } from "./components/SurfaceShape";
 import { playAgentSound } from "./agentSounds";
@@ -471,10 +473,17 @@ function App() {
   const [batterySaverEnabled, setBatterySaverEnabled] = useState(false);
   const [currentBrightness, setCurrentBrightness] = useState(50);
 
-  // System metrics for status widgets
+  // System metrics for status widgets & Live PC Stats panel
   const [cpuUsage, setCpuUsage] = useState(0);
   const [ramUsage, setRamUsage] = useState(0);
   const [diskSpace, setDiskSpace] = useState(0);
+  const [systemMetrics, setSystemMetrics] = useState<SystemMetricsData>({
+    cpu: 0,
+    ram: 0,
+    disk_free_gb: 0,
+    net_up: 0,
+    net_down: 0,
+  });
   const [netWidgetMode, setNetWidgetMode] = useState(() => localStorage.getItem("nectar-net-widget-mode") === "status" ? "status" : "speed");
   const [netUpSpeed, setNetUpSpeed] = useState(0);
   const [netDownSpeed, setNetDownSpeed] = useState(0);
@@ -625,6 +634,8 @@ function App() {
     };
   }, [isExpanded, isHidden, windowLabel, scale, tourActive]);
 
+  const startupSoundPlayedRef = useRef(false);
+
   useEffect(() => {
     if (!windowLabel) return;
 
@@ -642,6 +653,10 @@ function App() {
           const win = getCurrentWebviewWindow();
           const visible = await win.isVisible();
           if (visible) {
+            if (!startupSoundPlayedRef.current) {
+              startupSoundPlayedRef.current = true;
+              void playStartupSound(false);
+            }
             setStartupAnimating(true);
             setIsReady(true);
             setTimeout(() => {
@@ -720,9 +735,9 @@ function App() {
   const [settingsScrollVolume, setSettingsScrollVolume] = useState(() => localStorage.getItem("nectar-notch-scroll-volume") === "true");
   const [reversePanelScroll, setReversePanelScroll] = useState(() => localStorage.getItem("nectar-notch-scroll-direction") === "up");
   const [settingsShelfPersist, setSettingsShelfPersist] = useState(() => localStorage.getItem("nectar-shelf-persist") === "true");
-  const [settingsRememberMode, setSettingsRememberMode] = useState(() => localStorage.getItem("nectar-notch-remember-mode") === "true");
+  const [settingsRememberMode, setSettingsRememberMode] = useState(() => localStorage.getItem("nectar-notch-remember-mode") !== "false");
   const [panelControlCenter, setPanelControlCenter] = useState(() => localStorage.getItem("nectar-panel-control-center-enabled") !== "false");
-  const [panelShelf, setPanelShelf] = useState(() => localStorage.getItem("nectar-panel-shelf-enabled") !== "false");
+  const [panelShelf, setPanelShelf] = useState(() => localStorage.getItem("nectar-panel-shelf-enabled") === "true");
   const [panelWorkspace, setPanelWorkspace] = useState(() => localStorage.getItem("nectar-panel-workspace-enabled") !== "false");
   const [panelStatus, setPanelStatus] = useState(() => localStorage.getItem("nectar-panel-status-enabled") !== "false");
   const [panelOrder, setPanelOrder] = useState(() => parsePanelOrder(localStorage.getItem("nectar-panel-order")));
@@ -732,7 +747,31 @@ function App() {
     const index = ccResolved[kind].indexOf(id);
     return index < 0 ? { display: 'none' as const } : { order: index };
   };
-  const rememberedModeRef = useRef<"command-center" | "calendar" | "workspace" | null>(null);
+  type RememberablePanel = "command-center" | "calendar" | "workspace" | "status" | "music" | "shelf";
+  const LAST_NOTCH_PANEL_KEY = "adara-last-notch-panel";
+  const readSavedLastPanel = (): RememberablePanel | null => {
+    try {
+      const raw = localStorage.getItem(LAST_NOTCH_PANEL_KEY);
+      if (
+        raw === "command-center" ||
+        raw === "calendar" ||
+        raw === "workspace" ||
+        raw === "status" ||
+        raw === "music" ||
+        raw === "shelf"
+      ) {
+        return raw;
+      }
+    } catch {}
+    return null;
+  };
+  const rememberedModeRef = useRef<RememberablePanel | null>(readSavedLastPanel());
+  const saveLastPanel = (mode: RememberablePanel) => {
+    rememberedModeRef.current = mode;
+    try {
+      localStorage.setItem(LAST_NOTCH_PANEL_KEY, mode);
+    } catch {}
+  };
   const [settingsVisualizerEnabled, setSettingsVisualizerEnabled] = useState(() => localStorage.getItem("nectar-visualizer-enabled") !== "false");
   const [settingsAlbumArtEnabled, setSettingsAlbumArtEnabled] = useState(() => localStorage.getItem("nectar-media-album-art-enabled") !== "false");
   const [settingsAmbienceEnabled, setSettingsAmbienceEnabled] = useState(() => localStorage.getItem("nectar-media-ambience-enabled") !== "false");
@@ -959,9 +998,9 @@ function App() {
       "nectar-notch-scroll-volume": setSettingsScrollVolume,
       "nectar-notch-scroll-direction": (v) => setReversePanelScroll(v === "up"),
       "nectar-shelf-persist": setSettingsShelfPersist,
-      "nectar-notch-remember-mode": setSettingsRememberMode,
+      "nectar-notch-remember-mode": (v) => setSettingsRememberMode(v !== false && v !== "false"),
       "nectar-panel-control-center-enabled": (v) => setPanelControlCenter(v !== false && v !== "false"),
-      "nectar-panel-shelf-enabled": (v) => setPanelShelf(v !== false && v !== "false"),
+      "nectar-panel-shelf-enabled": (v) => setPanelShelf(v === true || v === "true"),
       "nectar-panel-workspace-enabled": (v) => setPanelWorkspace(v !== false && v !== "false"),
       "nectar-panel-status-enabled": (v) => setPanelStatus(v !== false && v !== "false"),
       "nectar-panel-order": (v) => setPanelOrder(parsePanelOrder(v === null ? null : String(v))),
@@ -1162,19 +1201,12 @@ function App() {
   const WHEEL_STEP_THRESHOLD = 60;
   const WHEEL_IDLE_RESET_MS = 180;
 
-  // Music shifts position based on playing state:
-  // Playing: command-center → music → status → calendar (active, near command-center)
-  // Paused:  command-center → status → music → calendar (secondary, after status)
   const availableNotchModes = () => {
-    const musicBeforeStatus = isPlaying && mediaInfo.has_media && settingsMusicModeEnabled;
     const modes: ('command-center' | 'status' | 'music' | 'calendar' | 'shelf' | 'workspace')[] = panelOrder
       ? [...panelOrder]
-      : musicBeforeStatus
-        ? ['command-center', 'music', 'status', 'calendar', 'shelf', 'workspace']
-        : ['command-center', 'status', 'music', 'calendar', 'shelf', 'workspace'];
-    const noStatusWidgets = !panelStatus || statusWidgets.left.length + statusWidgets.right.length === 0;
+      : ['workspace', 'status', 'music', 'calendar', 'command-center', 'shelf'];
     return modes.filter(m => {
-      if (m === 'status' && noStatusWidgets && nectarMode !== 'status') return false;
+      if (m === 'status' && !panelStatus && nectarMode !== 'status') return false;
       if (m === 'music' && (!settingsMusicModeEnabled || !mediaInfo.has_media)) return false;
       if (m === 'calendar' && !productivityEnabled) return false;
       if (m === 'shelf' && (!isNotchWindow || settingsLegacyMode || !panelShelf)) return false;
@@ -1212,6 +1244,7 @@ function App() {
     const nextIndex = (currentIndex + direction + availableModes.length) % availableModes.length;
     const nextMode = availableModes[nextIndex];
     manualMusicRef.current = nextMode === 'music';
+    saveLastPanel(nextMode);
     setNectarMode(nextMode);
     tourSignal('panel');
   };
@@ -1517,16 +1550,9 @@ function App() {
   }, []);
 
   useEffect(() => {
-    interface SystemMetrics {
-      cpu: number;
-      ram: number;
-      disk_free_gb: number;
-      net_up: number;
-      net_down: number;
-    }
-
     const fetchMetrics = () => {
-      invoke<SystemMetrics>("get_system_metrics").then((m) => {
+      invoke<SystemMetricsData>("get_system_metrics").then((m) => {
+        setSystemMetrics(m);
         setCpuUsage(m.cpu);
         setRamUsage(m.ram);
         setDiskSpace(m.disk_free_gb);
@@ -1820,6 +1846,7 @@ function App() {
     if (index === -1 || modes.length < 2) return;
     const next = modes[(index + 1) % modes.length];
     manualMusicRef.current = next === 'music';
+    saveLastPanel(next);
     setNectarMode(next);
   };
 
@@ -1943,7 +1970,7 @@ function App() {
       if (!over) {
         setIsHovered(false);
         setIsNotchHovered(false);
-        rememberedModeRef.current = 'workspace';
+        saveLastPanel('workspace');
         setNectarMode(mediaInfo.has_media && isPlaying && settingsMusicCompactNotch ? 'music' : 'status');
       }
     }, 120);
@@ -2009,8 +2036,8 @@ function App() {
     }
     if (nectarMode === 'status' && isHovered) {
       const totalWidgets = Math.max(statusWidgets.left.length, statusWidgets.right.length) * 2;
-      const minW = showNotchPanelBar ? 390 : 0;
-      return Math.max(minW, Math.min(200 + totalWidgets * 65, 530)) + dualClockExtra;
+      const minW = isNotchWindow ? 430 : (showNotchPanelBar ? 390 : 0);
+      return Math.max(minW, Math.min(200 + totalWidgets * 65, 530), widgetsRowWidth) + dualClockExtra;
     }
     if (isMusicMode && isHovered) return mediaLayout === 'compact' ? 300 : 340;
     if ((showPowerPulse || showLowBatteryPulse || showUpdatePulse) && !isHovered) return 200;
@@ -2053,7 +2080,10 @@ function App() {
       const slidersH = ccResolved.sliders.length ? ccResolved.sliders.length * 22 + (ccResolved.sliders.length - 1) * 12 + 14 : 0;
       return 46 + tilesH + buttonsH + slidersH + panelBarOffset;
     }
-    if (nectarMode === 'status') return showNotchPanelBar ? 68 : 36;
+    if (nectarMode === 'status') {
+      if (isHovered && isNotchWindow) return (systemMetrics.gpu_name ? 256 : 244) + panelBarOffset;
+      return showNotchPanelBar ? 68 : 36;
+    }
     if (isMusicMode && isHovered) {
       const hasProgressBar = (mediaInfo.duration_ms ?? 0) > 0;
       let h = mediaLayout === 'compact' ? (hasProgressBar ? 132 : 116) : 120;
@@ -2067,7 +2097,7 @@ function App() {
 
   const isCalendarMode = nectarMode === 'calendar';
   // Calendar, command center, shelf and workspace are big, dense panels; glass styles thicken the fill for them
-  const isPanelOpen = isHovered && (isCalendarMode || nectarMode === 'command-center' || nectarMode === 'shelf' || nectarMode === 'workspace');
+  const isPanelOpen = isHovered && (isCalendarMode || nectarMode === 'command-center' || nectarMode === 'shelf' || nectarMode === 'workspace' || (nectarMode === 'status' && isNotchWindow));
 
   // Album tints the whole notch, collapsed pill included. The expanded state
   // reads --nectar-bg-expanded and the muted/border vars live on :root, so all
@@ -2147,9 +2177,11 @@ function App() {
           clearTimeout(shelfCollapseTimer.current);
           setIsHovered(true);
           if (nectarMode !== 'shelf' && !(nectarMode === 'workspace' && workspaceHoldsOpen())) {
+            const available = availableNotchModes();
             const remembered = settingsRememberMode ? rememberedModeRef.current : null;
             if (agentNeedsYou) setNectarMode('agent');
-            else if (remembered && availableNotchModes().includes(remembered)) setNectarMode(remembered);
+            else if (remembered && available.includes(remembered)) setNectarMode(remembered);
+            else if (available.length > 0) setNectarMode(available[0]);
             else setNectarMode(mediaInfo.has_media && isPlaying ? 'music' : 'status');
           }
         }}
@@ -2161,7 +2193,16 @@ function App() {
             return;
           }
           setIsHovered(false);
-          if (nectarMode === 'command-center' || nectarMode === 'calendar' || nectarMode === 'workspace') rememberedModeRef.current = nectarMode;
+          if (
+            nectarMode === 'command-center' ||
+            nectarMode === 'calendar' ||
+            nectarMode === 'workspace' ||
+            nectarMode === 'status' ||
+            nectarMode === 'music' ||
+            nectarMode === 'shelf'
+          ) {
+            saveLastPanel(nectarMode);
+          }
           const targetMode = mediaInfo.has_media && isPlaying && settingsMusicCompactNotch ? 'music' : 'status';
           if (nectarMode === 'music') {
             setNectarMode(targetMode);
@@ -2286,6 +2327,7 @@ function App() {
                                 className="music-calendar-btn"
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                  saveLastPanel('workspace');
                                   setNectarMode('workspace');
                                 }}
                                 {...tip(t("panel.workspace"))}
@@ -2633,6 +2675,7 @@ function App() {
                             onClick={(e) => {
                               e.stopPropagation();
                               manualMusicRef.current = modeId === 'music';
+                              saveLastPanel(modeId);
                               setNectarMode(modeId);
                               tourSignal('panel');
                             }}
@@ -2642,6 +2685,35 @@ function App() {
                         ))}
                       </div>
                     )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <AnimatePresence>
+                {nectarMode === 'status' && isHovered && isNotchWindow && !tourActive && (
+                  <motion.div
+                    key="status-panel"
+                    className="status-stats-panel-wrap"
+                    onClick={e => e.stopPropagation()}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0, transition: { duration: 0.1 } }}
+                    transition={{ type: "spring", stiffness: 400, damping: 30, delay: 0.08 }}
+                  >
+                    <SystemStatsPanel
+                      metrics={systemMetrics}
+                      hasBattery={hasBattery}
+                      batteryLevel={batteryLevel}
+                      isCharging={isCharging}
+                      online={wifiConnected || !!lanStatus?.connected}
+                      connectionLabel={
+                        showLan
+                          ? lanStatus?.name || "Ethernet"
+                          : wifiConnected
+                            ? "Wi-Fi"
+                            : "Offline"
+                      }
+                    />
                   </motion.div>
                 )}
               </AnimatePresence>

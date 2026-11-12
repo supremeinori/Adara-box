@@ -2870,3 +2870,152 @@ img {
     border-color: transparent;
     font-weight: 600;
 }
+
+/* Live PC Stats Panel inside Notch */
+.status-stats-panel-wrap {
+    position: absolute;
+    top: var(--notch-panel-top, 36px);
+    left: 0;
+    width: 100%;
+    height: calc(100% - var(--notch-panel-top, 36px));
+    box-sizing: border-box;
+    padding: 8px 14px 12px;
+    z-index: 2;
+    color: var(--nectar-text, #ffffff);
+    overflow: hidden;
+}
+
+.sys-stats-panel {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.sys-stats-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.sys-stats-cpu-model {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--nectar-text, #ffffff);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sys-stats-badges {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+}
+
+.sys-stats-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 18px;
+    padding: 0 7px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--nectar-text-muted, rgba(255, 255, 255, 0.78));
+}
+
+.sys-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.sys-stat-card {
+    background: var(--nectar-group-bg, rgba(255, 255, 255, 0.045));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.sys-stat-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+.sys-stat-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--nectar-text-muted, rgba(255, 255, 255, 0.78));
+}
+
+.sys-stat-value {
+    font-size: 12px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--nectar-text, #ffffff);
+}
+
+.sys-stat-bar {
+    width: 100%;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+}
+
+.sys-stat-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--nectar-accent, #ffffff);
+    transition: width 0.35s ease;
+}
+
+.sys-stat-sub {
+    font-size: 10px;
+    color: var(--nectar-text-muted, rgba(255, 255, 255, 0.65));
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sys-stats-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 5px 9px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    font-size: 10.5px;
+    color: var(--nectar-text-muted, rgba(255, 255, 255, 0.78));
+}
+
+.sys-stats-net,
+.sys-stats-power {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.sys-stats-net-rates {
+    color: var(--nectar-text, #ffffff);
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+}

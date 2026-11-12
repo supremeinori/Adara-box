@@ -3352,26 +3352,200 @@ pub fn open_battery_saver_settings() {
     }
 }
 
-// --- System metrics for status widgets ---
+// --- System metrics for status widgets & Live PC Stats panel ---
 
 #[derive(serde::Serialize)]
 pub struct SystemMetrics {
     cpu: u32,
     ram: f32,
+    ram_used_gb: f32,
+    ram_total_gb: f32,
     disk_free_gb: u64,
+    disk_used_gb: u64,
+    disk_total_gb: u64,
     net_up: u64,
     net_down: u64,
+    cpu_name: String,
+    cpu_cores: u32,
+    uptime_secs: u64,
+    gpu_name: Option<String>,
+    gpu_vram_used_mb: Option<u64>,
+    gpu_vram_total_mb: Option<u64>,
+}
+
+fn read_cpu_identity() -> (String, u32) {
+    static CPU_INFO: std::sync::OnceLock<(String, u32)> = std::sync::OnceLock::new();
+    CPU_INFO
+        .get_or_init(|| unsafe {
+            let mut sys_info = windows::Win32::System::SystemInformation::SYSTEM_INFO::default();
+            windows::Win32::System::SystemInformation::GetSystemInfo(&mut sys_info);
+            let cores = sys_info.dwNumberOfProcessors.max(1);
+
+            let mut hkey = windows::Win32::System::Registry::HKEY::default();
+            let subkey = windows::core::w!("HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0");
+            let mut cpu_name = String::new();
+            if windows::Win32::System::Registry::RegOpenKeyExW(
+                windows::Win32::System::Registry::HKEY_LOCAL_MACHINE,
+                subkey,
+                Some(0),
+                windows::Win32::System::Registry::KEY_READ,
+                &mut hkey,
+            )
+            .is_ok()
+            {
+                let mut buf = [0u16; 256];
+                let mut byte_len = (buf.len() * 2) as u32;
+                let mut reg_type = windows::Win32::System::Registry::REG_VALUE_TYPE::default();
+                if windows::Win32::System::Registry::RegQueryValueExW(
+                    hkey,
+                    windows::core::w!("ProcessorNameString"),
+                    None,
+                    Some(&mut reg_type),
+                    Some(buf.as_mut_ptr() as *mut u8),
+                    Some(&mut byte_len),
+                )
+                .is_ok()
+                {
+                    let wchar_len = (byte_len as usize / 2).min(buf.len());
+                    let raw = String::from_utf16_lossy(&buf[..wchar_len]);
+                    cpu_name = raw
+                        .trim_end_matches('\0')
+                        .split_whitespace()
+                        .collect::<Vec<_>>()
+                        .join(" ");
+                }
+                let _ = windows::Win32::System::Registry::RegCloseKey(hkey);
+            }
+
+            if cpu_name.is_empty() {
+                cpu_name = format!("x64 Processor ({cores} Cores)");
+            }
+            (cpu_name, cores)
+        })
+        .clone()
+}
+
+fn read_ram_details() -> (f32, f32, f32) {
+    unsafe {
+        let mut mem = windows::Win32::System::SystemInformation::MEMORYSTATUSEX::default();
+        mem.dwLength =
+            std::mem::size_of::<windows::Win32::System::SystemInformation::MEMORYSTATUSEX>() as u32;
+        if windows::Win32::System::SystemInformation::GlobalMemoryStatusEx(&mut mem).is_ok() {
+            const GB: f64 = 1024.0 * 1024.0 * 1024.0;
+            let total_gb = (mem.ullTotalPhys as f64 / GB) as f32;
+            let avail_gb = (mem.ullAvailPhys as f64 / GB) as f32;
+            let used_gb = (total_gb - avail_gb).max(0.0);
+            return (mem.dwMemoryLoad as f32, used_gb, total_gb);
+        }
+    }
+    (0.0, 0.0, 0.0)
+}
+
+fn read_disk_details() -> (u64, u64, u64) {
+    unsafe {
+        let mut free_bytes = 0u64;
+        let mut total_bytes = 0u64;
+        let mut total_free = 0u64;
+        if windows::Win32::Storage::FileSystem::GetDiskFreeSpaceExW(
+            windows::core::w!("C:\\"),
+            Some(&mut free_bytes),
+            Some(&mut total_bytes),
+            Some(&mut total_free),
+        )
+        .is_ok()
+        {
+            const GB: u64 = 1024 * 1024 * 1024;
+            let free_gb = free_bytes / GB;
+            let total_gb = total_bytes / GB;
+            let used_gb = total_gb.saturating_sub(free_gb);
+            return (free_gb, used_gb, total_gb);
+        }
+    }
+    (0, 0, 0)
+}
+
+fn read_gpu_details() -> (Option<String>, Option<u64>, Option<u64>) {
+    use windows::core::Interface;
+    use windows::Win32::Graphics::Dxgi::{
+        CreateDXGIFactory1, IDXGIFactory1, IDXGIAdapter3, DXGI_ADAPTER_FLAG_SOFTWARE,
+        DXGI_MEMORY_SEGMENT_GROUP_LOCAL, DXGI_QUERY_VIDEO_MEMORY_INFO,
+    };
+
+    unsafe {
+        let Ok(factory) = CreateDXGIFactory1::<IDXGIFactory1>() else {
+            return (None, None, None);
+        };
+        let mut best: Option<(String, Option<u64>, Option<u64>)> = None;
+        let mut best_vram = 0u64;
+        for idx in 0..8 {
+            let Ok(adapter) = factory.EnumAdapters1(idx) else {
+                break;
+            };
+            let Ok(desc) = adapter.GetDesc1() else {
+                continue;
+            };
+            if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE.0 as u32) != 0 {
+                continue;
+            }
+            let len = desc
+                .Description
+                .iter()
+                .position(|&c| c == 0)
+                .unwrap_or(desc.Description.len());
+            let name = String::from_utf16_lossy(&desc.Description[..len]).trim().to_string();
+            let dedicated_mb = (desc.DedicatedVideoMemory as u64) / (1024 * 1024);
+
+            let mut used_mb: Option<u64> = None;
+            if let Ok(adapter3) = adapter.cast::<IDXGIAdapter3>() {
+                let mut vmi = DXGI_QUERY_VIDEO_MEMORY_INFO::default();
+                if adapter3
+                    .QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &mut vmi)
+                    .is_ok()
+                {
+                    used_mb = Some(vmi.CurrentUsage / (1024 * 1024));
+                }
+            }
+
+            if best.is_none() || dedicated_mb > best_vram {
+                best_vram = dedicated_mb;
+                best = Some((
+                    name,
+                    used_mb,
+                    if dedicated_mb > 0 { Some(dedicated_mb) } else { None },
+                ));
+            }
+        }
+        match best {
+            Some((n, u, t)) => (Some(n), u, t),
+            None => (None, None, None),
+        }
+    }
 }
 
 #[tauri::command]
 pub fn get_system_metrics() -> SystemMetrics {
     let (net_up, net_down) = get_network_speed().unwrap_or((0, 0));
+    let (ram, ram_used_gb, ram_total_gb) = read_ram_details();
+    let (disk_free_gb, disk_used_gb, disk_total_gb) = read_disk_details();
+    let (cpu_name, cpu_cores) = read_cpu_identity();
+    let uptime_secs = unsafe { windows::Win32::System::SystemInformation::GetTickCount64() / 1000 };
+    let (gpu_name, gpu_vram_used_mb, gpu_vram_total_mb) = read_gpu_details();
     SystemMetrics {
         cpu: get_cpu_usage().unwrap_or(0),
-        ram: get_ram_usage().unwrap_or(0.0),
-        disk_free_gb: get_disk_space().unwrap_or(0),
+        ram,
+        ram_used_gb,
+        ram_total_gb,
+        disk_free_gb,
+        disk_used_gb,
+        disk_total_gb,
         net_up,
         net_down,
+        cpu_name,
+        cpu_cores,
+        uptime_secs,
+        gpu_name,
+        gpu_vram_used_mb,
+        gpu_vram_total_mb,
     }
 }
 
@@ -4350,4 +4524,19 @@ pub fn clear_live_thumbnails() -> Result<(), String> {
 #[tauri::command]
 pub fn is_dwm_composition_enabled() -> Result<bool, String> {
     Ok(crate::live_preview::is_composition_enabled())
+}
+
+#[cfg(test)]
+mod system_metrics_tests {
+    use super::get_system_metrics;
+
+    #[test]
+    fn system_metrics_reads_real_hardware_values() {
+        let m = get_system_metrics();
+        assert!(!m.cpu_name.trim().is_empty(), "cpu_name should not be empty");
+        assert!(m.cpu_cores >= 1, "cpu_cores should be >= 1");
+        assert!(m.ram_total_gb > 0.5, "ram_total_gb should be populated");
+        assert!(m.disk_total_gb >= m.disk_free_gb, "disk_total_gb >= disk_free_gb");
+        assert!(m.uptime_secs > 0, "uptime_secs should be positive");
+    }
 }

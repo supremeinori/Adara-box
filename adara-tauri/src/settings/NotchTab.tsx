@@ -434,7 +434,7 @@ export function NotchTab({
               </label>
             </SettingRow>
 
-        <SettingRow icon={ArrowDownUp} label={t("notch.scrollDirection")} desc={t("notch.scrollDirection.desc")}>
+        <SettingRow icon={ArrowDownUp} label={t("notch.scrollDirection")} desc={t("notch.scrollDirection.desc")} divider={false}>
           <Dropdown
             value={panelScrollDirection}
             options={[
@@ -444,8 +444,10 @@ export function NotchTab({
             onChange={changePanelScrollDirection}
           />
         </SettingRow>
+      </SettingSection>
 
-        <SettingRow icon={ListOrdered} label={t("notch.panelOrder")} desc={t("notch.panelOrder.desc")} divider={false} stacked>
+      <SettingSection id="notch-widgets" title={t("notch.widgets.group")}>
+        <SettingRow icon={ListOrdered} label={t("notch.panelOrder")} desc={t("notch.panelOrder.desc")} stacked>
           <OrderList
             ids={panelOrder ?? DEFAULT_PANEL_ORDER}
             label={(id) => t(`panel.${id}`)}
@@ -460,6 +462,16 @@ export function NotchTab({
             resetLabel={t("notch.panelOrder.reset")}
           />
         </SettingRow>
+
+        <SettingRow icon={Inbox} label={t("notch.panelShelf")} desc={t("notch.panelShelf.desc")}>
+          <label className="toggle-switch">
+            <input type="checkbox" checked={panelShelf} onChange={togglePanelShelf} />
+            <span className="slider"></span>
+          </label>
+        </SettingRow>
+
+        <StatusWidgetConfig value={statusWidgets} onChange={handleWidgetsChange} hasBattery={hasBattery} />
+        <NetWidgetMode />
       </SettingSection>
 
       <SettingSection id="notch-cc" title={t("notch.section.cc")}>
@@ -571,11 +583,6 @@ export function NotchTab({
 
       <SettingSection id="notch-hotkey" title={t("notch.hotkey.group")}>
         <NotchHotkey />
-      </SettingSection>
-
-      <SettingSection id="notch-widgets" title={t("notch.widgets.group")}>
-        <StatusWidgetConfig value={statusWidgets} onChange={handleWidgetsChange} hasBattery={hasBattery} />
-        <NetWidgetMode />
       </SettingSection>
     </>
   );
