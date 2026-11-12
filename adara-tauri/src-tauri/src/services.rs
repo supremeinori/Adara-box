@@ -1319,7 +1319,7 @@ pub fn setup_system_worker(app_handle: AppHandle) -> Sender<SystemCommand> {
                                         should_overlap = false;
                                         if let Some(dr) = crate::state::dock_rects().lock().ok().and_then(|m| m.get("dock").copied()) {
                                             {
-                                                let scale = cached_scale;
+                                                let scale = crate::state::effective_css_scale_for("dock", cached_scale);
                                                 let d_left = (dr.x as f64 * scale) as i32;
                                                 let d_right = d_left + (dr.width as f64 * scale) as i32;
                                                 let res_h = (56.0 * scale) as i32;
@@ -1334,7 +1334,7 @@ pub fn setup_system_worker(app_handle: AppHandle) -> Sender<SystemCommand> {
 
                                         if let Some(nr) = crate::state::notch_rects().lock().ok().and_then(|m| m.get("main").copied()) {
                                             {
-                                                let scale = cached_scale;
+                                                let scale = crate::state::effective_css_scale_for("main", cached_scale);
                                                 let n_left = (nr.x as f64 * scale) as i32;
                                                 let n_right = n_left + (nr.width as f64 * scale) as i32;
                                                 let res_h = (36.0 * scale) as i32;
@@ -1461,16 +1461,18 @@ pub fn setup_system_worker(app_handle: AppHandle) -> Sender<SystemCommand> {
                                 true
                             } else if is_dock {
                                 crate::state::dock_rects().lock().ok().and_then(|m| m.get(&label).copied()).is_some_and(|dr| {
-                                    let d_left = mx + (dr.x as f64 * cached_scale) as i32;
-                                    let d_right = d_left + (dr.width as f64 * cached_scale) as i32;
-                                    let trigger_y = screen.bottom - (56.0 * cached_scale) as i32;
+                                    let scale = crate::state::effective_css_scale_for(&label, cached_scale);
+                                    let d_left = mx + (dr.x as f64 * scale) as i32;
+                                    let d_right = d_left + (dr.width as f64 * scale) as i32;
+                                    let trigger_y = screen.bottom - (56.0 * scale) as i32;
                                     rect.left < d_right - 4 && rect.right > d_left + 4 && rect.bottom > trigger_y + 4
                                 })
                             } else {
                                 crate::state::notch_rects().lock().ok().and_then(|m| m.get(&label).copied()).is_some_and(|nr| {
-                                    let n_left = mx + (nr.x as f64 * cached_scale) as i32;
-                                    let n_right = n_left + (nr.width as f64 * cached_scale) as i32;
-                                    let trigger_y = screen.top + (36.0 * cached_scale) as i32;
+                                    let scale = crate::state::effective_css_scale_for(&label, cached_scale);
+                                    let n_left = mx + (nr.x as f64 * scale) as i32;
+                                    let n_right = n_left + (nr.width as f64 * scale) as i32;
+                                    let trigger_y = screen.top + (36.0 * scale) as i32;
                                     rect.left < n_right - 4 && rect.right > n_left + 4 && rect.top < trigger_y - 4
                                 })
                             }
@@ -2031,7 +2033,7 @@ fn volume_mixer_physical_rect_for(app: &AppHandle) -> Option<(i32, i32, i32, i32
     let (x, y, width, height) = (*crate::state::VOLUME_MIXER_RECT.lock().ok()?)?;
     let ov_win = app.get_webview_window("overlay")?;
     let monitor = ov_win.primary_monitor().ok().flatten()?;
-    let scale = monitor.scale_factor();
+    let scale = crate::state::effective_css_scale_for(ov_win.label(), monitor.scale_factor());
     let pos = monitor.position();
     Some((
         pos.x + (x * scale) as i32,
@@ -2240,7 +2242,7 @@ unsafe fn process_mouse_move(app_handle: &AppHandle, cursor: windows::Win32::Fou
                         if in_window {
                             if let Ok(region) = crate::state::dock_rects().try_lock() {
                                 if let Some(r) = region.get("dock").copied() {
-                                    let scale = dock_win.scale_factor().unwrap_or(1.0);
+                                    let scale = crate::state::effective_css_scale_for(dock_win.label(), dock_win.scale_factor().unwrap_or(1.0));
                                     let pad_x = (5.0 * scale) as i32;
                                     let pad_y_top = (8.0 * scale) as i32;
                                     let pad_y_bottom = (5.0 * scale) as i32;
@@ -2265,7 +2267,7 @@ unsafe fn process_mouse_move(app_handle: &AppHandle, cursor: windows::Win32::Fou
                             if !is_click_interactive && MENU_IS_OPEN.load(Ordering::Relaxed) {
                                 if let Ok(rect) = MENU_RECT.try_lock() {
                                     if let Some(r) = *rect {
-                                        let scale = dock_win.scale_factor().unwrap_or(1.0);
+                                        let scale = crate::state::effective_css_scale_for(dock_win.label(), dock_win.scale_factor().unwrap_or(1.0));
                                         let rx = win_pos.x + (r.x as f64 * scale) as i32 - (5.0 * scale) as i32;
                                         let ry = win_pos.y + (r.y as f64 * scale) as i32 - (5.0 * scale) as i32;
                                         let rw = (r.width as f64 * scale) as i32 + (10.0 * scale) as i32;
@@ -2281,7 +2283,7 @@ unsafe fn process_mouse_move(app_handle: &AppHandle, cursor: windows::Win32::Fou
 
                     // Hot-edge detection (Bottom edge)
                     let in_dock_hover = crate::state::get_flag(crate::state::dock_hovered(), "dock");
-                    let scale = dock_win.scale_factor().unwrap_or(1.0);
+                    let scale = crate::state::effective_css_scale_for(dock_win.label(), dock_win.scale_factor().unwrap_or(1.0));
                     let over_dock_span = !edge_area_narrow(app_handle, "nectar-dock-edge-area")
                         || dock_span.map_or(true, |(l, r)| {
                             let pad = (60.0 * scale) as i32;
@@ -2352,7 +2354,7 @@ unsafe fn process_mouse_move(app_handle: &AppHandle, cursor: windows::Win32::Fou
                         let notch_fs = notch_suppressed(app_handle, "main");
                         let in_notch_hover = !notch_fs && crate::state::get_flag(crate::state::notch_hovered(), "main");
                         let mut is_notch_hovered = false;
-                        let scale = main_win.scale_factor().unwrap_or(1.0);
+                        let scale = crate::state::effective_css_scale_for(main_win.label(), main_win.scale_factor().unwrap_or(1.0));
                         let over_notch_span = !edge_area_narrow(app_handle, "nectar-notch-edge-area")
                             || notch_x_span(scale).map_or(true, |(l, r)| {
                                 let pad = (60.0 * scale) as i32;
@@ -2378,7 +2380,7 @@ unsafe fn process_mouse_move(app_handle: &AppHandle, cursor: windows::Win32::Fou
                         if let Some((win_pos, _)) = main_rect_val {
                             if let Ok(region) = crate::state::notch_rects().try_lock() {
                                 if let Some(r) = region.get("main").copied() {
-                                    let scale = main_win.scale_factor().unwrap_or(1.0);
+                                    let scale = crate::state::effective_css_scale_for(main_win.label(), main_win.scale_factor().unwrap_or(1.0));
                                     let pad_x = (20.0 * scale) as i32;
                                     let pad_y_bottom = (5.0 * scale) as i32;
                                     // Hysteresis keeps the notch interactive a little past
@@ -2500,7 +2502,7 @@ unsafe fn process_mouse_move(app_handle: &AppHandle, cursor: windows::Win32::Fou
                     && app_handle.primary_monitor().ok().flatten().is_some_and(|m| {
                         let ms = m.size();
                         let mp = m.position();
-                        let sc = m.scale_factor() * overlay_nectar_scale;
+                        let sc = crate::state::effective_css_scale_for("overlay", m.scale_factor()) * overlay_nectar_scale;
                         let nw = (42.0 * sc) as i32;
                         let nh = (196.0 * sc) as i32;
                         let nx = if volume_right { mp.x + ms.width as i32 - nw } else { mp.x };
@@ -2554,7 +2556,7 @@ unsafe fn process_mouse_move(app_handle: &AppHandle, cursor: windows::Win32::Fou
                     let over_left = in_mixer || if let Ok(Some(m)) = ov_win.primary_monitor() {
                         let ms = m.size();
                         let mp = m.position();
-                        let sc = m.scale_factor() * overlay_nectar_scale;
+                        let sc = crate::state::effective_css_scale_for("overlay", m.scale_factor()) * overlay_nectar_scale;
                         let nw = (42.0 * sc) as i32;
                         let nh = (196.0 * sc) as i32;
                         let nx = mp.x;
@@ -2565,7 +2567,7 @@ unsafe fn process_mouse_move(app_handle: &AppHandle, cursor: windows::Win32::Fou
                     let over_right = if let Ok(Some(m)) = ov_win.primary_monitor() {
                         let ms = m.size();
                         let mp = m.position();
-                        let sc = m.scale_factor() * overlay_nectar_scale;
+                        let sc = crate::state::effective_css_scale_for("overlay", m.scale_factor()) * overlay_nectar_scale;
                         let nw = (42.0 * sc) as i32;
                         let nh = (196.0 * sc) as i32;
                         let nx = mp.x + ms.width as i32 - nw;
@@ -2687,7 +2689,7 @@ fn hit_test_extra_dock_windows(app_handle: &AppHandle, cursor: windows::Win32::F
 
         let mut is_click_interactive = false;
         let mut dock_span: Option<(i32, i32)> = None;
-        let scale = dock_win.scale_factor().unwrap_or(1.0);
+        let scale = crate::state::effective_css_scale_for(dock_win.label(), dock_win.scale_factor().unwrap_or(1.0));
 
         let dock_rect_val = crate::state::dock_window_rects().lock().ok().and_then(|m| m.get(&label).copied());
         if let Some((win_pos, win_size)) = dock_rect_val {
@@ -2801,7 +2803,7 @@ fn hit_test_extra_notch_windows(app_handle: &AppHandle, cursor: windows::Win32::
         let Ok(hwnd) = main_win.hwnd() else { continue };
         let Some((mon_x, mon_y, mon_w, _mon_h)) = monitor_rect_for_hwnd(hwnd) else { continue };
 
-        let scale = main_win.scale_factor().unwrap_or(1.0);
+        let scale = crate::state::effective_css_scale_for(main_win.label(), main_win.scale_factor().unwrap_or(1.0));
         let notch_fs = notch_suppressed(app_handle, &label);
         let in_notch_hover = !notch_fs && crate::state::get_flag(crate::state::notch_hovered(), &label);
         let in_top_band = cursor.y <= (mon_y + (8.0 * scale) as i32) &&
@@ -3300,7 +3302,7 @@ pub unsafe extern "system" fn enum_windows_proc(hwnd: HWND, lparam: LPARAM) -> B
             }
 
             // Filter out system containers and background stuff
-            if title == "Program Manager" || title == "nectar" || title == "Nectar Dock" {
+            if title == "Program Manager" || title == "nectar" || title == "Nectar Dock" || title == "Adara Box" || title == "Adara Box Dock" {
                 return true.into();
             }
 

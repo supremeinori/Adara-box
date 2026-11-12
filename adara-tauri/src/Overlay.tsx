@@ -330,7 +330,8 @@ function VolumeNotch({
       x: rect.x,
       y: rect.y,
       width: rect.width,
-      height: rect.height
+      height: rect.height,
+      dpr: window.devicePixelRatio || 1
     }).catch(() => {});
   }, []);
 
@@ -1032,7 +1033,7 @@ function OverlayApp() {
               transition={{ duration: 2.6, times: [0, 0.3, 0.7, 1], ease: "easeInOut" }}
             />
             <motion.img
-              src="/nectar.png"
+              src="/adara.png"
               className="splash-logo"
               draggable={false}
               initial={{ scale: 0.82, opacity: 0, y: 10, filter: "blur(14px)" }}
@@ -1064,7 +1065,7 @@ function OverlayApp() {
             transition={{ duration: 0.3 }}
           >
             <div className="update-splash-card">
-              <img src="/nectar.png" className="update-splash-logo" alt="Nectar" />
+              <img src="/adara.png" className="update-splash-logo" alt="Adara Box" />
               <p className="update-splash-text">
                 {updateStatus === 'checking' && t("overlay.update.checking")}
                 {updateStatus === 'downloading' && t("overlay.update.downloading", { percent: updateProgress })}

@@ -1,4 +1,4 @@
-use std::sync::{atomic::{AtomicBool, AtomicU32, AtomicI64}, Mutex, OnceLock};
+use std::sync::{atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicI64}, Mutex, OnceLock};
 use std::sync::mpsc::Sender;
 use std::collections::HashMap;
 use crate::types::{SystemCommand, IntRect, AppInfo};
@@ -62,6 +62,69 @@ label_map!(dock_extra_last_edge_hover, i32);
 label_map!(notch_extra_last_edge_hover, i32);
 label_map!(dock_extra_expiry_ms, i64);
 label_map!(notch_extra_expiry_ms, i64);
+label_map!(window_dpr, f64);
+
+pub fn set_window_dpr(label: &str, dpr: f64) {
+    if dpr > 0.0 && dpr.is_finite() {
+        if let Ok(mut m) = window_dpr().lock() {
+            m.insert(label.to_string(), dpr);
+        }
+    }
+}
+
+/// Reads Windows Accessibility "Text size" (`TextScaleFactor`, 100 = 1.0x, 120 = 1.2x),
+/// which WebView2 applies to DOM/CSS coordinates even when the monitor DPI `scale_factor()` is 1.0.
+pub fn windows_text_scale_factor() -> f64 {
+    static CACHED_BITS: AtomicU64 = AtomicU64::new(0);
+    static CACHED_AT_MS: AtomicI64 = AtomicI64::new(0);
+    let now_ms = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis() as i64)
+        .unwrap_or(0);
+    let cached_at = CACHED_AT_MS.load(std::sync::atomic::Ordering::Relaxed);
+    if cached_at != 0 && (now_ms - cached_at).abs() < 2000 {
+        let bits = CACHED_BITS.load(std::sync::atomic::Ordering::Relaxed);
+        if bits != 0 {
+            return f64::from_bits(bits);
+        }
+    }
+    let scale = unsafe {
+        use windows::Win32::System::Registry::{RegGetValueW, HKEY_CURRENT_USER, RRF_RT_REG_DWORD};
+        let mut val = 100u32;
+        let mut size = std::mem::size_of::<u32>() as u32;
+        let res = RegGetValueW(
+            HKEY_CURRENT_USER,
+            windows::core::w!(r"Software\Microsoft\Accessibility"),
+            windows::core::w!("TextScaleFactor"),
+            RRF_RT_REG_DWORD,
+            None,
+            Some(&mut val as *mut u32 as *mut std::ffi::c_void),
+            Some(&mut size),
+        );
+        if res.is_ok() && (50..=400).contains(&val) {
+            val as f64 / 100.0
+        } else {
+            1.0
+        }
+    };
+    CACHED_BITS.store(scale.to_bits(), std::sync::atomic::Ordering::Relaxed);
+    CACHED_AT_MS.store(now_ms, std::sync::atomic::Ordering::Relaxed);
+    scale
+}
+
+/// CSS-to-physical pixel ratio for a WebView window (`window.devicePixelRatio`),
+/// preferring the value reported by that WebView and falling back to OS DPI × Windows TextScaleFactor.
+pub fn effective_css_scale_for(label: &str, os_scale: f64) -> f64 {
+    if let Ok(m) = window_dpr().lock() {
+        if let Some(&dpr) = m.get(label) {
+            if dpr > 0.0 && dpr.is_finite() {
+                return dpr;
+            }
+        }
+    }
+    let base = if os_scale > 0.0 && os_scale.is_finite() { os_scale } else { 1.0 };
+    base * windows_text_scale_factor()
+}
 
 pub fn get_flag(map: &'static Mutex<HashMap<String, bool>>, label: &str) -> bool {
     map.lock().ok().and_then(|m| m.get(label).copied()).unwrap_or(false)
@@ -124,6 +187,7 @@ pub fn clear_window_state(label: &str) {
     if let Ok(mut m) = notch_extra_last_edge_hover().lock() { m.remove(label); }
     if let Ok(mut m) = dock_extra_expiry_ms().lock() { m.remove(label); }
     if let Ok(mut m) = notch_extra_expiry_ms().lock() { m.remove(label); }
+    if let Ok(mut m) = window_dpr().lock() { m.remove(label); }
 }
 
 pub fn dock_label_for_monitor(monitor_id: &str) -> String {
@@ -199,3 +263,24 @@ pub static PROCESS_NAME_CACHE: OnceLock<Mutex<HashMap<String, String>>> = OnceLo
 pub static THUMBNAIL_CACHE: OnceLock<Mutex<HashMap<isize, (String, i64)>>> = OnceLock::new();
 pub static FOCUS_TIMESTAMPS: OnceLock<Mutex<HashMap<isize, i64>>> = OnceLock::new();
 pub static SETTINGS_CACHE: OnceLock<Mutex<HashMap<String, serde_json::Value>>> = OnceLock::new();
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn effective_css_scale_prefers_valid_reported_dpr_and_cleans_up() {
+        let label = "test-dpr-win";
+        clear_window_state(label);
+        set_window_dpr(label, -1.0);
+        set_window_dpr(label, f64::NAN);
+        let fallback = effective_css_scale_for(label, 1.0);
+        assert!(fallback >= 0.5 && fallback <= 4.0);
+
+        set_window_dpr(label, 1.2);
+        assert!((effective_css_scale_for(label, 1.0) - 1.2).abs() < 1e-6);
+
+        clear_window_state(label);
+        assert!((effective_css_scale_for(label, 1.5) - 1.5 * windows_text_scale_factor()).abs() < 1e-6);
+    }
+}

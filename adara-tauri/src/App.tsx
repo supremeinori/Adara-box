@@ -603,10 +603,11 @@ function App() {
           width: Math.round(right - left),
           height: Math.round(bottom - rect.y)
         };
-        const key = `${next.x},${next.y},${next.width},${next.height}`;
+        const dpr = window.devicePixelRatio || 1;
+        const key = `${next.x},${next.y},${next.width},${next.height},${dpr}`;
         if (key === lastSent) return;
         lastSent = key;
-        invoke('update_notch_rect', { rect: next }).catch(() => { lastSent = ""; });
+        invoke('update_notch_rect', { rect: next, dpr }).catch(() => { lastSent = ""; });
       }
     };
 

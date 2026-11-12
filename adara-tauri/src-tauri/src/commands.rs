@@ -12,7 +12,10 @@ use crate::services::{register_appbar, register_dock_appbar, sync_overlays, unre
 use std::collections::HashMap;
 
 #[tauri::command]
-pub async fn set_menu_open(open: bool, rect: Option<IntRect>) {
+pub async fn set_menu_open(window: Window, open: bool, rect: Option<IntRect>, dpr: Option<f64>) {
+    if let Some(d) = dpr {
+        crate::state::set_window_dpr(window.label(), d);
+    }
     MENU_IS_OPEN.store(open, Ordering::Relaxed);
     if let Ok(mut r) = MENU_RECT.lock() {
         *r = rect;
@@ -67,14 +70,20 @@ pub async fn set_dock_dragging(dragging: bool) {
 }
 
 #[tauri::command]
-pub async fn update_dock_rect(window: Window, rect: IntRect) {
+pub async fn update_dock_rect(window: Window, rect: IntRect, dpr: Option<f64>) {
+    if let Some(d) = dpr {
+        crate::state::set_window_dpr(window.label(), d);
+    }
     if let Ok(mut m) = crate::state::dock_rects().lock() {
         m.insert(window.label().to_string(), rect);
     }
 }
 
 #[tauri::command]
-pub async fn update_notch_rect(window: Window, rect: IntRect) {
+pub async fn update_notch_rect(window: Window, rect: IntRect, dpr: Option<f64>) {
+    if let Some(d) = dpr {
+        crate::state::set_window_dpr(window.label(), d);
+    }
     if let Ok(mut m) = crate::state::notch_rects().lock() {
         m.insert(window.label().to_string(), rect);
     }
@@ -2091,7 +2100,8 @@ fn notch_anchor(app: &AppHandle) -> Option<(i32, i32)> {
         .map(|(label, _)| label.clone())
         .unwrap_or_else(|| "main".to_string());
     let (pos, _) = windows.get(&label).copied()?;
-    let scale = app.get_webview_window(&label)?.scale_factor().ok()?;
+    let os_scale = app.get_webview_window(&label)?.scale_factor().ok()?;
+    let scale = crate::state::effective_css_scale_for(&label, os_scale);
     let rect = crate::state::notch_rects().lock().ok()?.get(&label).copied()?;
 
     let centre_x = pos.x + ((rect.x as f64 + rect.width as f64 / 2.0) * scale) as i32;
@@ -2603,7 +2613,10 @@ pub async fn set_app_mute(pid: u32, muted: bool) -> Result<(), String> {
 
 /// Mixer panel bounds in overlay CSS px, so the mouse hook keeps the card clickable while open.
 #[tauri::command]
-pub fn set_volume_mixer_rect(x: f64, y: f64, width: f64, height: f64) {
+pub fn set_volume_mixer_rect(window: Window, x: f64, y: f64, width: f64, height: f64, dpr: Option<f64>) {
+    if let Some(d) = dpr {
+        crate::state::set_window_dpr(window.label(), d);
+    }
     if let Ok(mut rect) = VOLUME_MIXER_RECT.lock() {
         *rect = Some((x, y, width, height));
     }
@@ -4183,7 +4196,7 @@ pub fn pointer_over_notch(window: Window) -> bool {
     }
     let Some((win_pos, _)) = main_window_rects().lock().ok().and_then(|m| m.get(&label).copied()) else { return false };
     let Some(r) = notch_rects().lock().ok().and_then(|m| m.get(&label).copied()) else { return false };
-    let scale = window.scale_factor().unwrap_or(1.0);
+    let scale = crate::state::effective_css_scale_for(&label, window.scale_factor().unwrap_or(1.0));
     let left = win_pos.x + (r.x as f64 * scale) as i32;
     let right = left + (r.width as f64 * scale) as i32;
     let top = win_pos.y;

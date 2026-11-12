@@ -171,7 +171,7 @@ function DockAppIcon({ src, alt, nectar }: { src: string | undefined; alt: strin
 function resolveStartIcon(startIcon: string): string {
   if (startIcon === "windows") return "/windows.svg";
   if (startIcon.startsWith("custom:")) return startIcon.slice("custom:".length);
-  return "/nectar.png";
+  return "/adara.png";
 }
 
 // Stable module-level constants so object references never change between renders,
@@ -597,7 +597,7 @@ const Dock = memo(function Dock() {
     localStorage.setItem("nectar-dock-names", value);
     invoke("save_setting", { key: "nectar-dock-names", value }).catch(console.error);
     setRenameApp(null);
-    invoke('set_menu_open', { open: false, rect: null }).catch(() => {});
+    invoke('set_menu_open', { open: false, rect: null, dpr: window.devicePixelRatio || 1 }).catch(() => {});
   };
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, app: AppInfo | null } | null>(null);
   const [contextMenuHeight, setContextMenuHeight] = useState(0);
@@ -718,10 +718,11 @@ const Dock = memo(function Dock() {
           width: Math.round(rect.width) + (hasPreview ? 1000 : 0),
           height: Math.round(rect.height) + (hasPreview ? 320 : 0)
         };
-        const key = `${next.x},${next.y},${next.width},${next.height}`;
+        const dpr = window.devicePixelRatio || 1;
+        const key = `${next.x},${next.y},${next.width},${next.height},${dpr}`;
         if (key === lastSent) return;
         lastSent = key;
-        invoke('update_dock_rect', { rect: next }).catch(() => { lastSent = ""; });
+        invoke('update_dock_rect', { rect: next, dpr }).catch(() => { lastSent = ""; });
       }
     };
 
@@ -1114,13 +1115,13 @@ const Dock = memo(function Dock() {
   const closeMenu = () => {
     setContextMenu(null);
     setActiveSubmenu(null);
-    invoke('set_menu_open', { open: false, rect: null }).catch(() => {});
+    invoke('set_menu_open', { open: false, rect: null, dpr: window.devicePixelRatio || 1 }).catch(() => {});
   };
 
   const closePopup = () => {
     setShowAddPopup(false);
     setRenameApp(null);
-    invoke('set_menu_open', { open: false, rect: null }).catch(() => {});
+    invoke('set_menu_open', { open: false, rect: null, dpr: window.devicePixelRatio || 1 }).catch(() => {});
   };
 
   useLayoutEffect(() => {
@@ -1163,7 +1164,7 @@ const Dock = memo(function Dock() {
       open = true;
     }
 
-    invoke('set_menu_open', { open, rect }).catch(() => {});
+    invoke('set_menu_open', { open, rect, dpr: window.devicePixelRatio || 1 }).catch(() => {});
 
   }, [contextMenu, popupOpen, pinnedApps, activeApps, activeSubmenu, scale]);
 
@@ -1818,7 +1819,7 @@ const Dock = memo(function Dock() {
                     const isNectarOrSettings = isNectarWindow(app);
                     
                     return (icon || isNectarOrSettings) ? (
-                      <DockAppIcon src={isNectarOrSettings ? "/nectar.png" : (icon ?? undefined)} alt={app.name} nectar={isNectarOrSettings} />
+                      <DockAppIcon src={isNectarOrSettings ? "/adara.png" : (icon ?? undefined)} alt={app.name} nectar={isNectarOrSettings} />
                     ) : (
                       <div className="fallback-icon">{app.name[0]}</div>
                     );
@@ -1901,7 +1902,7 @@ const Dock = memo(function Dock() {
                     const icon = customIcons[cacheKey] || (allowPathFallback && customIcons[app.path]) || iconsRef.current[cacheKey] || (allowPathFallback && iconsRef.current[app.path]) || app.icon;
                           const isNectarOrSettings = isNectarWindow(app);
                           return (icon || isNectarOrSettings) ? (
-                            <DockAppIcon src={isNectarOrSettings ? "/nectar.png" : (icon ?? undefined)} alt={app.name} nectar={isNectarOrSettings} />
+                            <DockAppIcon src={isNectarOrSettings ? "/adara.png" : (icon ?? undefined)} alt={app.name} nectar={isNectarOrSettings} />
                           ) : (
                             <div className="fallback-icon">{app.name[0]}</div>
                           );
@@ -1982,7 +1983,7 @@ const Dock = memo(function Dock() {
                     const icon = customIcons[cacheKey] || (allowPathFallback && customIcons[app.path]) || iconsRef.current[cacheKey] || (allowPathFallback && iconsRef.current[app.path]) || app.icon;
                           const isNectarOrSettings = isNectarWindow(app);
                           return (icon || isNectarOrSettings) ? (
-                            <DockAppIcon src={isNectarOrSettings ? "/nectar.png" : (icon ?? undefined)} alt={app.name} nectar={isNectarOrSettings} />
+                            <DockAppIcon src={isNectarOrSettings ? "/adara.png" : (icon ?? undefined)} alt={app.name} nectar={isNectarOrSettings} />
                           ) : (
                             <div className="fallback-icon">{app.name[0]}</div>
                           );
@@ -2132,7 +2133,7 @@ const Dock = memo(function Dock() {
             scale={scale}
             bottom={popupBottom}
             onSave={(name) => saveName(renameApp, name)}
-            onClose={() => { setRenameApp(null); invoke('set_menu_open', { open: false, rect: null }).catch(() => {}); }}
+            onClose={() => { setRenameApp(null); invoke('set_menu_open', { open: false, rect: null, dpr: window.devicePixelRatio || 1 }).catch(() => {}); }}
           />
         )}
         {showAddPopup && (
