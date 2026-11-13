@@ -16,6 +16,9 @@
   <a href="https://github.com/supremeinori/Adara-box/releases/download/v2.0.0/Adara-Box-2.0.0-Setup.exe">
     <img src="https://img.shields.io/badge/%E2%AC%87%EF%B8%8F%20Download%20Installer-v2.0.0%20(Windows%20x64)-000000?style=for-the-badge&logo=windows&logoColor=white" alt="Download Windows Installer" />
   </a>
+  <a href="https://github.com/supremeinori/Adara-box/releases/download/v2.0.0/Adara-Box-2.0.0-Portable.zip">
+    <img src="https://img.shields.io/badge/%F0%9F%93%A6%20Download%20Portable%20(.zip)-v2.0.0-28C840?style=for-the-badge&logo=windows&logoColor=white" alt="Download Portable ZIP" />
+  </a>
   <a href="https://github.com/supremeinori/Adara-box/releases/latest">
     <img src="https://img.shields.io/github/v/release/supremeinori/Adara-box?style=for-the-badge&color=28C840&label=Latest%20Release" alt="Latest Release" />
   </a>
@@ -28,19 +31,22 @@
 
 ## 💾 Download
 
-Download the latest ready-to-run installer for Windows 10/11:
+Choose how you want to run Adara Box on Windows 10/11:
 
 <p align="left">
   <a href="https://github.com/supremeinori/Adara-box/releases/download/v2.0.0/Adara-Box-2.0.0-Setup.exe">
-    <img src="https://img.shields.io/badge/Download-Adara%20Box%20v2.0.0%20(64--bit%20Installer)-000000?style=for-the-badge&logo=windows&logoColor=white" alt="Download Windows Installer" />
+    <img src="https://img.shields.io/badge/Download-Installer%20v2.0.0%20(Recommended)-000000?style=for-the-badge&logo=windows&logoColor=white" alt="Download Windows Installer" />
+  </a>
+  &nbsp;
+  <a href="https://github.com/supremeinori/Adara-box/releases/download/v2.0.0/Adara-Box-2.0.0-Portable.zip">
+    <img src="https://img.shields.io/badge/Download-Portable%20.zip%20v2.0.0-28C840?style=for-the-badge&logo=windows&logoColor=white" alt="Download Portable ZIP" />
   </a>
 </p>
 
-Or view all versions on the [**GitHub Releases Page**](https://github.com/supremeinori/Adara-box/releases).
+- **Installer (Recommended)**: Download **`Adara-Box-2.0.0-Setup.exe`**. Automatically installs all runtime libraries (`WebView2Loader.dll`), sets up Start Menu and Desktop shortcuts, and ensures seamless background wakeups without requiring administrator rights.
+- **Portable Edition**: Download **`Adara-Box-2.0.0-Portable.zip`**. Unzip to any folder and run `adara-box.exe` immediately (contains `adara-box.exe` and `WebView2Loader.dll` bundled together).
 
-1. Download **`Adara-Box-2.0.0-Setup.exe`**.
-2. Run the installer (per-user installation, no administrator privileges required).
-3. Adara Box launches immediately and is accessible anytime from your Desktop or by typing **Adara Box** in Windows Search.
+Or view all versions on the [**GitHub Releases Page**](https://github.com/supremeinori/Adara-box/releases).
 
 ---
 

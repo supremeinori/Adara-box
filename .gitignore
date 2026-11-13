@@ -17,3 +17,7 @@ artifacts/
 .vscode/
 *.DotSettings.user
 *.lnk
+*.exe
+*.dll
+*.zip
+
