@@ -7,7 +7,7 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 
-use tauri::{AppHandle, Emitter, State};
+use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_dialog::DialogExt;
 use uuid::Uuid;
 
@@ -111,12 +111,15 @@ pub async fn ws_pick_icon_image(
 ) -> Result<Option<String>, String> {
     let icons_dir = state.store.icons_dir().to_path_buf();
     tauri::async_runtime::spawn_blocking(move || {
-        let picked = app
+        let mut builder = app
             .dialog()
             .file()
             .set_title("Choose Workspace Icon")
-            .add_filter("Images", &["png", "jpg", "jpeg", "webp", "ico", "bmp"])
-            .blocking_pick_file();
+            .add_filter("Images", &["png", "jpg", "jpeg", "webp", "ico", "bmp"]);
+        if let Some(w) = app.get_webview_window("workspace").or_else(|| app.get_webview_window("main")) {
+            builder = builder.set_parent(&w);
+        }
+        let picked = builder.blocking_pick_file();
         let Some(file_path) = picked else {
             return Ok(None);
         };
@@ -389,11 +392,14 @@ pub fn open_workspace_window(app: AppHandle) {
 #[tauri::command]
 pub async fn res_pick_file(app: AppHandle) -> Result<Option<String>, String> {
     tauri::async_runtime::spawn_blocking(move || {
-        let picked = app
+        let mut builder = app
             .dialog()
             .file()
-            .set_title("Select File or Application")
-            .blocking_pick_file();
+            .set_title("Select File or Application");
+        if let Some(w) = app.get_webview_window("workspace").or_else(|| app.get_webview_window("main")) {
+            builder = builder.set_parent(&w);
+        }
+        let picked = builder.blocking_pick_file();
         match picked {
             Some(p) => Ok(Some(
                 p.into_path()
@@ -411,11 +417,14 @@ pub async fn res_pick_file(app: AppHandle) -> Result<Option<String>, String> {
 #[tauri::command]
 pub async fn res_pick_folder(app: AppHandle) -> Result<Option<String>, String> {
     tauri::async_runtime::spawn_blocking(move || {
-        let picked = app
+        let mut builder = app
             .dialog()
             .file()
-            .set_title("Select Folder")
-            .blocking_pick_folder();
+            .set_title("Select Folder");
+        if let Some(w) = app.get_webview_window("workspace").or_else(|| app.get_webview_window("main")) {
+            builder = builder.set_parent(&w);
+        }
+        let picked = builder.blocking_pick_folder();
         match picked {
             Some(p) => Ok(Some(
                 p.into_path()

@@ -1997,8 +1997,12 @@ fn notch_x_span(scale: f64) -> Option<(i32, i32)> {
     let (win_pos, _) = crate::state::main_window_rects().lock().ok().and_then(|m| m.get("main").copied())?;
     let region = crate::state::notch_rects().lock().ok()?;
     let r = region.get("main").copied()?;
-    let left = win_pos.x + (r.x as f64 * scale) as i32;
-    Some((left, left + (r.width as f64 * scale) as i32))
+    let center_x = win_pos.x + (r.x as f64 * scale) as i32 + ((r.width as f64 * scale) as i32 / 2);
+    // Comfortable minimum hit zone (240px) centered around the notch
+    let min_half_w = (120.0 * scale) as i32;
+    let actual_half_w = ((r.width as f64 * scale) as i32 / 2) + (24.0 * scale) as i32;
+    let half_w = min_half_w.max(actual_half_w);
+    Some((center_x - half_w, center_x + half_w))
 }
 
 fn start_mouse_worker(app_handle: AppHandle) {
@@ -2318,7 +2322,11 @@ unsafe fn process_mouse_move(app_handle: &AppHandle, cursor: windows::Win32::Fou
                                     if cursor.x >= rx && cursor.x <= (rx + rw) && cursor.y >= ry && cursor.y <= (ry + rh) {
                                         is_click_interactive = true;
                                     }
-                                    dock_span = Some((rx, rx + rw));
+                                    let cx = rx + rw / 2;
+                                    let min_half_w = (180.0 * scale) as i32;
+                                    let actual_half_w = (rw / 2) + (24.0 * scale) as i32;
+                                    let half_w = min_half_w.max(actual_half_w);
+                                    dock_span = Some((cx - half_w, cx + half_w));
                                     dbg_box = Some((rx, ry, rw, rh));
                                     dbg_rect = Some(r);
                                     dbg_scale = scale;
@@ -2350,12 +2358,7 @@ unsafe fn process_mouse_move(app_handle: &AppHandle, cursor: windows::Win32::Fou
                         let half_w = (180.0 * scale) as i32;
                         (cx - half_w, cx + half_w)
                     });
-                    let over_dock_span = if !edge_area_narrow(app_handle, "nectar-dock-edge-area") {
-                        cursor.x >= dock_mon_x && cursor.x <= (dock_mon_x + dock_mon_w)
-                    } else {
-                        let pad = (4.0 * scale) as i32;
-                        cursor.x >= span.0 - pad && cursor.x <= span.1 + pad
-                    };
+                    let over_dock_span = cursor.x >= span.0 && cursor.x <= span.1;
                     let at_bottom_edge = cursor.y >= (dock_mon_y + dock_mon_h - (8.0 * scale) as i32) &&
                                          cursor.y <= (dock_mon_y + dock_mon_h) && over_dock_span;
 
@@ -2422,15 +2425,10 @@ unsafe fn process_mouse_move(app_handle: &AppHandle, cursor: windows::Win32::Fou
                         let scale = crate::state::effective_css_scale_for(main_win.label(), main_win.scale_factor().unwrap_or(1.0));
                         let notch_span = notch_x_span(scale).unwrap_or_else(|| {
                             let cx = notch_mon_x + notch_mon_w / 2;
-                            let half_w = (100.0 * scale) as i32;
+                            let half_w = (120.0 * scale) as i32;
                             (cx - half_w, cx + half_w)
                         });
-                        let over_notch_span = if !edge_area_narrow(app_handle, "nectar-notch-edge-area") {
-                            cursor.x >= notch_mon_x && cursor.x <= (notch_mon_x + notch_mon_w)
-                        } else {
-                            let pad = (4.0 * scale) as i32;
-                            cursor.x >= notch_span.0 - pad && cursor.x <= notch_span.1 + pad
-                        };
+                        let over_notch_span = cursor.x >= notch_span.0 && cursor.x <= notch_span.1;
                         let in_top_band = cursor.y >= notch_mon_y &&
                                           cursor.y <= (notch_mon_y + (8.0 * scale) as i32) &&
                                           over_notch_span;
@@ -2445,6 +2443,7 @@ unsafe fn process_mouse_move(app_handle: &AppHandle, cursor: windows::Win32::Fou
                         }
 
                         let mut is_click_interactive = false;
+                        let mut is_expanded = false;
                         let mut dbg_box: Option<(i32, i32, i32, i32)> = None;
                         let mut dbg_rect: Option<crate::types::IntRect> = None;
                         let main_rect_val = crate::state::main_window_rects().lock().ok().and_then(|m| m.get("main").copied());
@@ -2464,12 +2463,15 @@ unsafe fn process_mouse_move(app_handle: &AppHandle, cursor: windows::Win32::Fou
                                     let ry_top = win_pos.y;
                                     let ry_bottom = win_pos.y + (r.height as f64 * scale) as i32 + pad_y_bottom + hyst;
 
-                                    // A hidden notch must not eat clicks, in smart/peek it's off screen most of the time.
+                                    is_expanded = r.height > 50;
                                     let notch_hidden = crate::state::get_flag(crate::state::notch_hidden(), "main");
-                                    let hover_active = is_notch_hovered || now < MH_TOPBAR_EXPIRY_MS.load(Ordering::Relaxed);
-                                    if (!notch_hidden || hover_active)
+                                    let hover_active = is_notch_hovered || now < MH_TOPBAR_EXPIRY_MS.load(Ordering::Relaxed) || is_expanded;
+                                    if (is_expanded || !notch_hidden || hover_active)
                                         && cursor.x >= rx && cursor.x <= (rx + rw) && cursor.y >= ry_top && cursor.y <= ry_bottom {
                                         is_click_interactive = true;
+                                        if is_expanded {
+                                            MH_TOPBAR_EXPIRY_MS.store(now + 1000, Ordering::Relaxed);
+                                        }
                                     }
                                     dbg_box = Some((rx, ry_top, rw, ry_bottom - ry_top));
                                     dbg_rect = Some(r);
@@ -2497,7 +2499,7 @@ unsafe fn process_mouse_move(app_handle: &AppHandle, cursor: windows::Win32::Fou
                             }
                         }
 
-                        if is_click_interactive && !in_notch_hover && !left_button_held() && caption_buttons_under(cursor) {
+                        if is_click_interactive && !is_expanded && !in_notch_hover && !left_button_held() && caption_buttons_under(cursor) {
                             is_click_interactive = false;
                             is_notch_hovered = false;
                             MH_TOPBAR_EXPIRY_MS.store(0, Ordering::Relaxed);
@@ -2893,22 +2895,19 @@ fn hit_test_extra_notch_windows(app_handle: &AppHandle, cursor: windows::Win32::
                 crate::state::main_window_rects().lock().ok().and_then(|m| m.get(&label).copied()),
                 crate::state::notch_rects().lock().ok().and_then(|m| m.get(&label).copied()),
             ) {
-                let left = win_pos.x + (r.x as f64 * scale) as i32;
-                let right = left + (r.width as f64 * scale) as i32;
-                (left, right)
+                let center_x = win_pos.x + (r.x as f64 * scale) as i32 + ((r.width as f64 * scale) as i32 / 2);
+                let min_half_w = (120.0 * scale) as i32;
+                let actual_half_w = ((r.width as f64 * scale) as i32 / 2) + (24.0 * scale) as i32;
+                let half_w = min_half_w.max(actual_half_w);
+                (center_x - half_w, center_x + half_w)
             } else {
                 let cx = mon_x + mon_w / 2;
-                let half_w = (100.0 * scale) as i32;
+                let half_w = (120.0 * scale) as i32;
                 (cx - half_w, cx + half_w)
             }
         };
 
-        let over_notch_span = if !edge_area_narrow(app_handle, "nectar-notch-edge-area") {
-            cursor.x >= mon_x && cursor.x <= (mon_x + mon_w)
-        } else {
-            let pad = (4.0 * scale) as i32;
-            cursor.x >= extra_notch_span.0 - pad && cursor.x <= extra_notch_span.1 + pad
-        };
+        let over_notch_span = cursor.x >= extra_notch_span.0 && cursor.x <= extra_notch_span.1;
 
         let in_top_band = cursor.y >= mon_y &&
                           cursor.y <= (mon_y + (8.0 * scale) as i32) &&
@@ -2937,12 +2936,17 @@ fn hit_test_extra_notch_windows(app_handle: &AppHandle, cursor: windows::Win32::
                 let ry_top = win_pos.y;
                 let ry_bottom = win_pos.y + (r.height as f64 * scale) as i32 + pad_y_bottom + hyst;
 
+                let is_expanded = r.height > 50;
                 let notch_hidden = crate::state::get_flag(crate::state::notch_hidden(), &label);
                 let hover_active = is_notch_hovered
-                    || now < crate::state::get_i64(crate::state::notch_extra_expiry_ms(), &label, 0);
-                if (!notch_hidden || hover_active)
+                    || now < crate::state::get_i64(crate::state::notch_extra_expiry_ms(), &label, 0)
+                    || is_expanded;
+                if (is_expanded || !notch_hidden || hover_active)
                     && cursor.x >= rx && cursor.x <= (rx + rw) && cursor.y >= ry_top && cursor.y <= ry_bottom {
                     is_click_interactive = true;
+                    if is_expanded {
+                        crate::state::set_i64(crate::state::notch_extra_expiry_ms(), &label, now + 1000);
+                    }
                 }
 
                 let edge_pad = (6.0 * scale) as i32;

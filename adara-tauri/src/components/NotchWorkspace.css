@@ -703,6 +703,11 @@
   gap: 5px;
 }
 
+.ws-target-row .ws-action-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 .ws-sheet-foot {
   margin-top: auto;
   display: flex;

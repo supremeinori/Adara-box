@@ -9,6 +9,7 @@ import {
   ArrowUp,
   BookOpen,
   Check,
+  Clipboard,
   ExternalLink,
   FileText,
   Folder,
@@ -386,7 +387,76 @@ export function WorkspaceView({
     setSheet({ kind: "edit-ws", workspace: ws, confirmDelete: false });
   };
 
+  const sanitizeTarget = (raw: string): string => {
+    let clean = raw.trim();
+    if (clean.startsWith('"') && clean.endsWith('"') && clean.length >= 2) {
+      clean = clean.slice(1, -1).trim();
+    }
+    return clean;
+  };
+
+  const inferMetaFromTarget = (target: string): { type?: ResourceType; name?: string } => {
+    const clean = sanitizeTarget(target);
+    if (!clean) return {};
+
+    const lower = clean.toLowerCase();
+    if (lower.startsWith("http://") || lower.startsWith("https://") || lower.startsWith("www.")) {
+      try {
+        const urlStr = lower.startsWith("www.") ? `https://${clean}` : clean;
+        const u = new URL(urlStr);
+        const host = u.hostname.replace(/^www\./i, "");
+        const pathPart = u.pathname.replace(/^\/|\/$/g, "").split("/").pop();
+        const autoName = pathPart ? `${host}/${pathPart}` : host;
+        return { type: "link", name: autoName };
+      } catch {
+        return { type: "link", name: clean.replace(/^https?:\/\//i, "").split("/")[0] || "Link" };
+      }
+    }
+
+    if (/\.(exe|lnk|bat|cmd|msi)$/i.test(clean)) {
+      const base = clean.split(/[\\/]/).filter(Boolean).pop() ?? clean;
+      const cleanName = base.replace(/\.(exe|lnk|bat|cmd|msi)$/i, "");
+      return { type: "application", name: cleanName };
+    }
+
+    if (/[\\/]$/.test(clean) || (!/\.[a-zA-Z0-9]{1,6}$/.test(clean) && /^[a-zA-Z]:[\\/]/.test(clean))) {
+      const base = clean.split(/[\\/]/).filter(Boolean).pop() ?? clean;
+      return { type: "folder", name: base };
+    }
+
+    const base = clean.split(/[\\/]/).filter(Boolean).pop() ?? clean;
+    return { type: "file", name: base };
+  };
+
+  const handlePasteTarget = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text || !text.trim()) {
+        setStatusNotice("Clipboard is empty");
+        setTimeout(() => setStatusNotice(null), 1500);
+        return;
+      }
+      const clean = sanitizeTarget(text);
+      setResTarget(clean);
+      const inferred = inferMetaFromTarget(clean);
+      if (inferred.type && (sheet.kind === "add-res" || resType === "application")) {
+        setResType(inferred.type);
+      }
+      if (!resName.trim() && inferred.name) {
+        setResName(inferred.name);
+      }
+      setStatusNotice(t("ws.pasteSuccess") || "Pasted from clipboard");
+      setTimeout(() => setStatusNotice(null), 1500);
+    } catch (err) {
+      setErrorMsg("Failed to read clipboard: " + extractErrorMessage(err));
+    }
+  };
+
   const openAddResSheet = () => {
+    if (!activeWorkspace) {
+      openCreateWsSheet();
+      return;
+    }
     setResName("");
     setResType("application");
     setResTarget("");
@@ -569,8 +639,25 @@ export function WorkspaceView({
 
   return (
     <div
+      tabIndex={0}
       className={`ws-root ${mode === "notch" ? "is-notch" : "is-window"}`}
       onClick={(e) => e.stopPropagation()}
+      onKeyDown={async (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "v" && sheet.kind === "none" && activeWorkspace) {
+          try {
+            const text = await navigator.clipboard.readText();
+            if (text && text.trim()) {
+              const clean = sanitizeTarget(text);
+              const inferred = inferMetaFromTarget(clean);
+              setResTarget(clean);
+              setResType(inferred.type || (clean.startsWith("http") ? "link" : "file"));
+              setResName(inferred.name || "");
+              setErrorMsg(null);
+              setSheet({ kind: "add-res" });
+            }
+          } catch {}
+        }
+      }}
     >
       {mode === "window" && (
         <aside className="ws-sidebar">
@@ -1195,11 +1282,38 @@ export function WorkspaceView({
                   className="ws-input"
                   value={resTarget}
                   autoFocus
-                  onChange={(e) => setResTarget(e.target.value)}
+                  onChange={(e) => {
+                    const clean = sanitizeTarget(e.target.value);
+                    setResTarget(clean);
+                  }}
+                  onPaste={(e) => {
+                    const pasted = e.clipboardData.getData("text");
+                    if (pasted) {
+                      e.preventDefault();
+                      const clean = sanitizeTarget(pasted);
+                      setResTarget(clean);
+                      const inferred = inferMetaFromTarget(clean);
+                      if (inferred.type && sheet.kind === "add-res") {
+                        setResType(inferred.type);
+                      }
+                      if (!resName.trim() && inferred.name) {
+                        setResName(inferred.name);
+                      }
+                    }
+                  }}
                   placeholder={
                     resType === "link" ? "https://example.com" : "C:\\Path\\To\\Target"
                   }
                 />
+                <button
+                  type="button"
+                  className="ws-action-btn"
+                  onClick={handlePasteTarget}
+                  title={t("ws.pasteTooltip")}
+                >
+                  <Clipboard size={12} />
+                  <span>{t("ws.paste")}</span>
+                </button>
                 {resType !== "link" && (
                   <button
                     type="button"

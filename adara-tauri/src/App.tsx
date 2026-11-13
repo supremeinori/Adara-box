@@ -932,8 +932,14 @@ function App() {
   }, [windowLabel]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    // Disable context menu globally
-    const preventContext = (e: MouseEvent) => e.preventDefault();
+    // Disable context menu globally except for text inputs
+    const preventContext = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
+      e.preventDefault();
+    };
     document.addEventListener('contextmenu', preventContext);
 
     const unlistenVisibility = listen<boolean>("visibility-change", (event) => {

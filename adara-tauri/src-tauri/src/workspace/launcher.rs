@@ -92,7 +92,10 @@ fn execute_resource(resource: &ResourceDto) -> Result<(), (String, String)> {
             if !path.is_dir() {
                 return Err(("PATH_NOT_FOUND".into(), "Folder was not found.".into()));
             }
-            shell_execute_open(&expanded, None, Some(&expanded))
+            if shell_execute_open(&expanded, None, Some(&expanded)).is_err() {
+                let _ = std::process::Command::new("explorer").arg(&expanded).spawn();
+            }
+            Ok(())
         }
         ResourceType::File => {
             let path = Path::new(&expanded);
