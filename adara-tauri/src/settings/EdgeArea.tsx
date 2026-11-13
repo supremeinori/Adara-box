@@ -7,7 +7,7 @@ import { useT } from "../i18n";
 
 export function EdgeArea({ settingKey }: { settingKey: "nectar-notch-edge-area" | "nectar-dock-edge-area" }) {
   const t = useT();
-  const [value, setValue] = useState(() => (localStorage.getItem(settingKey) === "narrow" ? "narrow" : "full"));
+  const [value, setValue] = useState(() => (localStorage.getItem(settingKey) === "full" ? "full" : "narrow"));
 
   const change = (next: string) => {
     setValue(next);
@@ -21,8 +21,8 @@ export function EdgeArea({ settingKey }: { settingKey: "nectar-notch-edge-area" 
         value={value}
         onChange={change}
         options={[
-          { value: "full", label: t("edgeArea.full") },
           { value: "narrow", label: t("edgeArea.narrow") },
+          { value: "full", label: t("edgeArea.full") },
         ]}
       />
     </SettingRow>
