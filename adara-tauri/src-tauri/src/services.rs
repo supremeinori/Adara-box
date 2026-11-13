@@ -533,6 +533,9 @@ unsafe extern "system" fn thumbnail_capture_proc(
     });
 }
 
+static TASKBAR_EVENT_BUSY: AtomicBool = AtomicBool::new(false);
+static LAST_TASKBAR_EVENT_MS: AtomicI64 = AtomicI64::new(0);
+
 unsafe extern "system" fn taskbar_event_proc(
     _h_win_event_hook: windows::Win32::UI::Accessibility::HWINEVENTHOOK,
     _event: u32,
@@ -542,14 +545,26 @@ unsafe extern "system" fn taskbar_event_proc(
     _dw_event_thread: u32,
     _dwms_event_time: u32,
 ) {
+    if !DISPLAY_POWER_ON.load(Ordering::Relaxed) {
+        return;
+    }
     if NATIVE_TASKBAR_HIDDEN.load(Ordering::Relaxed) {
         let mut class_name = [0u8; 256];
         let len = windows::Win32::UI::WindowsAndMessaging::GetClassNameA(hwnd, &mut class_name);
         let class_str = std::str::from_utf8(&class_name[..len as usize]).unwrap_or("");
         
         if class_str == "Shell_TrayWnd" || class_str == "Shell_SecondaryTrayWnd" {
-            // Taskbar is trying to show or move: slap it back down.
+            // Prevent recursive event storms and deadlocks with explorer.exe
+            let now = crate::utils::get_now_ms();
+            if now - LAST_TASKBAR_EVENT_MS.load(Ordering::Relaxed) < 300 {
+                return;
+            }
+            if TASKBAR_EVENT_BUSY.swap(true, Ordering::SeqCst) {
+                return;
+            }
+            LAST_TASKBAR_EVENT_MS.store(now, Ordering::Relaxed);
             set_taskbar_visibility(false, false);
+            TASKBAR_EVENT_BUSY.store(false, Ordering::SeqCst);
         }
     }
 }
@@ -1999,6 +2014,10 @@ fn start_mouse_worker(app_handle: AppHandle) {
                 std::thread::park();
             }
             if !MOUSE_DIRTY.swap(false, Ordering::Relaxed) {
+                continue;
+            }
+            if !DISPLAY_POWER_ON.load(Ordering::Relaxed) {
+                std::thread::sleep(Duration::from_millis(250));
                 continue;
             }
             let cursor = windows::Win32::Foundation::POINT {
@@ -3719,6 +3738,29 @@ fn reposition_autohide_dock(app_handle: &AppHandle, dock_win: tauri::WebviewWind
     });
 }
 
+pub static DISPLAY_POWER_ON: AtomicBool = AtomicBool::new(true);
+
+#[repr(C)]
+struct POWERBROADCAST_SETTING {
+    power_setting: windows::core::GUID,
+    data_length: u32,
+    data: [u8; 1],
+}
+
+const GUID_CONSOLE_DISPLAY_STATE: windows::core::GUID =
+    windows::core::GUID::from_u128(0x6fe69556_704a_47a0_8f24_c28d936fda47);
+
+extern "system" {
+    fn RegisterPowerSettingNotification(
+        hrecipient: windows::Win32::Foundation::HANDLE,
+        powersettingguid: *const windows::core::GUID,
+        flags: u32,
+    ) -> *mut std::ffi::c_void;
+    fn UnregisterPowerSettingNotification(
+        handle: *mut std::ffi::c_void,
+    ) -> windows::core::BOOL;
+}
+
 pub fn setup_display_change_monitor(app_handle: AppHandle) {
     let _ = crate::state::DISPLAY_MONITOR_HANDLE.set(app_handle);
 
@@ -3762,10 +3804,20 @@ pub fn setup_display_change_monitor(app_handle: AppHandle) {
                 Err(_) => return,
             };
 
+            let power_notify = RegisterPowerSettingNotification(
+                windows::Win32::Foundation::HANDLE(hwnd.0),
+                &GUID_CONSOLE_DISPLAY_STATE,
+                0,
+            );
+
             let mut msg = MSG::default();
             while GetMessageW(&mut msg, Some(hwnd), 0, 0).as_bool() {
                 let _ = TranslateMessage(&msg);
                 DispatchMessageW(&msg);
+            }
+
+            if !power_notify.is_null() {
+                let _ = UnregisterPowerSettingNotification(power_notify);
             }
         }
     });
@@ -3784,11 +3836,18 @@ unsafe extern "system" fn display_monitor_proc(
     const WM_POWERBROADCAST: u32 = 0x0218;
     const PBT_APMPOWERSTATUSCHANGE: u32 = 0x000A;
     const PBT_APMRESUMESUSPEND: u32 = 0x0007;
+    const PBT_APMSUSPEND: u32 = 0x0004;
+    const PBT_APMRESUMEAUTOMATIC: u32 = 0x0012;
+    const PBT_POWERSETTINGCHANGE: u32 = 0x8013;
     const WM_DWMCOLORIZATIONCOLORCHANGED: u32 = 0x0320;
     const WM_SETTINGCHANGE: u32 = 0x001A;
 
     match msg {
         WM_DISPLAYCHANGE => {
+            // Skip repositioning while display is asleep to prevent DWM/Explorer lockups
+            if !DISPLAY_POWER_ON.load(Ordering::Relaxed) {
+                return LRESULT(0);
+            }
             let now = get_now_ms();
             let last = LAST_DISPLAY_CHANGE_MS.load(Ordering::Relaxed);
             if now - last > 500 {
@@ -3796,8 +3855,10 @@ unsafe extern "system" fn display_monitor_proc(
                 if let Some(app_handle) = DISPLAY_MONITOR_HANDLE.get() {
                     let ah = app_handle.clone();
                     tauri::async_runtime::spawn(async move {
-                        tokio::time::sleep(std::time::Duration::from_millis(200)).await;
-                        reposition_all_windows(&ah);
+                        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+                        if DISPLAY_POWER_ON.load(Ordering::Relaxed) {
+                            reposition_all_windows(&ah);
+                        }
                     });
                 }
             }
@@ -3805,7 +3866,36 @@ unsafe extern "system" fn display_monitor_proc(
         }
         WM_POWERBROADCAST => {
             let pw = wparam.0 as u32;
-            if pw == PBT_APMPOWERSTATUSCHANGE || pw == PBT_APMRESUMESUSPEND {
+            if pw == PBT_POWERSETTINGCHANGE && lparam.0 != 0 {
+                let pbs = &*(lparam.0 as *const POWERBROADCAST_SETTING);
+                if pbs.power_setting == GUID_CONSOLE_DISPLAY_STATE {
+                    let state = *(pbs.data.as_ptr() as *const u32);
+                    crate::diagnostics::log(&format!("display power setting change: state={state}"));
+                    if state == 0 {
+                        // Display turned OFF
+                        DISPLAY_POWER_ON.store(false, Ordering::SeqCst);
+                    } else if state == 1 {
+                        // Display turned ON (resumed/awake)
+                        let was_off = !DISPLAY_POWER_ON.swap(true, Ordering::SeqCst);
+                        if was_off {
+                            if let Some(app_handle) = DISPLAY_MONITOR_HANDLE.get() {
+                                let ah = app_handle.clone();
+                                tauri::async_runtime::spawn(async move {
+                                    // Settle delay after monitor wake before repositioning windows
+                                    tokio::time::sleep(std::time::Duration::from_millis(800)).await;
+                                    reposition_all_windows(&ah);
+                                    let _ = ah.emit("display-resumed", ());
+                                });
+                            }
+                        }
+                    }
+                }
+            } else if pw == PBT_APMSUSPEND {
+                crate::diagnostics::log("power broadcast: APM suspend");
+                DISPLAY_POWER_ON.store(false, Ordering::SeqCst);
+            } else if pw == PBT_APMRESUMESUSPEND || pw == PBT_APMRESUMEAUTOMATIC || pw == PBT_APMPOWERSTATUSCHANGE {
+                crate::diagnostics::log("power broadcast: resume/status change");
+                DISPLAY_POWER_ON.store(true, Ordering::SeqCst);
                 let now = get_now_ms();
                 let last = LAST_DISPLAY_CHANGE_MS.load(Ordering::Relaxed);
                 if now - last > 1000 {
@@ -3813,9 +3903,7 @@ unsafe extern "system" fn display_monitor_proc(
                     if let Some(app_handle) = DISPLAY_MONITOR_HANDLE.get() {
                         let ah = app_handle.clone();
                         tauri::async_runtime::spawn(async move {
-                            // Longer delay for wake from sleep to allow display to fully initialize
-                            let delay = if pw == PBT_APMRESUMESUSPEND { 500 } else { 300 };
-                            tokio::time::sleep(std::time::Duration::from_millis(delay)).await;
+                            tokio::time::sleep(std::time::Duration::from_millis(800)).await;
                             reposition_all_windows(&ah);
                         });
                     }
@@ -3850,6 +3938,9 @@ unsafe extern "system" fn display_monitor_proc(
 pub fn start_window_style_guard(app: AppHandle) {
     std::thread::spawn(move || loop {
         std::thread::sleep(std::time::Duration::from_millis(1000));
+        if !DISPLAY_POWER_ON.load(Ordering::Relaxed) {
+            continue;
+        }
         for (label, win) in app.webview_windows() {
             let is_notch = is_notch_label(&label);
             let is_dock = is_dock_label(&label);
@@ -3911,6 +4002,8 @@ pub fn watch_webview_processes(app: &AppHandle) {
                 COREWEBVIEW2_PROCESS_FAILED_KIND,
                 COREWEBVIEW2_PROCESS_FAILED_KIND_BROWSER_PROCESS_EXITED,
                 COREWEBVIEW2_PROCESS_FAILED_KIND_RENDER_PROCESS_EXITED,
+                COREWEBVIEW2_PROCESS_FAILED_KIND_RENDER_PROCESS_UNRESPONSIVE,
+                COREWEBVIEW2_PROCESS_FAILED_KIND_GPU_PROCESS_EXITED,
             };
             use webview2_com::ProcessFailedEventHandler;
 
@@ -3919,15 +4012,21 @@ pub fn watch_webview_processes(app: &AppHandle) {
             };
             let mut token = 0i64;
             let _ = core.add_ProcessFailed(
-                &ProcessFailedEventHandler::create(Box::new(move |_, args| {
+                &ProcessFailedEventHandler::create(Box::new(move |sender, args| {
                     let Some(args) = args else {
                         return Ok(());
                     };
                     let mut kind = COREWEBVIEW2_PROCESS_FAILED_KIND::default();
                     args.ProcessFailedKind(&mut kind)?;
                     crate::diagnostics::log(&format!("webview process failed: kind={}", kind.0));
-                    if kind == COREWEBVIEW2_PROCESS_FAILED_KIND_BROWSER_PROCESS_EXITED
+                    if kind == COREWEBVIEW2_PROCESS_FAILED_KIND_GPU_PROCESS_EXITED {
+                        crate::diagnostics::log("reloading webview after GPU process exited");
+                        if let Some(ref sender_core) = sender {
+                            let _ = sender_core.Reload();
+                        }
+                    } else if kind == COREWEBVIEW2_PROCESS_FAILED_KIND_BROWSER_PROCESS_EXITED
                         || kind == COREWEBVIEW2_PROCESS_FAILED_KIND_RENDER_PROCESS_EXITED
+                        || kind == COREWEBVIEW2_PROCESS_FAILED_KIND_RENDER_PROCESS_UNRESPONSIVE
                     {
                         recover_from_webview_failure(&handle);
                     }

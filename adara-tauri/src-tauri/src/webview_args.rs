@@ -4,15 +4,17 @@ const BASE_ARGS: &str = concat!(
     "SpareRendererForSitePerProcess,",
     "InterestFeedContentSuggestions,MediaRouter,OptimizationHints,Translate,",
     "AutofillServerCommunication,CertificateTransparencyComponentUpdater,",
-    "SegmentationPlatform,BackgroundFetch ",
+    "SegmentationPlatform,BackgroundFetch,",
+    "CalculateNativeWinOcclusion,IntensiveWakeUpThrottling ",
     "--autoplay-policy=no-user-gesture-required ",
     "--no-first-run --no-default-browser-check --disable-sync ",
     "--disable-background-networking --disable-component-update ",
     "--disable-domain-reliability --disable-breakpad ",
+    "--disable-backgrounding-occluded-windows ",
+    "--disable-renderer-backgrounding ",
     "--disk-cache-size=16777216 --media-cache-size=8388608 ",
-    "--enable-low-end-device-mode ",
     "--js-flags=--max-semi-space-size=1 ",
-    "--renderer-process-limit=1 ",
+    "--renderer-process-limit=2 ",
     "--num-raster-threads=2"
 );
 

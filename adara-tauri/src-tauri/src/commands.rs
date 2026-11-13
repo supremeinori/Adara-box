@@ -3524,6 +3524,26 @@ fn read_gpu_details() -> (Option<String>, Option<u64>, Option<u64>) {
 
 #[tauri::command]
 pub fn get_system_metrics() -> SystemMetrics {
+    // Avoid querying DXGI GPU adapters or hardware metrics while screen is asleep/off
+    if !crate::services::DISPLAY_POWER_ON.load(std::sync::atomic::Ordering::Relaxed) {
+        return SystemMetrics {
+            cpu: 0,
+            ram: 0.0,
+            ram_used_gb: 0.0,
+            ram_total_gb: 0.0,
+            disk_free_gb: 0,
+            disk_used_gb: 0,
+            disk_total_gb: 0,
+            net_up: 0,
+            net_down: 0,
+            cpu_name: String::new(),
+            cpu_cores: 0,
+            uptime_secs: 0,
+            gpu_name: None,
+            gpu_vram_used_mb: None,
+            gpu_vram_total_mb: None,
+        };
+    }
     let (net_up, net_down) = get_network_speed().unwrap_or((0, 0));
     let (ram, ram_used_gb, ram_total_gb) = read_ram_details();
     let (disk_free_gb, disk_used_gb, disk_total_gb) = read_disk_details();
